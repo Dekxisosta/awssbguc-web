@@ -95,7 +95,7 @@ export function BrandPanel({ heading, sub }: { heading: string; sub: string }) {
       {/* Logo */}
       <div className="relative z-10 flex items-center gap-3">
         <Image
-          src="/icons/logo.jpg"
+          src="/icons/logo.webp"
           alt="AWSSBG-UC logo"
           width={32}
           height={32}
