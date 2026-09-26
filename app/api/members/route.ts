@@ -20,12 +20,14 @@ import type { PublicMemberProfile } from "@/src/entities/member";
  *   { members: PublicMemberProfile[], page: number, totalPages: number, totalCount: number }
  */
 
+export const dynamic = "force-dynamic";
+
 const PAGE_SIZE = 20;
 
 export async function GET(req: NextRequest) {
   try {
     const admin = createAdminClient();
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = req.nextUrl;
 
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
     const from = (page - 1) * PAGE_SIZE;
