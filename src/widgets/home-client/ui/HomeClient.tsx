@@ -102,6 +102,15 @@ function SectionHeading({ children, y, light = false }: { children: React.ReactN
 
 function HeroSection() {
   const [current, setCurrent] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    setIsDesktop(window.innerWidth >= 640);
+    const mq = window.matchMedia("(min-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -159,7 +168,7 @@ function HeroSection() {
 
       
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] opacity-20 mix-blend-screen">
-        <PixelBlast
+        {isDesktop && <PixelBlast
           variant="square"
           pixelSize={2}
           color="#00e482"
@@ -177,7 +186,7 @@ function HeroSection() {
           speed={0.5}
           edgeFade={0.3}
           transparent
-        />
+        />}
       </div>
 
       
