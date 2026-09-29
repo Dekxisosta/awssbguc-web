@@ -193,7 +193,7 @@ function ResourceCard({
 
 export function AWSPage() {
   return (
-    <div className="relative min-h-screen bg-neutral-900">
+    <div className="relative min-h-screen bg-neutral-900 overflow-hidden">
       {/* Background accents */}
       <div
         aria-hidden="true"
