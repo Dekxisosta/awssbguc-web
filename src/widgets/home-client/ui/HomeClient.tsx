@@ -453,8 +453,8 @@ export default function HomeClient({
       <div className="bg-white pt-10">
         <TechMarquee />
 
-        <div className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-8 px-6 py-7">
+        <div className="border-b border-neutral-200 bg-white overflow-x-auto">
+        <div className="mx-auto flex max-w-5xl items-center justify-center gap-8 px-6 py-7 min-w-0 flex-wrap">
           <span className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Follow us</span>
           <div className="h-5 w-px bg-neutral-300" aria-hidden="true" />
           <div className="flex items-center gap-2">
