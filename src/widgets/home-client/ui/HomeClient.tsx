@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion, MotionValue } from "framer-motion";
 import { GlobeOrbit } from "./GlobeOrbit";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
 
@@ -48,20 +48,32 @@ function ParallaxSection({
   className = "",
   accentBehind,
 }: {
-  children: (params: { headingY: MotionValue<string>; bodyY: MotionValue<string> }) => React.ReactNode;
+  children: (params: { headingY: MotionValue<number>; bodyY: MotionValue<number> }) => React.ReactNode;
   className?: string;
   accentBehind?: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const headingY = useTransform<number, string>(scrollYProgress, [0, 1], ["18px", "-18px"]);
-  const bodyY    = useTransform<number, string>(scrollYProgress, [0, 1], ["10px", "-10px"]);
-  const accentY  = useTransform<number, string>(scrollYProgress, [0, 1], ["-24px", "24px"]);
+  const prefersReduced = useReducedMotion();
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+    layoutEffect: false,
+  });
+
+  // Number-valued transforms — no string parsing per frame, GPU-composited via will-change
+  const headingY = useTransform(scrollYProgress, [0, 1], prefersReduced ? [0, 0] : [18, -18]);
+  const bodyY    = useTransform(scrollYProgress, [0, 1], prefersReduced ? [0, 0] : [10, -10]);
+  const accentY  = useTransform(scrollYProgress, [0, 1], prefersReduced ? [0, 0] : [-24, 24]);
 
   return (
     <div ref={ref} className={`relative flex flex-col overflow-hidden ${className}`}>
       {accentBehind && (
-        <motion.div aria-hidden="true" style={{ y: accentY }} className="pointer-events-none absolute inset-0">
+        <motion.div
+          aria-hidden="true"
+          style={{ y: accentY, willChange: "transform" }}
+          className="pointer-events-none absolute inset-0"
+        >
           {accentBehind}
         </motion.div>
       )}
@@ -80,9 +92,9 @@ function EyebrowLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SectionHeading({ children, y, light = false }: { children: React.ReactNode; y: MotionValue<string>; light?: boolean }) {
+function SectionHeading({ children, y, light = false }: { children: React.ReactNode; y: MotionValue<number>; light?: boolean }) {
   return (
-    <motion.h2 variants={fadeUp} style={{ y }} className={`text-4xl font-bold tracking-tight sm:text-5xl ${light ? "text-neutral-900" : "text-neutral-100"}`}>
+    <motion.h2 variants={fadeUp} style={{ y, willChange: "transform" }} className={`text-4xl font-bold tracking-tight sm:text-5xl ${light ? "text-neutral-900" : "text-neutral-100"}`}>
       {children}
     </motion.h2>
   );
@@ -514,10 +526,10 @@ export default function HomeClient({
               <div>
                 <EyebrowLabel>About AWS</EyebrowLabel>
                 <SectionHeading y={headingY} light>The world runs on the cloud.</SectionHeading>
-                <motion.p variants={fadeUp} style={{ y: bodyY }} className="mt-6 text-base leading-relaxed text-neutral-600">
+                <motion.p variants={fadeUp} style={{ y: bodyY, willChange: "transform" }} className="mt-6 text-base leading-relaxed text-neutral-600">
                   Amazon Web Services powers millions of businesses globally — from startups to governments. With over 200 fully featured services spanning compute, storage, databases, AI/ML, and security, AWS is the on-ramp to building anything at scale.
                 </motion.p>
-                <motion.p variants={fadeUp} style={{ y: bodyY }} className="mt-4 text-base leading-relaxed text-neutral-600">
+                <motion.p variants={fadeUp} style={{ y: bodyY, willChange: "transform" }} className="mt-4 text-base leading-relaxed text-neutral-600">
                   As members of AWSSBG-UC, you get hands-on exposure to the same infrastructure used by Netflix, Airbnb, NASA, and thousands more.
                 </motion.p>
               </div>
@@ -654,7 +666,7 @@ export default function HomeClient({
             <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={viewport}>
               <EyebrowLabel>100% Free</EyebrowLabel>
               <SectionHeading y={headingY}>Build real things. No credit card.</SectionHeading>
-              <motion.p variants={fadeUp} style={{ y: bodyY }} className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-400">
+              <motion.p variants={fadeUp} style={{ y: bodyY, willChange: "transform" }} className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-400">
                 AWS provides hands-on labs, guided workshops, and project starters that run in real cloud environments — all at zero cost through AWS Builder Labs, Builder Center, Skill Builder, and the Free Tier.
               </motion.p>
               <motion.div variants={fadeUp} className="mt-6">
