@@ -452,7 +452,8 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
           width={260}
           height={260}
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-12 -right-10 w-52 select-none opacity-[0.06] lg:w-64"
+          className="animate-rain pointer-events-none absolute -bottom-12 -right-10 w-52 select-none lg:w-64"
+          style={{ "--rain-opacity": "0.04", "--rain-duration": "7s", "--rain-delay": "0s" } as React.CSSProperties}
         />
         <Image
           src="/images/additional/sound.png"
@@ -460,7 +461,8 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
           width={160}
           height={160}
           aria-hidden="true"
-          className="pointer-events-none absolute -top-8 left-1/2 w-32 -translate-x-1/2 select-none opacity-[0.04] lg:left-auto lg:right-[48%] lg:translate-x-0"
+          className="animate-rain pointer-events-none absolute -top-8 left-1/2 w-32 -translate-x-1/2 select-none lg:left-auto lg:right-[48%] lg:translate-x-0"
+          style={{ "--rain-opacity": "0.03", "--rain-duration": "9s", "--rain-delay": "-3s" } as React.CSSProperties}
         />
 
         <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
@@ -480,7 +482,8 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
           width={220}
           height={220}
           aria-hidden="true"
-          className="pointer-events-none absolute -top-6 -left-8 w-44 select-none opacity-[0.06] lg:w-56"
+          className="animate-rain pointer-events-none absolute -top-6 -left-8 w-44 select-none lg:w-56"
+          style={{ "--rain-opacity": "0.04", "--rain-duration": "8s", "--rain-delay": "-1.5s" } as React.CSSProperties}
         />
         <Image
           src="/images/additional/ladder.png"
@@ -488,7 +491,8 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
           width={180}
           height={180}
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 right-4 w-36 select-none opacity-[0.05] lg:w-44"
+          className="animate-rain pointer-events-none absolute bottom-0 right-4 w-36 select-none lg:w-44"
+          style={{ "--rain-opacity": "0.03", "--rain-duration": "10s", "--rain-delay": "-5s" } as React.CSSProperties}
         />
 
         <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
@@ -519,7 +523,8 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
           width={200}
           height={200}
           aria-hidden="true"
-          className="pointer-events-none absolute -top-6 right-8 w-40 select-none opacity-[0.05] lg:w-48"
+          className="animate-rain pointer-events-none absolute -top-6 right-8 w-40 select-none lg:w-48"
+          style={{ "--rain-opacity": "0.03", "--rain-duration": "11s", "--rain-delay": "-2s" } as React.CSSProperties}
         />
         <Image
           src="/images/additional/key2.png"
@@ -527,7 +532,8 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
           width={180}
           height={180}
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-16 -left-6 w-36 select-none opacity-[0.04] lg:w-44"
+          className="animate-rain pointer-events-none absolute bottom-16 -left-6 w-36 select-none lg:w-44"
+          style={{ "--rain-opacity": "0.04", "--rain-duration": "8.5s", "--rain-delay": "-4s" } as React.CSSProperties}
         />
 
         {/* Header */}

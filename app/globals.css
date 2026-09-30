@@ -128,3 +128,17 @@
     display: none;
   }
 }
+
+@layer utilities {
+  /* ── Rain-drift animation for decorative background elements ── */
+  @keyframes rain-drift {
+    0%   { transform: translate(0, -8px) rotate(0deg);   opacity: var(--rain-opacity, 0.04); }
+    50%  { transform: translate(6px,  14px) rotate(4deg); opacity: calc(var(--rain-opacity, 0.04) * 0.7); }
+    100% { transform: translate(0, -8px) rotate(0deg);   opacity: var(--rain-opacity, 0.04); }
+  }
+
+  .animate-rain {
+    animation: rain-drift var(--rain-duration, 6s) ease-in-out infinite;
+    animation-delay: var(--rain-delay, 0s);
+  }
+}
