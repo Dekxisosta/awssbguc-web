@@ -51,110 +51,220 @@ function GitHubIcon({ size = 12, className = "" }: { size?: number; className?: 
   );
 }
 
-// ─── Discord IDE mock (dark panel) ────────────────────────────────────────────
+// ─── Discord app mock ─────────────────────────────────────────────────────────
+// Colours match Discord's actual dark theme:
+//   Server icon rail  #1e1f22
+//   Channel sidebar   #2b2d31
+//   Chat background   #313338
+//   Input area        #383a40
+//   Hover channel     #35373c
+//   Active channel    #404249 + white text
+//   Category label    #949ba4
+//   Username (default)#f2f3f5
+//   Timestamp / muted #949ba4
 
-type ChannelType = "text" | "voice" | "announcement" | "rules";
-
-interface MockChannel {
-  id: string;
-  label: string;
-  type: ChannelType;
-  category?: string;
-  locked?: boolean;
-}
-
-const MOCK_CHANNELS: MockChannel[] = [
-  { id: "announcements",     label: "announcements",   type: "announcement", category: "Info",                locked: true  },
-  { id: "about-server",      label: "about-server",    type: "rules",                                          locked: true  },
-  { id: "moderator-only",    label: "moderator-only",  type: "text",                                           locked: true  },
-  { id: "live-updates",      label: "AWSSBG UC Live!", type: "voice",        category: "AWSSBG UC Live!",      locked: true  },
-  { id: "build-and-brew",    label: "Build & Brew",    type: "voice",                                          locked: true  },
-  { id: "community-hangout", label: "Community H...",  type: "voice",                                          locked: true  },
-  { id: "welcome",           label: "welcome",         type: "text",         category: "AWSSBG UC - Channels", locked: true  },
-  { id: "general",           label: "general",         type: "text",                                           locked: false },
-  { id: "ask-anything",      label: "ask-anything",    type: "text",                                           locked: true  },
-  { id: "celebrations",      label: "celebrations",    type: "text",                                           locked: true  },
-  { id: "tech-news",         label: "tech-news",       type: "text",                                           locked: true  },
-  { id: "collab-requests",   label: "collab-requests", type: "text",                                           locked: true  },
+const CHANNELS = [
+  { id: "announcements", label: "announcements", category: "INFO",            active: false, announce: true },
+  { id: "rules",         label: "rules",          category: null,             active: false, announce: false },
+  { id: "welcome",       label: "welcome",        category: "AWSSBG-UC",     active: false, announce: false },
+  { id: "general",       label: "general",         category: null,            active: true,  announce: false },
+  { id: "ask-anything",  label: "ask-anything",    category: null,            active: false, announce: false },
+  { id: "tech-news",     label: "tech-news",       category: null,            active: false, announce: false },
+  { id: "study-groups",  label: "study-groups",    category: "VOICE",        active: false, announce: false, voice: true },
+  { id: "build-brew",    label: "build-and-brew",  category: null,            active: false, announce: false, voice: true },
 ];
 
-function IDEChatMock() {
+// Mock messages shown in the chat — conversational, AWS-flavoured
+const MOCK_MESSAGES = [
+  {
+    id: "m1",
+    user: "Capybara67",
+    avatar: "/images/discord/discord.jpg",
+    time: "Today at 2:14 PM",
+    lines: ["just passed my AWS Cloud Practitioner 🎉", "anyone have tips for Solutions Architect Associate next?"],
+    reactions: [{ emoji: "🎉", count: 7 }, { emoji: "🔥", count: 4 }],
+  },
+  {
+    id: "m2",
+    user: "rafael_dev",
+    avatar: null,
+    color: "#57F287",
+    time: "Today at 2:16 PM",
+    lines: ["congrats!! for SAA I'd start with the official exam guide and do at least 2 practice exams"],
+    reactions: [],
+  },
+  {
+    id: "m3",
+    user: "cloudgirl.pnc",
+    avatar: null,
+    color: "#FEE75C",
+    time: "Today at 2:18 PM",
+    lines: ["Stephane Maarek's course on Udemy is 🐐", "plus check the #tech-news channel — someone shared free whitepapers"],
+    reactions: [{ emoji: "👆", count: 5 }],
+  },
+  {
+    id: "m4",
+    user: "Capybara67",
+    avatar: "/images/discord/discord.jpg",
+    time: "Today at 2:19 PM",
+    lines: ["saving this thread, thank you all 🙏"],
+    reactions: [{ emoji: "❤️", count: 3 }],
+  },
+];
+
+function DiscordAvatar({ avatar, user, color, size = 32 }: { avatar: string | null; user: string; color?: string; size?: number }) {
+  if (avatar) {
+    return (
+      <div className="shrink-0 overflow-hidden rounded-full" style={{ width: size, height: size }}>
+        <Image src={avatar} alt={user} width={size} height={size} className="h-full w-full object-cover" />
+      </div>
+    );
+  }
   return (
     <div
-      className="flex h-[460px] w-full flex-col overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 shadow-2xl shadow-black/60 sm:h-[500px]"
-      aria-label="Discord community chat preview"
+      className="shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+      style={{ width: size, height: size, background: color ?? "#5865F2" }}
+    >
+      {user[0].toUpperCase()}
+    </div>
+  );
+}
+
+function DiscordMock() {
+  return (
+    <div
+      className="flex h-[500px] w-full overflow-hidden rounded-xl shadow-2xl shadow-black/60 sm:h-[540px]"
+      aria-label="Discord community preview"
       role="img"
     >
-      {/* Chrome bar */}
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-neutral-800 bg-neutral-900 px-4">
-        <span className="h-2.5 w-2.5 rounded-full bg-neutral-800" aria-hidden="true" />
-        <span className="h-2.5 w-2.5 rounded-full bg-neutral-800" aria-hidden="true" />
-        <span className="h-2.5 w-2.5 rounded-full bg-neutral-800" aria-hidden="true" />
-        <span className="ml-3 font-mono text-[11px] text-neutral-600">discord — AWSSBG-UC</span>
+      {/* ── Server icon rail ── */}
+      <div className="flex w-[52px] shrink-0 flex-col items-center gap-2 px-1.5 py-3 overflow-y-auto [scrollbar-width:none]" style={{ background: "#1e1f22" }}>
+        {/* Server icon */}
+        <div className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[16px] bg-[#5865F2] transition-all hover:rounded-[12px] cursor-default">
+          <DiscordIcon size={22} className="text-white" />
+          {/* Active pill */}
+          <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />
+        </div>
+        <div className="h-px w-8 rounded-full bg-white/10 my-1" />
+        {/* DMs icon */}
+        <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#313338] cursor-default hover:rounded-[12px] hover:bg-[#5865F2] transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1">
-        {/* Sidebar */}
-        <div className="flex w-36 shrink-0 flex-col border-r border-neutral-800 bg-neutral-900">
-          <div className="flex items-center gap-2 border-b border-neutral-800 px-3 py-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#5865F2]">
-              <DiscordIcon size={13} />
-            </div>
-            <span className="truncate text-[11px] font-bold text-neutral-300">AWSSBG-UC</span>
-          </div>
-          <nav className="mt-1 flex flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Channels">
-            {MOCK_CHANNELS.map((ch) => (
-              <div key={ch.id}>
-                {ch.category && (
-                  <p className="mt-2 px-3 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-neutral-700 truncate">{ch.category}</p>
-                )}
-                {ch.locked ? (
-                  <div className="flex w-full items-center gap-1.5 px-2 py-[3px] text-[11px] text-neutral-700 cursor-default select-none">
-                    {ch.type === "voice" ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                      </svg>
+      {/* ── Channel sidebar ── */}
+      <div className="flex w-[172px] shrink-0 flex-col" style={{ background: "#2b2d31" }}>
+        {/* Server name header */}
+        <div className="flex h-12 shrink-0 items-center justify-between border-b px-3 shadow-sm cursor-default" style={{ borderColor: "#1e1f22" }}>
+          <span className="text-[13px] font-semibold truncate" style={{ color: "#f2f3f5" }}>AWSSBG-UC</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </div>
+
+        {/* Channel list */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {(() => {
+            let lastCategory: string | null = "";
+            return CHANNELS.map((ch) => {
+              const showCat = ch.category !== null && ch.category !== lastCategory;
+              if (showCat) lastCategory = ch.category;
+              return (
+                <div key={ch.id}>
+                  {showCat && (
+                    <div className="flex items-center gap-1 px-1 pt-4 pb-1 cursor-default">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#949ba4" }}>{ch.category}</span>
+                    </div>
+                  )}
+                  <div
+                    className="flex items-center gap-1.5 rounded-[4px] px-2 py-[5px] cursor-default"
+                    style={{
+                      background: ch.active ? "#404249" : "transparent",
+                      color: ch.active ? "#f2f3f5" : "#949ba4",
+                    }}
+                  >
+                    {ch.voice ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+                    ) : ch.announce ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true"><path d="M3 11l19-9-9 19-2-8-8-2z" /></svg>
                     ) : (
-                      <span className="shrink-0">#</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                     )}
-                    <span className="truncate">{ch.label}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-auto shrink-0" aria-hidden="true">
-                      <rect width="11" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
+                    <span className="truncate text-[13px] font-medium">{ch.label}</span>
                   </div>
-                ) : (
-                  <div className="flex w-full items-center gap-1.5 rounded-md px-2 py-[3px] text-[11px] bg-[#00e482]/10 font-semibold text-[#00e482] cursor-default select-none">
-                    <span className="shrink-0 text-[#00e482]/40">#</span>
-                    <span className="truncate">{ch.label}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
-          <div className="mt-auto border-t border-neutral-800 px-3 py-2.5">
-            <div className="flex items-center gap-2">
-              <div className="relative h-6 w-6 shrink-0">
-                <div className="h-6 w-6 rounded-full bg-[#00e482]/10 flex items-center justify-center text-[10px] font-bold text-[#00e482]">Y</div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-neutral-900 bg-[#00e482]" aria-hidden="true" />
-              </div>
-              <span className="truncate text-[10px] text-neutral-600">you</span>
+                </div>
+              );
+            });
+          })()}
+        </div>
+
+        {/* User bar */}
+        <div className="flex h-[52px] shrink-0 items-center gap-2 px-2" style={{ background: "#232428" }}>
+          <div className="relative shrink-0">
+            <div className="h-8 w-8 overflow-hidden rounded-full">
+              <Image src="/images/discord/discord.jpg" alt="Capybara67" width={32} height={32} className="h-full w-full object-cover" />
             </div>
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 bg-[#23a559]" style={{ borderColor: "#232428" }} aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[12px] font-semibold leading-none" style={{ color: "#f2f3f5" }}>Capybara67</p>
+            <p className="mt-0.5 truncate text-[11px] leading-none" style={{ color: "#949ba4" }}>Online</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="23" y2="15" /><line x1="23" y1="9" x2="17" y2="12" /><line x1="23" y1="15" x2="17" y2="12" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M4.93 4.93a10 10 0 0 0 0 14.14" /></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Chat area ── */}
+      <div className="flex min-w-0 flex-1 flex-col" style={{ background: "#313338" }}>
+        {/* Channel header */}
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4 shadow-sm" style={{ borderColor: "#1e1f22" }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+          <span className="text-[13px] font-semibold" style={{ color: "#f2f3f5" }}>general</span>
+          <div className="mx-2 h-4 w-px" style={{ background: "#4e5058" }} />
+          <span className="text-[12px] truncate" style={{ color: "#949ba4" }}>AWSSBG-UC community · all members welcome</span>
+          <div className="ml-auto flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
           </div>
         </div>
 
-        {/* Chat area */}
-        <div className="flex min-w-0 flex-1 flex-col bg-neutral-900">
-          <div className="flex shrink-0 items-center gap-2 border-b border-neutral-800 px-4 py-2">
-            <span className="text-neutral-700">#</span>
-            <span className="text-[12px] font-semibold text-neutral-400">general</span>
-            <div className="ml-auto flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-700" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-700" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {MOCK_MESSAGES.map((msg) => (
+            <div key={msg.id} className="flex items-start gap-3 group">
+              <DiscordAvatar avatar={msg.avatar ?? null} user={msg.user} color={msg.color} size={36} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[13px] font-semibold" style={{ color: msg.color ?? "#f2f3f5" }}>{msg.user}</span>
+                  <span className="text-[10px]" style={{ color: "#949ba4" }}>{msg.time}</span>
+                </div>
+                {msg.lines.map((line, i) => (
+                  <p key={i} className="mt-0.5 text-[13px] leading-[1.375rem]" style={{ color: "#dcddde" }}>{line}</p>
+                ))}
+                {msg.reactions.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {msg.reactions.map((r) => (
+                      <span key={r.emoji} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium cursor-default" style={{ background: "#383a40", color: "#b5bac1" }}>
+                        {r.emoji} {r.count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <video src="/video/discord_video.mp4" autoPlay muted loop playsInline className="h-full w-full object-cover" />
-          </div>
+          ))}
+        </div>
+
+        {/* Message input */}
+        <div className="mx-4 mb-4 flex items-center gap-2 rounded-lg px-4 py-2.5" style={{ background: "#383a40" }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+          <span className="flex-1 text-[13px]" style={{ color: "#6c6f78" }}>Message #general</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
         </div>
       </div>
     </div>
@@ -422,7 +532,7 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <DiscordCTA />
-            <IDEChatMock />
+            <DiscordMock />
           </div>
         </div>
       </section>
