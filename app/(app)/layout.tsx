@@ -11,19 +11,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let memberId: string | null = null;
 
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username, avatar_url")
-      .eq("profile_id", user.id)
-      .single();
+    const [{ data: profile }, { data: participant }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("profile_id", user.id)
+        .single(),
+      supabase
+        .from("participants")
+        .select("member_roster_id, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
 
-    const { data: participant } = await supabase
-      .from("participants")
-      .select("member_roster_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    displayName = profile?.username ?? user.email ?? "Member";
+    // Priority: profile username → participant display_name → email → fallback
+    displayName = profile?.username ?? participant?.display_name ?? user.email ?? "Member";
     username = profile?.username ?? null;
     avatarUrl = profile?.avatar_url ?? null;
     memberId = participant?.member_roster_id ?? null;

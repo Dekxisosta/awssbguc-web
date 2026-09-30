@@ -320,8 +320,11 @@ function MemberCard({ member }: { member: PublicMemberProfile }) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-neutral-100">
-            {member.username ? `@${member.username}` : (member.display_name ?? "—")}
+            {member.display_name ?? member.username ?? "—"}
           </p>
+          {member.username && (
+            <p className="truncate text-[11px] text-neutral-500">@{member.username}</p>
+          )}
           {isMemberId && (
             <p className="font-mono text-[10px] text-neutral-600 truncate">{member.member_id}</p>
           )}
