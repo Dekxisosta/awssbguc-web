@@ -203,14 +203,6 @@ function DiscordCTA() {
           <span className="text-[#00e482]">community</span>{" "}
           lives.
         </h2>
-        <Image
-          src="/images/additional/thunder.png"
-          alt=""
-          width={72}
-          height={72}
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-4 -top-4 w-16 select-none opacity-30 sm:-right-6 sm:w-20"
-        />
       </div>
 
       <p className="mt-4 max-w-md text-base leading-relaxed text-neutral-400">
@@ -276,14 +268,6 @@ function FacebookCTA() {
           Events, updates,{" "}
           <span className="text-[#1877F2]">announcements.</span>
         </h2>
-        <Image
-          src="/images/additional/smiley.png"
-          alt=""
-          width={72}
-          height={72}
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-4 -top-4 w-16 select-none opacity-25 sm:-right-6 sm:w-20"
-        />
       </div>
 
       <p className="mt-4 max-w-md text-base leading-relaxed text-neutral-600">
@@ -552,10 +536,10 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
             <Image
               src="/images/additional/community.png"
               alt=""
-              width={28}
-              height={28}
+              width={44}
+              height={44}
               aria-hidden="true"
-              className="shrink-0 opacity-60"
+              className="shrink-0 opacity-70"
             />
             <div>
               <h2 className="text-xl font-bold tracking-tight text-neutral-100">Member Directory</h2>
