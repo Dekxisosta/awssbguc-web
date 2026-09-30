@@ -22,6 +22,8 @@ export interface ProfilePageProps {
   bio: string | null;
   /** Self-reported skill tags */
   skills: string[] | null;
+  /** ISO timestamp of one-time username change; null means never changed */
+  usernameChangedAt: string | null;
 }
 
 /**

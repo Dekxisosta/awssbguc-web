@@ -40,7 +40,7 @@ export default async function ProfileRoute() {
   // only nulls out the new fields — it never blocks the base profile data.
   const { data: dirProfile } = await admin
     .from("profiles")
-    .select("directory_visible, bio, skills")
+    .select("directory_visible, bio, skills, username_changed_at")
     .eq("profile_id", user.id)
     .maybeSingle();
 
@@ -60,6 +60,7 @@ export default async function ProfileRoute() {
       directoryVisible={dirProfile?.directory_visible ?? false}
       bio={dirProfile?.bio ?? null}
       skills={(dirProfile?.skills as string[] | null | undefined) ?? null}
+      usernameChangedAt={dirProfile?.username_changed_at ?? null}
     />
   );
 }

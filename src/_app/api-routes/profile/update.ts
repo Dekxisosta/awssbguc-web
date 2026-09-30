@@ -46,16 +46,22 @@ function validateSuppliedName(value: string): string | null {
   return null;
 }
 
+function validateUsernameField(value: string): string | null {
+  if (!/^[A-Za-z][A-Za-z0-9_]{5,23}$/.test(value))
+    return "Username must be 6–24 characters, start with a letter, and contain only letters, numbers, and underscores.";
+  return null;
+}
+
+
+
 function validateDisplayNameField(value: string): string | null {
   return validateDisplayName(value);
 }
-
-// ---------------------------------------------------------------------------
-// Main handler — PATCH /api/profile
 // Accepts a partial body; any subset of the editable fields may be present.
 // ---------------------------------------------------------------------------
 
 interface ProfilePatchBody {
+  username?: unknown;
   discord_id?: unknown;
   github_username?: unknown;
   display_name?: unknown;
@@ -85,6 +91,7 @@ export async function handleProfileUpdate(request: NextRequest) {
   }
 
   const {
+    username,
     discord_id,
     github_username,
     display_name,
@@ -96,6 +103,7 @@ export async function handleProfileUpdate(request: NextRequest) {
   } = body;
 
   const hasProfileFields =
+    username !== undefined ||
     discord_id !== undefined ||
     github_username !== undefined ||
     directory_visible !== undefined ||
@@ -116,6 +124,37 @@ export async function handleProfileUpdate(request: NextRequest) {
   // ── profiles table ────────────────────────────────────────────────────────
   if (hasProfileFields) {
     const profileUpdate: Record<string, string | boolean | string[] | null> = {};
+
+    // ── username (one-time change) ────────────────────────────────────────
+    if (username !== undefined) {
+      if (typeof username !== "string" || username.trim() === "")
+        return json({ success: false, error: "Username must be a non-empty string.", field: "username" }, 400);
+      const trimmed = username.trim().toLowerCase();
+      const err = validateUsernameField(trimmed);
+      if (err) return json({ success: false, error: err, field: "username" }, 400);
+
+      // Check uniqueness
+      const { data: clash } = await admin
+        .from("profiles")
+        .select("profile_id")
+        .ilike("username", trimmed)
+        .neq("profile_id", user.id)
+        .maybeSingle();
+      if (clash)
+        return json({ success: false, error: "That username is already taken.", field: "username" }, 409);
+
+      // Enforce one-time rule: fetch current username_changed_at
+      const { data: current } = await admin
+        .from("profiles")
+        .select("username_changed_at")
+        .eq("profile_id", user.id)
+        .single();
+      if (current?.username_changed_at !== null && current?.username_changed_at !== undefined)
+        return json({ success: false, error: "You have already used your one-time username change.", field: "username" }, 409);
+
+      profileUpdate.username = trimmed;
+      profileUpdate.username_changed_at = new Date().toISOString();
+    }
 
     if (discord_id !== undefined) {
       if (discord_id === null || (typeof discord_id === "string" && discord_id.trim() === "")) {
@@ -216,6 +255,8 @@ export async function handleProfileUpdate(request: NextRequest) {
 
       if (error) {
         const msg = error.message.toLowerCase();
+        if (msg.includes("username"))
+          return json({ success: false, error: "That username is already taken.", field: "username" }, 409);
         if (msg.includes("discord"))
           return json({ success: false, error: "That Discord ID is already linked to another account.", field: "discord_id" }, 409);
         if (msg.includes("github"))

@@ -745,8 +745,9 @@ const ALL_SEARCH_ITEMS = [
   // AWS
   { href: "/aws",         label: "Free Resources",group: "AWS" },
   // Auth / account
-  { href: "/profile",     label: "Profile",       group: "Account" },
-  { href: "/member",      label: "Membership",    group: "Account" },
+  { href: "/profile",       label: "Profile",       group: "Account" },
+  { href: "/profile-setup", label: "Profile Setup",  group: "Account" },
+  { href: "/member",        label: "Membership",     group: "Account" },
 ];
 
 function SearchPalette({ onClose }: { onClose: () => void }) {
