@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { motion, useScroll, useTransform, useReducedMotion, MotionValue } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, MotionValue } from "framer-motion";
 import { GlobeOrbit } from "./GlobeOrbit";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
 
@@ -456,6 +456,114 @@ function TechMarquee() {
   );
 }
 
+// ─── WIP Banner ───────────────────────────────────────────────────────────────
+
+function WIPBanner() {
+  const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (!sessionStorage.getItem("wip-dismissed")) {
+      setVisible(true);
+    }
+  }, []);
+
+  function dismiss() {
+    sessionStorage.setItem("wip-dismissed", "1");
+    setVisible(false);
+  }
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {visible && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="wip-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={dismiss}
+            aria-hidden="true"
+          />
+
+          {/* Dialog */}
+          <motion.div
+            key="wip-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wip-title"
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="fixed inset-0 z-[99991] flex items-center justify-center pointer-events-none px-4"
+          >
+            <div
+              className="pointer-events-auto w-full max-w-md border border-neutral-700 bg-neutral-900 p-7 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={dismiss}
+              aria-label="Dismiss"
+              className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Logo + heading */}
+            <div className="mb-4 flex items-center gap-3">
+              <Image
+                src="/icons/logo.webp"
+                alt="AWSSBG-UC logo"
+                width={36}
+                height={36}
+                className="rounded-md object-contain"
+              />
+              <h2 id="wip-title" className="text-base font-bold text-neutral-100">
+                Work in progress
+              </h2>
+            </div>
+
+            <p className="text-sm leading-relaxed text-neutral-400">
+              This site is still being built. Some pages or features may be incomplete, broken, or missing.
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-neutral-400">
+              Spotted something? Let us know at{" "}
+              <a
+                href={MAILTO}
+                className="font-medium text-[#00e482] hover:underline"
+              >
+                {SOCIALS.email}
+              </a>
+              {" "}and we'll get it fixed.
+            </p>
+
+            <button
+              type="button"
+              onClick={dismiss}
+              className="mt-6 w-full rounded-lg bg-neutral-800 py-2.5 text-sm font-semibold text-neutral-200 transition-colors hover:bg-neutral-700"
+            >
+              Got it
+            </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function HomeClient({
@@ -467,7 +575,7 @@ export default function HomeClient({
 }) {
   return (
     <div>
-      
+      <WIPBanner />
       <HeroSection />
 
       {/* white breathing room above the marquee + socials */}
