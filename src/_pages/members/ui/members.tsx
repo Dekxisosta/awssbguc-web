@@ -197,7 +197,15 @@ function DiscordCTA() {
     <div className="flex flex-col justify-center">
       <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">Community</p>
 
-      <h2 className="text-4xl font-bold tracking-tight text-neutral-100 sm:text-5xl">
+      <h2 className="flex items-center gap-3 text-4xl font-bold tracking-tight text-neutral-100 sm:text-5xl">
+        <Image
+          src="/images/additional/thunder.png"
+          alt=""
+          width={40}
+          height={40}
+          aria-hidden="true"
+          className="shrink-0 opacity-80"
+        />
         Where the{" "}
         <span className="text-[#00e482]">community</span>{" "}
         lives.
@@ -261,7 +269,15 @@ function FacebookCTA() {
     <div className="order-1 flex flex-col justify-center lg:order-2">
       <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">Facebook</p>
 
-      <h2 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
+      <h2 className="flex items-center gap-3 text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
+        <Image
+          src="/images/additional/smiley.png"
+          alt=""
+          width={40}
+          height={40}
+          aria-hidden="true"
+          className="shrink-0 opacity-80"
+        />
         Events, updates,{" "}
         <span className="text-[#1877F2]">announcements.</span>
       </h2>
@@ -439,9 +455,27 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
   return (
     <div>
 
-      {/* ── Section 1: Discord — DARK (matches site's dark sections) ── */}
-      <section className="border-b border-neutral-800 bg-[neutral-900]">
-        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
+      {/* ── Section 1: Discord — DARK ────────────────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-neutral-800 bg-neutral-900">
+        {/* Decorative absolute images */}
+        <Image
+          src="/images/additional/community.png"
+          alt=""
+          width={260}
+          height={260}
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-12 -right-10 w-52 select-none opacity-[0.06] lg:w-64"
+        />
+        <Image
+          src="/images/additional/sound.png"
+          alt=""
+          width={160}
+          height={160}
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-8 left-1/2 w-32 -translate-x-1/2 select-none opacity-[0.04] lg:left-auto lg:right-[48%] lg:translate-x-0"
+        />
+
+        <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <DiscordCTA />
             <DiscordMock />
@@ -449,11 +483,28 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
         </div>
       </section>
 
-      {/* ── Section 2: Facebook — LIGHT (matches site's white sections) ── */}
-      <section className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
+      {/* ── Section 2: Facebook — LIGHT ──────────────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-neutral-200 bg-white">
+        {/* Decorative absolute images */}
+        <Image
+          src="/images/additional/trophy2.png"
+          alt=""
+          width={220}
+          height={220}
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-6 -left-8 w-44 select-none opacity-[0.06] lg:w-56"
+        />
+        <Image
+          src="/images/additional/ladder.png"
+          alt=""
+          width={180}
+          height={180}
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-0 right-4 w-36 select-none opacity-[0.05] lg:w-44"
+        />
+
+        <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-            {/* Image */}
             <div className="relative order-2 lg:order-1">
               <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-lg shadow-neutral-100">
                 <Image
@@ -471,24 +522,52 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
         </div>
       </section>
 
-      {/* ── Section 3: Member directory — DARK ── */}
-      <section className="bg-[neutral-900]">
+      {/* ── Section 3: Member directory — DARK ───────────────────────────── */}
+      <section className="relative overflow-hidden bg-neutral-900">
+        {/* Decorative absolute images */}
+        <Image
+          src="/images/additional/smile.png"
+          alt=""
+          width={200}
+          height={200}
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-6 right-8 w-40 select-none opacity-[0.05] lg:w-48"
+        />
+        <Image
+          src="/images/additional/key2.png"
+          alt=""
+          width={180}
+          height={180}
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-16 -left-6 w-36 select-none opacity-[0.04] lg:w-44"
+        />
+
         {/* Header */}
-        <div className="border-b border-neutral-800 px-6 py-8">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-xl font-bold tracking-tight text-neutral-100">Member Directory</h2>
-            <p className="mt-1 text-sm text-neutral-500">
-              Members who have opted into the public directory.
-              {(totalCount ?? 0) > 0 && (
-                <span className="ml-1 text-neutral-400">
-                  {totalCount} {totalCount !== 1 ? "profiles" : "profile"} shared.
-                </span>
-              )}
-            </p>
+        <div className="relative border-b border-neutral-800 px-6 py-8">
+          <div className="mx-auto max-w-5xl flex items-center gap-3">
+            <Image
+              src="/images/additional/community.png"
+              alt=""
+              width={28}
+              height={28}
+              aria-hidden="true"
+              className="shrink-0 opacity-60"
+            />
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-neutral-100">Member Directory</h2>
+              <p className="mt-0.5 text-sm text-neutral-500">
+                Members who have opted into the public directory.
+                {(totalCount ?? 0) > 0 && (
+                  <span className="ml-1 text-neutral-400">
+                    {totalCount} {totalCount !== 1 ? "profiles" : "profile"} shared.
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 py-10">
+        <div className="relative mx-auto max-w-5xl px-6 py-10">
           {members.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-800 py-20 text-center">
               <UserRound size={36} className="mb-4 text-neutral-700" aria-hidden="true" />
