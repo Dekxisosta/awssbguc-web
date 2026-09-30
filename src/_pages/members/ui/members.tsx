@@ -356,15 +356,6 @@ function MemberCard({ member }: { member: PublicMemberProfile }) {
             GitHub
           </a>
         )}
-        {member.discord_id && (
-          <span
-            title={`Discord: ${member.discord_id}`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#5865F2]/15 bg-[#5865F2]/8 px-2.5 py-1 text-[11px] font-medium text-[#5865F2] cursor-default select-none"
-          >
-            <DiscordIcon size={11} />
-            Discord
-          </span>
-        )}
       </div>
     </div>
   );

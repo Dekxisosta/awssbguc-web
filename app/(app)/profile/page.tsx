@@ -23,7 +23,7 @@ export default async function ProfileRoute() {
   const [{ data: profile }, { data: participant }] = await Promise.all([
     admin
       .from("profiles")
-      .select("username, discord_id, avatar_url, github_username")
+      .select("username, avatar_url, github_username")
       .eq("profile_id", user.id)
       .single(),
     admin
@@ -50,7 +50,7 @@ export default async function ProfileRoute() {
       memberId={participant?.member_roster_id ?? null}
       email={user.email ?? "—"}
       initialUsername={profile?.username ?? null}
-      discordId={profile?.discord_id ?? null}
+      discordId={null}
       initialAvatarUrl={profile?.avatar_url ?? null}
       githubUsername={profile?.github_username ?? null}
       qrToken={participant?.qr_token ?? null}

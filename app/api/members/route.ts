@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     // Page of rows from the public view.
     const { data: rows, error } = await admin
       .from("public_member_profiles")
-      .select("member_id, display_name, username, avatar_url, github_username, discord_id, bio, skills")
+      .select("member_id, display_name, username, avatar_url, github_username, bio, skills")
       .range(from, to);
 
     if (error) {
@@ -65,7 +65,6 @@ export async function GET(req: NextRequest) {
       username:        r.username        as string | null,
       avatar_url:      r.avatar_url      as string | null,
       github_username: r.github_username as string | null,
-      discord_id:      r.discord_id      as string | null,
       bio:             r.bio             as string | null,
       skills:          r.skills          as string[] | null,
     }));

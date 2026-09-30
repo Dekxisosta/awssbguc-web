@@ -33,7 +33,6 @@ export interface PublicMemberProfile {
   username: string | null;
   avatar_url: string | null;
   github_username: string | null;
-  discord_id: string | null;
   /** Short public bio set by the user (max 280 chars). Null when not set. */
   bio: string | null;
   /** Self-reported skill tags, e.g. ["Python", "AWS", "React"]. Null when not set. */

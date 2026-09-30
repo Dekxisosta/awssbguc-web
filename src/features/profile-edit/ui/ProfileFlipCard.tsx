@@ -310,8 +310,7 @@ export function ProfileCard({
       {/* Description */}
       <div className="px-1 py-3 sm:py-1.5 pl-8">
         <div className="flex flex-col gap-2.5 sm:gap-1.5">
-          <DescRow label="Name"    value={fullName} />
-          {discordId && <DescRow label="Discord" value={discordId} mono />}
+          <DescRow label="Name" value={fullName} />
         </div>
       </div>
 
@@ -481,12 +480,6 @@ export function ProfileCard({
               <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Name</span>
               <span className="text-sm text-neutral-200">{fullName}</span>
             </div>
-            {discordId && (
-              <div className="flex items-center justify-between gap-3 px-4 py-3">
-                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-neutral-500">Discord</span>
-                <span className="font-mono text-sm text-neutral-200 truncate">{discordId}</span>
-              </div>
-            )}
             {githubUsername && (
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">GitHub</span>
@@ -585,7 +578,6 @@ export function ProfileCard({
             <div className="flex flex-col gap-3">
               <ModalRow label="Name"       value={fullName} />
               {email && email !== "—"   && <ModalRow label="Email"      value={email} />}
-              {discordId                && <ModalRow label="Discord"    value={discordId}  mono />}
               {githubUsername           && <ModalRow label="GitHub"     value={githubUsername} mono />}
               {memberId                 && <ModalRow label="Member ID"  value={memberId}   mono />}
               {sinceYear                && <ModalRow label="Since"      value={sinceYear} />}
@@ -689,16 +681,6 @@ export function ProfileCard({
                   onSave={saveEmail}
                 />
 
-                {/* Discord ID */}
-                <EditableField
-                  id="discord_id"
-                  label="Discord ID"
-                  value={discordId}
-                  placeholder="e.g. 123456789012345678"
-                  hint="Your Discord snowflake ID (17–19 digits) or username#0000."
-                  onSave={saveDiscordId}
-                />
-
                 {/* GitHub username */}
                 <EditableField
                   id="github_username"
@@ -737,9 +719,31 @@ export function ProfileCard({
                     <p className="mt-1.5 text-xs text-neutral-500">
                       {directoryVisible
                         ? "Your profile is visible in the public directory."
-                        : "Enable to appear in the public member directory."}{" "}
-                      Requires at least one social link to be set.
+                        : "Enable to appear in the public member directory."}
                     </p>
+                    {directoryVisible && (
+                      <p className="mt-1.5 text-xs text-neutral-600">
+                        By making your profile public, you agree to our{" "}
+                        <a
+                          href="/terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neutral-400 underline-offset-2 hover:underline"
+                        >
+                          Terms of Service
+                        </a>{" "}
+                        and{" "}
+                        <a
+                          href="/privacy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neutral-400 underline-offset-2 hover:underline"
+                        >
+                          Privacy Policy
+                        </a>
+                        .
+                      </p>
+                    )}
                   </dd>
                 </div>
 

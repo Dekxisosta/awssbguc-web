@@ -34,7 +34,7 @@ export default async function MembersRoute({ searchParams }: Props) {
   // The view already filters on opt-in + at least one social, and orders by display_name.
   const { data: rows, error } = await admin
     .from("public_member_profiles")
-    .select("member_id, display_name, username, avatar_url, github_username, discord_id, bio, skills")
+    .select("member_id, display_name, username, avatar_url, github_username, bio, skills")
     .range(from, to);
 
   if (error) {
@@ -43,14 +43,13 @@ export default async function MembersRoute({ searchParams }: Props) {
   }
 
   const members: PublicMemberProfile[] = (rows ?? []).map((r) => ({
-    member_id:      r.member_id      as string,
-    display_name:   r.display_name   as string | null,
-    username:       r.username       as string | null,
-    avatar_url:     r.avatar_url     as string | null,
+    member_id:       r.member_id       as string,
+    display_name:    r.display_name    as string | null,
+    username:        r.username        as string | null,
+    avatar_url:      r.avatar_url      as string | null,
     github_username: r.github_username as string | null,
-    discord_id:     r.discord_id     as string | null,
-    bio:            r.bio            as string | null,
-    skills:         r.skills         as string[] | null,
+    bio:             r.bio             as string | null,
+    skills:          r.skills          as string[] | null,
   }));
 
   return (
