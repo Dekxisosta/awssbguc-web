@@ -81,13 +81,12 @@ const MOCK_CHANNELS: MockChannel[] = [
 function IDEChatMock() {
   return (
     <div
-      className="flex h-[460px] w-full flex-col overflow-hidden rounded-xl border border-neutral-800 shadow-2xl shadow-black/60 sm:h-[500px]"
-      style={{ background: "#0d1117" }}
+      className="flex h-[460px] w-full flex-col overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 shadow-2xl shadow-black/60 sm:h-[500px]"
       aria-label="Discord community chat preview"
       role="img"
     >
       {/* Chrome bar */}
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-neutral-800 px-4" style={{ background: "#0d1117" }}>
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-neutral-800 bg-neutral-900 px-4">
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-800" aria-hidden="true" />
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-800" aria-hidden="true" />
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-800" aria-hidden="true" />
@@ -96,7 +95,7 @@ function IDEChatMock() {
 
       <div className="flex min-h-0 flex-1">
         {/* Sidebar */}
-        <div className="flex w-36 shrink-0 flex-col border-r border-neutral-800" style={{ background: "#0d1117" }}>
+        <div className="flex w-36 shrink-0 flex-col border-r border-neutral-800 bg-neutral-900">
           <div className="flex items-center gap-2 border-b border-neutral-800 px-3 py-2.5">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#5865F2]">
               <DiscordIcon size={13} />
@@ -136,7 +135,7 @@ function IDEChatMock() {
             <div className="flex items-center gap-2">
               <div className="relative h-6 w-6 shrink-0">
                 <div className="h-6 w-6 rounded-full bg-[#00e482]/10 flex items-center justify-center text-[10px] font-bold text-[#00e482]">Y</div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 bg-[#00e482]" style={{ borderColor: "#0d1117" }} aria-hidden="true" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-neutral-900 bg-[#00e482]" aria-hidden="true" />
               </div>
               <span className="truncate text-[10px] text-neutral-600">you</span>
             </div>
@@ -144,7 +143,7 @@ function IDEChatMock() {
         </div>
 
         {/* Chat area */}
-        <div className="flex min-w-0 flex-1 flex-col" style={{ background: "#0d1117" }}>
+        <div className="flex min-w-0 flex-1 flex-col bg-neutral-900">
           <div className="flex shrink-0 items-center gap-2 border-b border-neutral-800 px-4 py-2">
             <span className="text-neutral-700">#</span>
             <span className="text-[12px] font-semibold text-neutral-400">general</span>
@@ -419,7 +418,7 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
     <div>
 
       {/* ── Section 1: Discord — DARK (matches site's dark sections) ── */}
-      <section className="border-b border-neutral-800 bg-[#0d1117]">
+      <section className="border-b border-neutral-800 bg-[neutral-900]">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <DiscordCTA />
@@ -451,7 +450,7 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
       </section>
 
       {/* ── Section 3: Member directory — DARK ── */}
-      <section className="bg-[#0d1117]">
+      <section className="bg-[neutral-900]">
         {/* Header */}
         <div className="border-b border-neutral-800 px-6 py-8">
           <div className="mx-auto max-w-5xl">
@@ -497,3 +496,4 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
     </div>
   );
 }
+
