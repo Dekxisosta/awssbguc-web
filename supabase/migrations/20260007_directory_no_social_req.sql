@@ -12,9 +12,12 @@
 
 -- =============================================================================
 -- SECTION 1: Replace public_member_profiles view
+-- Must DROP first — CREATE OR REPLACE cannot remove columns in PostgreSQL.
 -- =============================================================================
 
-CREATE OR REPLACE VIEW public_member_profiles AS
+DROP VIEW IF EXISTS public_member_profiles;
+
+CREATE VIEW public_member_profiles AS
 SELECT
     COALESCE(p.member_roster_id, p.participant_id::TEXT) AS member_id,
     p.display_name,
