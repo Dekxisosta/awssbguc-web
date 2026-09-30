@@ -52,83 +52,17 @@ function GitHubIcon({ size = 12, className = "" }: { size?: number; className?: 
 }
 
 // ─── Discord app mock ─────────────────────────────────────────────────────────
-// Colours match Discord's actual dark theme:
-//   Server icon rail  #1e1f22
-//   Channel sidebar   #2b2d31
-//   Chat background   #313338
-//   Input area        #383a40
-//   Hover channel     #35373c
-//   Active channel    #404249 + white text
-//   Category label    #949ba4
-//   Username (default)#f2f3f5
-//   Timestamp / muted #949ba4
 
 const CHANNELS = [
-  { id: "announcements", label: "announcements", category: "INFO",            active: false, announce: true },
-  { id: "rules",         label: "rules",          category: null,             active: false, announce: false },
-  { id: "welcome",       label: "welcome",        category: "AWSSBG-UC",     active: false, announce: false },
-  { id: "general",       label: "general",         category: null,            active: true,  announce: false },
-  { id: "ask-anything",  label: "ask-anything",    category: null,            active: false, announce: false },
-  { id: "tech-news",     label: "tech-news",       category: null,            active: false, announce: false },
-  { id: "study-groups",  label: "study-groups",    category: "VOICE",        active: false, announce: false, voice: true },
-  { id: "build-brew",    label: "build-and-brew",  category: null,            active: false, announce: false, voice: true },
+  { id: "announcements", label: "announcements", category: "INFO",             active: false, announce: true,  voice: false },
+  { id: "rules",         label: "rules",          category: null,              active: false, announce: false, voice: false },
+  { id: "welcome",       label: "welcome",        category: "AWSSBG-UC",      active: false, announce: false, voice: false },
+  { id: "general",       label: "general",        category: null,              active: true,  announce: false, voice: false },
+  { id: "ask-anything",  label: "ask-anything",   category: null,              active: false, announce: false, voice: false },
+  { id: "tech-news",     label: "tech-news",      category: null,              active: false, announce: false, voice: false },
+  { id: "study-groups",  label: "study-groups",   category: "VOICE",          active: false, announce: false, voice: true  },
+  { id: "build-brew",    label: "build-and-brew", category: null,              active: false, announce: false, voice: true  },
 ];
-
-// Mock messages shown in the chat — conversational, AWS-flavoured
-const MOCK_MESSAGES = [
-  {
-    id: "m1",
-    user: "Capybara67",
-    avatar: "/images/discord/discord.jpg",
-    time: "Today at 2:14 PM",
-    lines: ["just passed my AWS Cloud Practitioner 🎉", "anyone have tips for Solutions Architect Associate next?"],
-    reactions: [{ emoji: "🎉", count: 7 }, { emoji: "🔥", count: 4 }],
-  },
-  {
-    id: "m2",
-    user: "rafael_dev",
-    avatar: null,
-    color: "#57F287",
-    time: "Today at 2:16 PM",
-    lines: ["congrats!! for SAA I'd start with the official exam guide and do at least 2 practice exams"],
-    reactions: [],
-  },
-  {
-    id: "m3",
-    user: "cloudgirl.pnc",
-    avatar: null,
-    color: "#FEE75C",
-    time: "Today at 2:18 PM",
-    lines: ["Stephane Maarek's course on Udemy is 🐐", "plus check the #tech-news channel — someone shared free whitepapers"],
-    reactions: [{ emoji: "👆", count: 5 }],
-  },
-  {
-    id: "m4",
-    user: "Capybara67",
-    avatar: "/images/discord/discord.jpg",
-    time: "Today at 2:19 PM",
-    lines: ["saving this thread, thank you all 🙏"],
-    reactions: [{ emoji: "❤️", count: 3 }],
-  },
-];
-
-function DiscordAvatar({ avatar, user, color, size = 32 }: { avatar: string | null; user: string; color?: string; size?: number }) {
-  if (avatar) {
-    return (
-      <div className="shrink-0 overflow-hidden rounded-full" style={{ width: size, height: size }}>
-        <Image src={avatar} alt={user} width={size} height={size} className="h-full w-full object-cover" />
-      </div>
-    );
-  }
-  return (
-    <div
-      className="shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-      style={{ width: size, height: size, background: color ?? "#5865F2" }}
-    >
-      {user[0].toUpperCase()}
-    </div>
-  );
-}
 
 function DiscordMock() {
   return (
@@ -233,34 +167,12 @@ function DiscordMock() {
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MOCK_MESSAGES.map((msg) => (
-            <div key={msg.id} className="flex items-start gap-3 group">
-              <DiscordAvatar avatar={msg.avatar ?? null} user={msg.user} color={msg.color} size={36} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[13px] font-semibold" style={{ color: msg.color ?? "#f2f3f5" }}>{msg.user}</span>
-                  <span className="text-[10px]" style={{ color: "#949ba4" }}>{msg.time}</span>
-                </div>
-                {msg.lines.map((line, i) => (
-                  <p key={i} className="mt-0.5 text-[13px] leading-[1.375rem]" style={{ color: "#dcddde" }}>{line}</p>
-                ))}
-                {msg.reactions.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {msg.reactions.map((r) => (
-                      <span key={r.emoji} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium cursor-default" style={{ background: "#383a40", color: "#b5bac1" }}>
-                        {r.emoji} {r.count}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+        {/* Video — the actual chat content */}
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <video src="/video/discord_video.mp4" autoPlay muted loop playsInline className="h-full w-full object-cover" />
         </div>
 
-        {/* Message input */}
+        {/* Message input bar */}
         <div className="mx-4 mb-4 flex items-center gap-2 rounded-lg px-4 py-2.5" style={{ background: "#383a40" }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
           <span className="flex-1 text-[13px]" style={{ color: "#6c6f78" }}>Message #general</span>
