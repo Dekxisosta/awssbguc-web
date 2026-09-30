@@ -35,6 +35,11 @@ export interface ProfileFlipCardProps {
   pillSlotId: string;
   /** DOM id of the div to portal QR code into */
   qrSlotId: string;
+  /**
+   * When true the component renders an inline mobile layout instead of
+   * portalling content into the desktop artboard slots.
+   */
+  mobileLayout?: boolean;
 }
 
 type PatchResponse =
@@ -89,6 +94,7 @@ export function ProfileCard({
   cardSlotId,
   pillSlotId,
   qrSlotId,
+  mobileLayout = false,
 }: ProfileFlipCardProps) {
   // ── Local mutable state for all editable fields ──────────────────────────
   const [username, setUsername] = useState(initialUsername);
@@ -245,10 +251,11 @@ export function ProfileCard({
 
   const SUPPORT_EMAIL = SOCIALS.email;
 
-  if (!mounted || !cardEl || !pillEl || !qrEl) return null;
+  // ── Wait for mount (needed for portals and window references) ────────────
+  if (!mounted) return null;
 
-  // ── Card content ──────────────────────────────────────────────────────────
-  const cardContent = (
+  // ── Desktop portal content ────────────────────────────────────────────────
+  const cardContent = !mobileLayout && cardEl ? (
     <div className="flex h-full flex-col p-4">
 
       {/* Top row: avatar + username/role */}
@@ -259,7 +266,6 @@ export function ProfileCard({
           aria-label="Change avatar"
           className="group relative shrink-0"
         >
-          {/* Border decoration underneath avatar */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/profile/profile_border.png"
@@ -301,15 +307,15 @@ export function ProfileCard({
         </div>
       </div>
 
-      {/* Description — hidden on mobile (via More modal), shown sm+ */}
-      <div className="hidden sm:block px-1 py-3 sm:py-1.5 pl-8">
+      {/* Description */}
+      <div className="px-1 py-3 sm:py-1.5 pl-8">
         <div className="flex flex-col gap-2.5 sm:gap-1.5">
           <DescRow label="Name"    value={fullName} />
           {discordId && <DescRow label="Discord" value={discordId} mono />}
         </div>
       </div>
 
-      {/* Bottom row: ID badge + socials + mobile More button */}
+      {/* Bottom row: ID badge + socials */}
       <div className="mt-auto flex items-center justify-between gap-2 pt-1 mb-4">
         {memberIdDisplay ? (
           <div className="relative flex items-center px-6 py-2.5 min-w-[7rem] sm:px-8 sm:py-3 sm:min-w-0">
@@ -322,11 +328,7 @@ export function ProfileCard({
             />
             <span
               className="relative font-mono text-lg font-black tracking-wide sm:text-2xl"
-              style={{
-                color: "#cc0000",
-                WebkitTextStroke: "2px white",
-                paintOrder: "stroke fill",
-              }}
+              style={{ color: "#cc0000", WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
             >
               ID: {memberIdDisplay}
             </span>
@@ -342,11 +344,7 @@ export function ProfileCard({
             />
             <span
               className="relative font-mono text-base font-black sm:text-lg"
-              style={{
-                color: "#cc0000",
-                WebkitTextStroke: "2px white",
-                paintOrder: "stroke fill",
-              }}
+              style={{ color: "#cc0000", WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
             >
               No ID yet
             </span>
@@ -375,10 +373,9 @@ export function ProfileCard({
         </div>
       </div>
     </div>
-  );
+  ) : null;
 
-  // ── Pill content ──────────────────────────────────────────────────────────
-  const pillContent = (
+  const pillContent = !mobileLayout && pillEl ? (
     <div className="flex h-full items-center gap-3 px-5">
       <button
         type="button"
@@ -388,10 +385,9 @@ export function ProfileCard({
         Edit <PencilSquareIcon />
       </button>
     </div>
-  );
+  ) : null;
 
-  // ── QR content ────────────────────────────────────────────────────────────
-  const qrContent = (
+  const qrContent = !mobileLayout && qrEl ? (
     <div className="flex h-full w-full items-center justify-center">
       {qrToken ? (
         <button
@@ -408,25 +404,150 @@ export function ProfileCard({
         </div>
       )}
     </div>
-  );
+  ) : null;
 
   return (
     <>
-      {createPortal(cardContent, cardEl)}
-      {createPortal(pillContent, pillEl)}
-      {createPortal(qrContent, qrEl)}
+      {/* ── Desktop: portal the three zones into the artboard ───────────── */}
+      {!mobileLayout && cardEl && cardContent && createPortal(cardContent, cardEl)}
+      {!mobileLayout && pillEl && pillContent && createPortal(pillContent, pillEl)}
+      {!mobileLayout && qrEl  && qrContent  && createPortal(qrContent, qrEl)}
 
-      {/* ── More modal — mobile bottom sheet ──────────────────────────────── */}
+      {/* ── Mobile inline layout ─────────────────────────────────────────── */}
+      {mobileLayout && (
+        <div className="flex flex-col gap-4">
+
+          {/* Avatar + identity row */}
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              aria-label="Change avatar"
+              className="group relative shrink-0"
+            >
+              <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-neutral-600 bg-neutral-800 shadow transition-opacity group-hover:opacity-80">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-neutral-400">
+                    {(username ?? displayName ?? "?")[0].toUpperCase()}
+                  </span>
+                )}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <CameraIcon />
+                </span>
+              </div>
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-mono text-xl font-bold text-neutral-100">
+                {username ?? displayName ?? "—"}
+              </p>
+              <p className="mt-0.5 text-sm text-neutral-400">
+                {memberId ? "SBG Member" : "Participant"}
+              </p>
+              {sinceYear && (
+                <p className="text-xs text-neutral-500">Member since {sinceYear}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Member ID badge */}
+          {memberIdDisplay && (
+            <div className="relative flex items-center self-start px-5 py-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/profile/id_background.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-fill pointer-events-none"
+              />
+              <span
+                className="relative font-mono text-base font-black tracking-wide"
+                style={{ color: "#cc0000", WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
+              >
+                ID: {memberIdDisplay}
+              </span>
+            </div>
+          )}
+
+          {/* Details list */}
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 divide-y divide-neutral-800 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Name</span>
+              <span className="text-sm text-neutral-200">{fullName}</span>
+            </div>
+            {discordId && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-neutral-500">Discord</span>
+                <span className="font-mono text-sm text-neutral-200 truncate">{discordId}</span>
+              </div>
+            )}
+            {githubUsername && (
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">GitHub</span>
+                <a
+                  href={`https://github.com/${githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 font-mono text-sm text-[#00e482] hover:underline"
+                >
+                  {githubUsername} <ExternalLinkIcon />
+                </a>
+              </div>
+            )}
+            {email && email !== "—" && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-neutral-500">Email</span>
+                <a href={`mailto:${email}`} className="text-sm text-neutral-200 hover:underline truncate">
+                  {email}
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* QR + Edit row */}
+          <div className="flex items-center gap-3">
+            {qrToken ? (
+              <button
+                type="button"
+                onClick={() => setShowQR(true)}
+                aria-label="View my QR code"
+                className="flex items-center justify-center rounded-xl border-4 border-[#00e482] bg-white p-1.5 shadow-lg transition-opacity hover:opacity-90"
+              >
+                <QRCodeSVG value={qrValue} size={56} level="M" />
+              </button>
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-neutral-700 bg-neutral-800 text-xs text-neutral-500">
+                No QR
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-neutral-600 bg-neutral-800 px-5 py-3 text-sm font-bold text-neutral-200 transition-colors hover:border-neutral-400 hover:text-white"
+            >
+              Edit profile <PencilSquareIcon />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── More modal — desktop bottom sheet (only shown on desktop now) ── */}
       {showMore && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:hidden"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label="Profile details"
           onClick={() => setShowMore(false)}
         >
           <div
-            className="w-full rounded-t-3xl border-t border-neutral-700 bg-neutral-900 p-6 pb-10 shadow-2xl"
+            className="w-full max-w-lg rounded-t-3xl border-t border-neutral-700 bg-neutral-900 p-6 pb-10 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-neutral-600" />
@@ -473,7 +594,7 @@ export function ProfileCard({
         </div>
       )}
 
-      {/* ── Edit modal ────────────────────────────────────────────────────── */}
+      {/* ── Edit modal ───────────────────────────────────────────────────── */}
       {editOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
@@ -513,7 +634,7 @@ export function ProfileCard({
                   </dd>
                 </div>
 
-                {/* Username — read-only; changes must be requested */}
+                {/* Username — read-only */}
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Username
@@ -543,7 +664,7 @@ export function ProfileCard({
                   label="Display name"
                   value={displayName}
                   placeholder="e.g. BraveEagle4291"
-                  hint="6–24 characters. Start with a letter; letters, numbers, and _ only. This is your public identity at events."
+                  hint="6–24 characters. Start with a letter; letters, numbers, and _ only."
                   onSave={saveDisplayName}
                 />
 
@@ -588,20 +709,17 @@ export function ProfileCard({
                   onSave={saveGithubUsername}
                 />
 
-                {/* ── Public directory ───────────────────────────────────── */}
+                {/* Public directory opt-in */}
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Public directory
                   </dt>
                   <dd className="mt-2">
-                    {/* Opt-in toggle */}
                     <button
                       type="button"
                       role="switch"
                       aria-checked={directoryVisible}
-                      onClick={async () => {
-                        await saveDirectoryVisible(!directoryVisible);
-                      }}
+                      onClick={async () => { await saveDirectoryVisible(!directoryVisible); }}
                       className={[
                         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00e482] focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
                         directoryVisible ? "bg-[#00e482]" : "bg-neutral-700",
@@ -633,7 +751,6 @@ export function ProfileCard({
                   placeholder="e.g. AWS enthusiast, studying cloud security."
                   hint="Up to 280 characters. Shown publicly in the member directory."
                   onSave={saveBio}
-                  inputType="text"
                 />
 
                 {/* Skills */}
@@ -646,7 +763,7 @@ export function ProfileCard({
                   onSave={saveSkills}
                 />
 
-                {/* Member ID — read-only with change-by-email notice */}
+                {/* Member ID — read-only */}
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Member ID
@@ -682,31 +799,23 @@ export function ProfileCard({
                   </div>
                 )}
 
-                {/* ── Danger zone ─────────────────────────────────────────── */}
+                {/* Danger zone */}
                 <div className="border-t border-neutral-800 pt-6">
                   <p className="mb-3 text-xs font-medium uppercase tracking-wide text-red-500">
                     Danger zone
                   </p>
 
                   {deletionScheduledAt ? (
-                    /* Deletion already scheduled */
                     <div className="rounded-xl border border-red-900/60 bg-red-950/40 p-4">
-                      <p className="text-sm font-semibold text-red-300">
-                        Account deletion scheduled
-                      </p>
+                      <p className="text-sm font-semibold text-red-300">Account deletion scheduled</p>
                       <p className="mt-1 text-xs text-neutral-400">
                         Your account will be permanently deleted on{" "}
                         <span className="font-semibold text-neutral-200">
                           {formatDeletionDate(deletionScheduledAt)}
                         </span>{" "}
-                        ({daysUntilDeletion(deletionScheduledAt)} days remaining). All your
-                        data will be removed and cannot be recovered.
+                        ({daysUntilDeletion(deletionScheduledAt)} days remaining).
                       </p>
-                      {deleteError && (
-                        <p className="mt-2 text-xs text-red-400" role="alert">
-                          {deleteError}
-                        </p>
-                      )}
+                      {deleteError && <p className="mt-2 text-xs text-red-400" role="alert">{deleteError}</p>}
                       <button
                         type="button"
                         onClick={handleCancelDeletion}
@@ -717,22 +826,14 @@ export function ProfileCard({
                       </button>
                     </div>
                   ) : showDeleteConfirm ? (
-                    /* Confirmation step */
                     <div className="rounded-xl border border-red-900/60 bg-red-950/40 p-4">
-                      <p className="text-sm font-semibold text-red-300">
-                        Are you sure?
-                      </p>
+                      <p className="text-sm font-semibold text-red-300">Are you sure?</p>
                       <p className="mt-1 text-xs text-neutral-400">
                         Your account will be scheduled for permanent deletion in{" "}
                         <span className="font-semibold text-neutral-200">30 days</span>.
-                        You can cancel at any time before then. After 30 days, all your
-                        data will be removed and cannot be recovered.
+                        You can cancel at any time before then.
                       </p>
-                      {deleteError && (
-                        <p className="mt-2 text-xs text-red-400" role="alert">
-                          {deleteError}
-                        </p>
-                      )}
+                      {deleteError && <p className="mt-2 text-xs text-red-400" role="alert">{deleteError}</p>}
                       <div className="mt-3 flex gap-2">
                         <button
                           type="button"
@@ -753,7 +854,6 @@ export function ProfileCard({
                       </div>
                     </div>
                   ) : (
-                    /* Initial delete button */
                     <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
                       <p className="text-sm text-neutral-300">Delete account</p>
                       <p className="mt-0.5 text-xs text-neutral-500">
@@ -833,9 +933,7 @@ function DescRow({ label, value, mono }: { label: string; value: string; mono?: 
       <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-widest text-neutral-400">
         {label}
       </span>
-      <span
-        className={`truncate text-lg leading-tight sm:leading-snug text-neutral-700 ${mono ? "font-mono" : "font-semibold"}`}
-      >
+      <span className={`truncate text-lg leading-tight sm:leading-snug text-neutral-700 ${mono ? "font-mono" : "font-semibold"}`}>
         {value}
       </span>
     </div>
@@ -845,9 +943,7 @@ function DescRow({ label, value, mono }: { label: string; value: string; mono?: 
 function ModalRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">
-        {label}
-      </span>
+      <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">{label}</span>
       <span className={`text-base text-neutral-200 ${mono ? "font-mono" : ""}`}>{value}</span>
     </div>
   );
@@ -859,18 +955,7 @@ function ModalRow({ label, value, mono }: { label: string; value: string; mono?:
 
 function CameraIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
       <circle cx="12" cy="13" r="3" />
     </svg>
@@ -879,18 +964,7 @@ function CameraIcon() {
 
 function ExternalLinkIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M15 3h6v6" />
       <path d="M10 14 21 3" />
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -900,18 +974,7 @@ function ExternalLinkIcon() {
 
 export function PencilSquareIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -920,18 +983,7 @@ export function PencilSquareIcon() {
 
 function ChevronDownIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="m6 9 6 6 6-6" />
     </svg>
   );
@@ -939,18 +991,7 @@ function ChevronDownIcon() {
 
 function CloseIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M18 6 6 18" />
       <path d="m6 6 12 12" />
     </svg>

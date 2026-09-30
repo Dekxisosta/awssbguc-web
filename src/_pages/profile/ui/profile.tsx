@@ -37,53 +37,66 @@ export interface ProfilePageProps {
 export function ProfilePage(props: ProfilePageProps) {
   return (
     <div>
-      <div className="mx-auto w-full max-w-2xl px-2 py-6 sm:px-6 sm:py-10">
-        {/* Aspect-ratio shell — 1224:936 ≈ 76.47% */}
-        <div className="relative w-full" style={{ paddingBottom: "76.47%" }}>
+      {/* ── Mobile layout (< sm) — free flex stack, no artboard wrapper ─── */}
+      <div className="sm:hidden px-4 py-6">
+        {/* Slot divs for portals — still needed so ProfileCard mounts cleanly */}
+        <div id="profile-card-zone-mobile" className="hidden" />
+        <div id="profile-pill-zone-mobile" className="hidden" />
+        <div id="profile-qr-zone-mobile" className="hidden" />
 
-          {/* Background artwork */}
-          <Image
-            src="/profile/main_container.png"
-            alt=""
-            fill
-            sizes="(max-width: 768px) 100vw, 896px"
-            className="pointer-events-none select-none object-contain"
-            priority
-          />
+        <ProfileCard
+          {...props}
+          cardSlotId="profile-card-zone-mobile"
+          pillSlotId="profile-pill-zone-mobile"
+          qrSlotId="profile-qr-zone-mobile"
+          mobileLayout
+        />
+      </div>
 
-          {/* ── Big card zone — slot divs rendered first so the portal finds them ── */}
-          <div
-            id="profile-card-zone"
-            className="absolute overflow-visible"
-            style={{ left: "18%", top: "10.7%", right: "14%", bottom: "26.3%" }}
-          />
+      {/* ── Desktop layout (sm+) — artboard with positioned zones ──────── */}
+      <div className="hidden sm:block">
+        <div className="mx-auto w-full max-w-2xl px-6 py-10">
+          {/* Aspect-ratio shell — 1224:936 ≈ 76.47% */}
+          <div className="relative w-full" style={{ paddingBottom: "76.47%" }}>
 
-          {/* ── Pill zone ── */}
-          <div
-            id="profile-pill-zone"
-            className="absolute overflow-hidden"
-            style={{ left: "18%", top: "76.9%", right: "19.9%", bottom: "7%" }}
-          />
+            {/* Background artwork */}
+            <Image
+              src="/profile/main_container.png"
+              alt=""
+              fill
+              sizes="896px"
+              className="pointer-events-none select-none object-contain"
+              priority
+            />
 
-          {/* ── QR zone — bottom-right corner of the wrapper ── */}
-          <div
-            id="profile-qr-zone"
-            className="absolute"
-            style={{ right: "6%", bottom: "8%", width: "12%", aspectRatio: "1" }}
-          />
+            {/* ── Big card zone ── */}
+            <div
+              id="profile-card-zone"
+              className="absolute overflow-visible"
+              style={{ left: "18%", top: "10.7%", right: "14%", bottom: "26.3%" }}
+            />
 
-          {/*
-            ProfileCard is a client component. It mounts after the slot divs
-            exist in the DOM, then portals card content into #profile-card-zone
-            and pill content into #profile-pill-zone.
-          */}
-          <ProfileCard
-            {...props}
-            cardSlotId="profile-card-zone"
-            pillSlotId="profile-pill-zone"
-            qrSlotId="profile-qr-zone"
-          />
+            {/* ── Pill zone ── */}
+            <div
+              id="profile-pill-zone"
+              className="absolute overflow-hidden"
+              style={{ left: "18%", top: "76.9%", right: "19.9%", bottom: "7%" }}
+            />
 
+            {/* ── QR zone ── */}
+            <div
+              id="profile-qr-zone"
+              className="absolute"
+              style={{ right: "6%", bottom: "8%", width: "12%", aspectRatio: "1" }}
+            />
+
+            <ProfileCard
+              {...props}
+              cardSlotId="profile-card-zone"
+              pillSlotId="profile-pill-zone"
+              qrSlotId="profile-qr-zone"
+            />
+          </div>
         </div>
       </div>
     </div>
