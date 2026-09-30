@@ -6,7 +6,11 @@ export const loginMetadata = {
   title: "Sign in — AWSSBG-UC",
 };
 
-export function LoginPage() {
+interface LoginPageProps {
+  redirectTo?: string;
+}
+
+export function LoginPage({ redirectTo }: LoginPageProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-16">
       <div className="w-full max-w-sm">
@@ -25,12 +29,14 @@ export function LoginPage() {
               Sign in
             </h1>
             <p className="mt-1 text-sm text-neutral-500">
-              AWSSBG-UC member portal
+              {redirectTo === "/member"
+                ? "Sign in to complete your membership registration."
+                : "AWSSBG-UC member portal"}
             </p>
           </div>
         </div>
 
-        <LoginForm />
+        <LoginForm redirectTo={redirectTo} />
 
         <p className="mt-6 text-center text-xs text-neutral-600">
           Don&apos;t have an account?{" "}

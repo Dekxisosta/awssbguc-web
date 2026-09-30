@@ -234,9 +234,11 @@ function MembershipNoticeModal({ onConfirm }: { onConfirm: () => void }) {
 interface RegisterFormProps {
   onPasswordFocus?: () => void;
   onPasswordBlur?: () => void;
+  /** Called when registration succeeds — if provided, the form won't render its own success card */
+  onSuccess?: () => void;
 }
 
-export function RegisterForm({ onPasswordFocus, onPasswordBlur }: RegisterFormProps = {}) {
+export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: RegisterFormProps = {}) {
   const [form, setForm] = useState<RegisterInput>({ email: "", fullName: "", password: "" });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
@@ -293,7 +295,11 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur }: RegisterFormPr
       });
       const data: RegisterResponse = await res.json();
       if (data.success) {
-        setState({ status: "success", message: data.message });
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          setState({ status: "success", message: data.message });
+        }
         setForm({ email: "", fullName: "", password: "" });
         setConfirmPassword("");
         setAgreedToTerms(false);

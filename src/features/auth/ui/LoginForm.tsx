@@ -11,9 +11,11 @@ type FormState =
 interface LoginFormProps {
   onPasswordFocus?: () => void;
   onPasswordBlur?: () => void;
+  /** Path to redirect to after successful login. Defaults to "/" */
+  redirectTo?: string;
 }
 
-export function LoginForm({ onPasswordFocus, onPasswordBlur }: LoginFormProps = {}) {
+export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }: LoginFormProps = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,7 +59,7 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur }: LoginFormProps = 
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = redirectTo;
   }
 
   return (
