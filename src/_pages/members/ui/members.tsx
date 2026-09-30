@@ -197,19 +197,21 @@ function DiscordCTA() {
     <div className="flex flex-col justify-center">
       <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">Community</p>
 
-      <h2 className="flex items-center gap-3 text-4xl font-bold tracking-tight text-neutral-100 sm:text-5xl">
+      <div className="relative">
+        <h2 className="text-4xl font-bold tracking-tight text-neutral-100 sm:text-5xl">
+          Where the{" "}
+          <span className="text-[#00e482]">community</span>{" "}
+          lives.
+        </h2>
         <Image
           src="/images/additional/thunder.png"
           alt=""
-          width={40}
-          height={40}
+          width={72}
+          height={72}
           aria-hidden="true"
-          className="shrink-0 opacity-80"
+          className="pointer-events-none absolute -right-4 -top-4 w-16 select-none opacity-30 sm:-right-6 sm:w-20"
         />
-        Where the{" "}
-        <span className="text-[#00e482]">community</span>{" "}
-        lives.
-      </h2>
+      </div>
 
       <p className="mt-4 max-w-md text-base leading-relaxed text-neutral-400">
         Ask questions, share projects, get feedback on your AWS journey, and meet members across every year level — all in one place.
@@ -269,18 +271,20 @@ function FacebookCTA() {
     <div className="order-1 flex flex-col justify-center lg:order-2">
       <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">Facebook</p>
 
-      <h2 className="flex items-center gap-3 text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
+      <div className="relative">
+        <h2 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
+          Events, updates,{" "}
+          <span className="text-[#1877F2]">announcements.</span>
+        </h2>
         <Image
           src="/images/additional/smiley.png"
           alt=""
-          width={40}
-          height={40}
+          width={72}
+          height={72}
           aria-hidden="true"
-          className="shrink-0 opacity-80"
+          className="pointer-events-none absolute -right-4 -top-4 w-16 select-none opacity-25 sm:-right-6 sm:w-20"
         />
-        Events, updates,{" "}
-        <span className="text-[#1877F2]">announcements.</span>
-      </h2>
+      </div>
 
       <p className="mt-4 max-w-md text-base leading-relaxed text-neutral-600">
         Our Facebook page is the primary channel for official announcements, event postings, and recaps. Follow to stay in the loop.
