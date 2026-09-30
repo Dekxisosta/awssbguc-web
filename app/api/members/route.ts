@@ -5,19 +5,20 @@ import type { PublicMemberProfile } from "@/src/entities/member";
 /**
  * GET /api/members?page=1
  *
- * Returns a paginated list (20 per page) of public-safe participant profiles.
- * Any active participant qualifies — no SBG membership or account required.
+ * Returns a paginated list (20 per page) of opted-in public member profiles,
+ * sourced from the `public_member_profiles` view (migration 20260006).
  *
- * Sensitive fields intentionally excluded from SELECT:
- *   - participant_id used only as a key fallback; not exposed in response IDs
+ * Only accounts that have set directory_visible = true AND have at least one
+ * social link are returned. The view enforces both conditions.
+ *
+ * Sensitive fields intentionally excluded by the view:
  *   - supplied_name, email (personal identity / contact data)
- *   - qr_token, user_id (security / internal keys)
+ *   - qr_token, user_id, profile_id (security / internal keys)
  *   - student_number, date_of_birth, contact_number (institutional PII)
- *   - initial_setup_completed (internal account state)
- *   - profile_id (= user_id UUID; internal)
+ *   - initial_setup_completed, directory_visible (internal flags)
  *
  * Response shape:
- *   { members: PublicMemberProfile[], page: number, totalPages: number, totalCount: number }
+ *   { members: PublicMemberProfile[], page, totalPages, totalCount }
  */
 
 export const dynamic = "force-dynamic";
@@ -33,69 +34,43 @@ export async function GET(req: NextRequest) {
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    // Fetch one page of active participants, sorted alphabetically by display_name.
-    const { data: participants, error: participantsError, count } = await admin
-      .from("participants")
-      .select("participant_id, user_id, member_roster_id, display_name", { count: "exact" })
-      .eq("status", "active")
-      .order("display_name", { ascending: true })
-      .range(from, to);
-
-    if (participantsError) {
-      console.error("[GET /api/members] participants query error:", participantsError);
+    // Total count via dedicated function — no row data exposed.
+    const { data: countRow, error: countError } = await admin.rpc("count_public_members");
+    if (countError) {
+      console.error("[GET /api/members] count error:", countError.message);
       return NextResponse.json({ error: "Failed to load members" }, { status: 500 });
     }
 
-    const list = participants ?? [];
-    const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
+    const totalCount = Number(countRow ?? 0);
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / PAGE_SIZE) : 1;
 
-    if (list.length === 0) {
-      return NextResponse.json({ members: [], page, totalPages, totalCount: count ?? 0 });
+    if (totalCount === 0) {
+      return NextResponse.json({ members: [], page, totalPages, totalCount: 0 });
     }
 
-    // Only participants with a linked account have a profile row.
-    const userIds = list
-      .map((p) => p.user_id as string | null)
-      .filter((id): id is string => id !== null);
+    // Page of rows from the public view.
+    const { data: rows, error } = await admin
+      .from("public_member_profiles")
+      .select("member_id, display_name, username, avatar_url, github_username, discord_id, bio, skills")
+      .range(from, to);
 
-    const profileMap = new Map<string, {
-      username: string | null;
-      avatar_url: string | null;
-      github_username: string | null;
-      discord_id: string | null;
-    }>();
-
-    if (userIds.length > 0) {
-      const { data: profiles, error: profilesError } = await admin
-        .from("profiles")
-        .select("profile_id, username, avatar_url, github_username, discord_id")
-        .in("profile_id", userIds);
-
-      if (profilesError) {
-        console.error("[GET /api/members] profiles query error:", profilesError);
-        return NextResponse.json({ error: "Failed to load member profiles" }, { status: 500 });
-      }
-
-      for (const p of profiles ?? []) {
-        profileMap.set(p.profile_id, p);
-      }
+    if (error) {
+      console.error("[GET /api/members] view query error:", error.message);
+      return NextResponse.json({ error: "Failed to load members" }, { status: 500 });
     }
 
-    const members: PublicMemberProfile[] = list.map((participant) => {
-      const profile = participant.user_id
-        ? profileMap.get(participant.user_id as string)
-        : undefined;
-      return {
-        member_id: participant.member_roster_id ?? participant.participant_id,
-        display_name: participant.display_name ?? null,
-        username: profile?.username ?? null,
-        avatar_url: profile?.avatar_url ?? null,
-        github_username: profile?.github_username ?? null,
-        discord_id: profile?.discord_id ?? null,
-      };
-    });
+    const members: PublicMemberProfile[] = (rows ?? []).map((r) => ({
+      member_id:       r.member_id       as string,
+      display_name:    r.display_name    as string | null,
+      username:        r.username        as string | null,
+      avatar_url:      r.avatar_url      as string | null,
+      github_username: r.github_username as string | null,
+      discord_id:      r.discord_id      as string | null,
+      bio:             r.bio             as string | null,
+      skills:          r.skills          as string[] | null,
+    }));
 
-    return NextResponse.json({ members, page, totalPages, totalCount: count ?? 0 });
+    return NextResponse.json({ members, page, totalPages, totalCount });
   } catch (err) {
     console.error("[GET /api/members] unexpected error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

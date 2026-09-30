@@ -61,6 +61,12 @@ interface ProfilePatchBody {
   display_name?: unknown;
   supplied_name?: unknown;
   email?: unknown;
+  /** Public directory opt-in toggle */
+  directory_visible?: unknown;
+  /** Short public bio (max 280 chars) */
+  bio?: unknown;
+  /** Comma-separated skill tags (client sends a single string; server splits and trims) */
+  skills?: unknown;
 }
 
 export async function handleProfileUpdate(request: NextRequest) {
@@ -84,11 +90,17 @@ export async function handleProfileUpdate(request: NextRequest) {
     display_name,
     supplied_name,
     email,
+    directory_visible,
+    bio,
+    skills,
   } = body;
 
   const hasProfileFields =
     discord_id !== undefined ||
-    github_username !== undefined;
+    github_username !== undefined ||
+    directory_visible !== undefined ||
+    bio !== undefined ||
+    skills !== undefined;
 
   const hasParticipantFields =
     display_name !== undefined ||
@@ -103,7 +115,7 @@ export async function handleProfileUpdate(request: NextRequest) {
 
   // ── profiles table ────────────────────────────────────────────────────────
   if (hasProfileFields) {
-    const profileUpdate: Record<string, string | null> = {};
+    const profileUpdate: Record<string, string | boolean | string[] | null> = {};
 
     if (discord_id !== undefined) {
       if (discord_id === null || (typeof discord_id === "string" && discord_id.trim() === "")) {
@@ -148,6 +160,51 @@ export async function handleProfileUpdate(request: NextRequest) {
           return json({ success: false, error: "That GitHub username is already linked to another account.", field: "github_username" }, 409);
 
         profileUpdate.github_username = trimmed;
+      }
+    }
+
+    // ── directory_visible ─────────────────────────────────────────────────
+    if (directory_visible !== undefined) {
+      if (typeof directory_visible !== "boolean")
+        return json({ success: false, error: "directory_visible must be a boolean.", field: "directory_visible" }, 400);
+      profileUpdate.directory_visible = directory_visible;
+    }
+
+    // ── bio ───────────────────────────────────────────────────────────────
+    if (bio !== undefined) {
+      if (bio === null || (typeof bio === "string" && bio.trim() === "")) {
+        profileUpdate.bio = null;
+      } else {
+        if (typeof bio !== "string")
+          return json({ success: false, error: "Bio must be a string.", field: "bio" }, 400);
+        const trimmed = bio.trim();
+        if (trimmed.length > 280)
+          return json({ success: false, error: "Bio must be 280 characters or fewer.", field: "bio" }, 400);
+        profileUpdate.bio = trimmed;
+      }
+    }
+
+    // ── skills ────────────────────────────────────────────────────────────
+    if (skills !== undefined) {
+      if (skills === null || (typeof skills === "string" && skills.trim() === "") || (Array.isArray(skills) && skills.length === 0)) {
+        profileUpdate.skills = null;
+      } else {
+        // Accept either a pre-split string array or a comma-separated string
+        let tags: string[];
+        if (Array.isArray(skills)) {
+          tags = skills.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean);
+        } else if (typeof skills === "string") {
+          tags = skills.split(",").map((s) => s.trim()).filter(Boolean);
+        } else {
+          return json({ success: false, error: "Skills must be an array or comma-separated string.", field: "skills" }, 400);
+        }
+        if (tags.length > 20)
+          return json({ success: false, error: "You can list at most 20 skills.", field: "skills" }, 400);
+        for (const tag of tags) {
+          if (tag.length > 40)
+            return json({ success: false, error: "Each skill must be 40 characters or fewer.", field: "skills" }, 400);
+        }
+        profileUpdate.skills = tags;
       }
     }
 

@@ -1,80 +1,64 @@
 import { createAdminClient } from "@/src/shared/supabase/admin";
-import { MembersPage, membersMetadata } from "@/src/_pages/members";
+import { MembersPage } from "@/src/_pages/members";
 import type { PublicMemberProfile } from "@/src/entities/member";
 
-export const metadata = membersMetadata;
+export const metadata = { title: "Community — AWSSBG-UC" };
+
+/**
+ * Cache the directory listing for 60 seconds.
+ * Keeps the page fast for anonymous visitors while staying reasonably fresh.
+ * Individual profile opt-ins will appear within one cache window.
+ */
+export const revalidate = 60;
 
 const PAGE_SIZE = 20;
 
 interface Props {
-  searchParams: { page?: string };
+  searchParams: Promise<{ page?: string }>;
 }
 
 export default async function MembersRoute({ searchParams }: Props) {
-  const admin = createAdminClient();
-
-  // Parse and clamp the page number.
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // Fetch one page of active participants, sorted by display_name, with total count.
-  const { data: participants, error, count } = await admin
-    .from("participants")
-    .select("participant_id, user_id, member_roster_id, display_name", { count: "exact" })
-    .eq("status", "active")
-    .order("display_name", { ascending: true })
+  const admin = createAdminClient();
+
+  // Fetch the opted-in count via the dedicated function (no row data exposed).
+  const { data: countRow } = await admin.rpc("count_public_members");
+  const totalCount: number = Number(countRow ?? 0);
+  const totalPages = totalCount > 0 ? Math.ceil(totalCount / PAGE_SIZE) : 1;
+
+  // Fetch one page from the public view.
+  // The view already filters on opt-in + at least one social, and orders by display_name.
+  const { data: rows, error } = await admin
+    .from("public_member_profiles")
+    .select("member_id, display_name, username, avatar_url, github_username, discord_id, bio, skills")
     .range(from, to);
 
   if (error) {
-    return <MembersPage members={[]} page={page} totalPages={1} />;
+    console.error("[MembersRoute] view query error:", error.message);
+    return <MembersPage members={[]} page={page} totalPages={1} totalCount={0} />;
   }
 
-  const list = participants ?? [];
-  const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
-
-  // Only participants with a linked account have a profile row.
-  const userIds = list
-    .map((p) => p.user_id as string | null)
-    .filter((id): id is string => id !== null);
-
-  const profileMap = new Map<string, {
-    username: string | null;
-    avatar_url: string | null;
-    github_username: string | null;
-    discord_id: string | null;
-  }>();
-
-  if (userIds.length > 0) {
-    const { data: profiles } = await admin
-      .from("profiles")
-      .select("profile_id, username, avatar_url, github_username, discord_id")
-      .in("profile_id", userIds);
-    for (const p of profiles ?? []) {
-      profileMap.set(p.profile_id, p);
-    }
-  }
-
-  const members: PublicMemberProfile[] = list.map((participant) => {
-    const profile = participant.user_id
-      ? profileMap.get(participant.user_id as string)
-      : undefined;
-    return {
-      member_id: participant.member_roster_id ?? participant.participant_id,
-      display_name: participant.display_name ?? null,
-      username: profile?.username ?? null,
-      avatar_url: profile?.avatar_url ?? null,
-      github_username: profile?.github_username ?? null,
-      discord_id: profile?.discord_id ?? null,
-    };
-  });
+  const members: PublicMemberProfile[] = (rows ?? []).map((r) => ({
+    member_id:      r.member_id      as string,
+    display_name:   r.display_name   as string | null,
+    username:       r.username       as string | null,
+    avatar_url:     r.avatar_url     as string | null,
+    github_username: r.github_username as string | null,
+    discord_id:     r.discord_id     as string | null,
+    bio:            r.bio            as string | null,
+    skills:         r.skills         as string[] | null,
+  }));
 
   return (
     <MembersPage
       members={members}
       page={page}
       totalPages={totalPages}
-      totalCount={count ?? 0}
+      totalCount={totalCount}
     />
   );
 }

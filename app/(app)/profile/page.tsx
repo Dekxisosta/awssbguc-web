@@ -14,7 +14,7 @@ export default async function ProfileRoute() {
   const [{ data: profile }, { data: participant }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("username, discord_id, avatar_url, github_username")
+      .select("username, discord_id, avatar_url, github_username, directory_visible, bio, skills")
       .eq("profile_id", user.id)
       .single(),
     supabase
@@ -39,6 +39,9 @@ export default async function ProfileRoute() {
       displayName={participant?.display_name ?? null}
       participantId={participant?.participant_id ?? null}
       deletionScheduledAt={participant?.deletion_scheduled_at ?? null}
+      directoryVisible={profile?.directory_visible ?? false}
+      bio={profile?.bio ?? null}
+      skills={(profile?.skills as string[] | null | undefined) ?? null}
     />
   );
 }

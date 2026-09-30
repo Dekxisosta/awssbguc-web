@@ -23,6 +23,12 @@ export interface ProfileFlipCardProps {
   displayName: string | null;
   participantId: string | null;
   deletionScheduledAt: string | null;
+  /** Whether the profile is opted into the public directory */
+  directoryVisible: boolean;
+  /** Short public bio (max 280 chars) */
+  bio: string | null;
+  /** Self-reported skill tags */
+  skills: string[] | null;
   /** DOM id of the div to portal card content into */
   cardSlotId: string;
   /** DOM id of the div to portal pill content into */
@@ -77,6 +83,9 @@ export function ProfileCard({
   displayName: initialDisplayName,
   participantId,
   deletionScheduledAt: initialDeletionScheduledAt,
+  directoryVisible: initialDirectoryVisible,
+  bio: initialBio,
+  skills: initialSkills,
   cardSlotId,
   pillSlotId,
   qrSlotId,
@@ -89,6 +98,11 @@ export function ProfileCard({
   const [email, setEmail] = useState(initialEmail);
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
+
+  // ── Directory / bio / skills state ────────────────────────────────────────
+  const [directoryVisible, setDirectoryVisible] = useState(initialDirectoryVisible);
+  const [bio, setBio] = useState(initialBio);
+  const [skills, setSkills] = useState<string[] | null>(initialSkills);
 
   // ── Deletion state ────────────────────────────────────────────────────────
   const [deletionScheduledAt, setDeletionScheduledAt] = useState(
@@ -154,6 +168,27 @@ export function ProfileCard({
   async function saveEmail(value: string): Promise<string | null> {
     const err = await patchProfile({ email: value });
     if (!err) setEmail(value);
+    return err;
+  }
+
+  async function saveDirectoryVisible(value: boolean): Promise<string | null> {
+    const err = await patchProfile({ directory_visible: value });
+    if (!err) setDirectoryVisible(value);
+    return err;
+  }
+
+  async function saveBio(value: string): Promise<string | null> {
+    const err = await patchProfile({ bio: value || null });
+    if (!err) setBio(value || null);
+    return err;
+  }
+
+  async function saveSkills(value: string): Promise<string | null> {
+    const tags = value
+      ? value.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    const err = await patchProfile({ skills: tags.length > 0 ? tags : null });
+    if (!err) setSkills(tags.length > 0 ? tags : null);
     return err;
   }
 
@@ -551,6 +586,64 @@ export function ProfileCard({
                   placeholder="e.g. octocat"
                   hint="Your GitHub username. Leave blank to remove."
                   onSave={saveGithubUsername}
+                />
+
+                {/* ── Public directory ───────────────────────────────────── */}
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                    Public directory
+                  </dt>
+                  <dd className="mt-2">
+                    {/* Opt-in toggle */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={directoryVisible}
+                      onClick={async () => {
+                        await saveDirectoryVisible(!directoryVisible);
+                      }}
+                      className={[
+                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00e482] focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
+                        directoryVisible ? "bg-[#00e482]" : "bg-neutral-700",
+                      ].join(" ")}
+                      aria-label="Show profile in public member directory"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={[
+                          "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+                          directoryVisible ? "translate-x-5" : "translate-x-0",
+                        ].join(" ")}
+                      />
+                    </button>
+                    <p className="mt-1.5 text-xs text-neutral-500">
+                      {directoryVisible
+                        ? "Your profile is visible in the public directory."
+                        : "Enable to appear in the public member directory."}{" "}
+                      Requires at least one social link to be set.
+                    </p>
+                  </dd>
+                </div>
+
+                {/* Bio */}
+                <EditableField
+                  id="bio"
+                  label="Bio"
+                  value={bio}
+                  placeholder="e.g. AWS enthusiast, studying cloud security."
+                  hint="Up to 280 characters. Shown publicly in the member directory."
+                  onSave={saveBio}
+                  inputType="text"
+                />
+
+                {/* Skills */}
+                <EditableField
+                  id="skills"
+                  label="Skills"
+                  value={skills ? skills.join(", ") : null}
+                  placeholder="e.g. Python, AWS, React"
+                  hint="Comma-separated tags, up to 20 entries. Shown publicly in the member directory."
+                  onSave={saveSkills}
                 />
 
                 {/* Member ID — read-only with change-by-email notice */}

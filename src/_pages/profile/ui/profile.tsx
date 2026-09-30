@@ -16,6 +16,12 @@ export interface ProfilePageProps {
   participantId: string | null;
   /** ISO timestamp — set when the user has requested account deletion */
   deletionScheduledAt: string | null;
+  /** Whether the profile is opted into the public member directory */
+  directoryVisible: boolean;
+  /** Short public bio (max 280 chars) */
+  bio: string | null;
+  /** Self-reported skill tags */
+  skills: string[] | null;
 }
 
 /**
