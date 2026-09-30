@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FeedbackWidget } from "@/src/widgets/feedback-widget";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
 
@@ -731,7 +731,129 @@ function AsideNav({
   );
 }
 
-// ─── Profile nav items ────────────────────────────────────────────────────────
+// ─── Search palette ───────────────────────────────────────────────────────────
+
+const ALL_SEARCH_ITEMS = [
+  // Top-level nav
+  { href: "/",            label: "Home",          group: "Pages" },
+  { href: "/events",      label: "Events",        group: "Pages" },
+  { href: "/join",        label: "Join Us",       group: "Pages" },
+  { href: "/members",     label: "Community",     group: "Pages" },
+  // Discover
+  { href: "/about",       label: "About",         group: "Discover" },
+  { href: "/constitution",label: "Constitution",  group: "Discover" },
+  { href: "/privacy",     label: "Privacy",       group: "Discover" },
+  { href: "/terms",       label: "Terms",         group: "Discover" },
+  // AWS
+  { href: "/aws",         label: "Free Resources",group: "AWS" },
+  // Auth / account
+  { href: "/profile",     label: "Profile",       group: "Account" },
+  { href: "/member",      label: "Membership",    group: "Account" },
+];
+
+function SearchPalette({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const filtered = query.trim()
+    ? ALL_SEARCH_ITEMS.filter((item) =>
+        item.label.toLowerCase().includes(query.toLowerCase()) ||
+        item.group.toLowerCase().includes(query.toLowerCase()) ||
+        item.href.toLowerCase().includes(query.toLowerCase())
+      )
+    : ALL_SEARCH_ITEMS;
+
+  // Group results
+  const groups = filtered.reduce<Record<string, typeof ALL_SEARCH_ITEMS>>((acc, item) => {
+    (acc[item.group] ??= []).push(item);
+    return acc;
+  }, {});
+
+  function navigate(href: string) {
+    router.push(href);
+    onClose();
+  }
+
+  return createPortal(
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        style={{ zIndex: 100000 }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Palette */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search pages"
+        className="fixed left-1/2 top-[12vh] w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-neutral-700 bg-neutral-900 shadow-2xl"
+        style={{ zIndex: 100001 }}
+      >
+        {/* Input */}
+        <div className="flex items-center gap-3 border-b border-neutral-800 px-4 py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-neutral-500" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search pages…"
+            className="flex-1 bg-transparent text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none"
+          />
+          <kbd className="hidden rounded border border-neutral-700 px-1.5 py-0.5 text-[10px] font-medium text-neutral-600 sm:block">
+            ESC
+          </kbd>
+        </div>
+
+        {/* Results */}
+        <div className="max-h-80 overflow-y-auto py-2">
+          {Object.entries(groups).length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-neutral-600">No pages found.</p>
+          ) : (
+            Object.entries(groups).map(([group, items]) => (
+              <div key={group}>
+                <p className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-neutral-600">
+                  {group}
+                </p>
+                {items.map((item) => (
+                  <button
+                    key={item.href}
+                    type="button"
+                    onClick={() => navigate(item.href)}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-neutral-100"
+                  >
+                    <span>{item.label}</span>
+                    <span className="font-mono text-[10px] text-neutral-600">{item.href}</span>
+                  </button>
+                ))}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
 
 const PROFILE_NAV: NavItem[] = [
   {
@@ -767,9 +889,10 @@ export function DashboardShell({
   const pathname = usePathname();
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  // Close aside on route change
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
+  // Close aside and search on route change
+  useEffect(() => { setMobileOpen(false); setSearchOpen(false); }, [pathname]);
 
   const initials = displayName
     .split(" ")
@@ -828,6 +951,7 @@ export function DashboardShell({
               <button
                 type="button"
                 aria-label="Search"
+                onClick={() => setSearchOpen(true)}
                 className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-100"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -920,6 +1044,9 @@ export function DashboardShell({
         initials={initials}
         onProfileOpen={() => setProfileOpen(true)}
       />
+
+      {/* ── Search palette ── */}
+      {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} />}
 
       {/* ── Page content ── */}
       <main className="flex-1">{children}</main>
