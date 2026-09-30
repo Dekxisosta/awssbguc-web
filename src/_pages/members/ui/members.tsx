@@ -532,12 +532,12 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
 
         {/* Header */}
         <div className="relative border-b border-neutral-800 px-6 py-8">
-          <div className="mx-auto max-w-5xl flex items-center gap-3">
+          <div className="mx-auto max-w-5xl flex items-center gap-5">
             <Image
               src="/images/additional/community.png"
               alt=""
-              width={44}
-              height={44}
+              width={66}
+              height={66}
               aria-hidden="true"
               className="shrink-0 opacity-70"
             />
