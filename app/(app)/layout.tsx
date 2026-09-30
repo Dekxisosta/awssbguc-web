@@ -1,4 +1,5 @@
 import { createClient } from "@/src/shared/supabase/server";
+import { createAdminClient } from "@/src/shared/supabase/admin";
 import { DashboardShell } from "@/src/widgets/dashboard-shell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,13 +12,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let memberId: string | null = null;
 
   if (user) {
+    // Use admin client to bypass RLS — consistent with the profile page.
+    // The anon client can read these rows but the admin client is more
+    // reliable in layout context where cookie-based auth state may lag.
+    const admin = createAdminClient();
+
     const [{ data: profile }, { data: participant }] = await Promise.all([
-      supabase
+      admin
         .from("profiles")
         .select("username, avatar_url")
         .eq("profile_id", user.id)
         .single(),
-      supabase
+      admin
         .from("participants")
         .select("member_roster_id, display_name")
         .eq("user_id", user.id)
