@@ -331,8 +331,10 @@ function MemberCard({ member }: { member: PublicMemberProfile }) {
         </div>
       </div>
 
-      {member.bio && (
+      {member.bio ? (
         <p className="px-4 pb-3 text-xs leading-relaxed text-neutral-500 line-clamp-2">{member.bio}</p>
+      ) : (
+        <p className="px-4 pb-3 text-xs text-neutral-700 italic">No bio added.</p>
       )}
 
       {member.skills && member.skills.length > 0 && (
@@ -347,7 +349,7 @@ function MemberCard({ member }: { member: PublicMemberProfile }) {
       )}
 
       <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-neutral-800/60 px-4 py-3">
-        {member.github_username && (
+        {member.github_username ? (
           <a
             href={`https://github.com/${member.github_username}`}
             target="_blank"
@@ -358,6 +360,8 @@ function MemberCard({ member }: { member: PublicMemberProfile }) {
             <GitHubIcon size={11} />
             GitHub
           </a>
+        ) : (
+          <span className="text-[11px] italic text-neutral-700">No socials added.</span>
         )}
       </div>
     </div>
