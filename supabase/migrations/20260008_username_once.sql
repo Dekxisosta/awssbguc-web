@@ -11,5 +11,7 @@ ALTER TABLE profiles
     ADD COLUMN IF NOT EXISTS username_changed_at TIMESTAMPTZ;
 
 COMMENT ON COLUMN profiles.username_changed_at IS
-    'Timestamp of the one-time user-initiated username change. '
-    'NULL = username never set by user. Non-NULL = already used their change.';
+    'Timestamp of the one-time user-initiated username change via PATCH /api/profile. '
+    'NULL = user has not yet used their one-time self-service change (regardless of whether '
+    'a username was pre-assigned by an admin or left blank). Non-NULL = change has been used; '
+    'further self-service changes are blocked. Admins can still update username directly.';
