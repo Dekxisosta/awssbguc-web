@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { RegisterForm } from "@/src/features/auth";
+import { AvatarUpload } from "@/src/features/avatar-upload";
+import { MemberLinkForm } from "@/src/features/member-link";
 
 export const signupMetadata = {
   title: "Sign up — AWSSBG-UC",
@@ -11,46 +13,29 @@ export const signupMetadata = {
 
 type Step = "account" | "profile" | "membership";
 
+const HEADINGS: Record<Step, { title: string; sub: string }> = {
+  account:    { title: "Create your account",      sub: "Start here — takes less than a minute." },
+  profile:    { title: "Set up your profile",       sub: "All fields optional — you can update these anytime." },
+  membership: { title: "Register your membership",  sub: "Optional — you can always do this later." },
+};
+
 export function SignupPage() {
   const [step, setStep] = useState<Step>("account");
 
-  const headings: Record<Step, { title: string; sub: string }> = {
-    account: {
-      title: "Create your account",
-      sub: "Start here — takes less than a minute.",
-    },
-    profile: {
-      title: "Set up your profile",
-      sub: "Sign in first, then personalise your profile.",
-    },
-    membership: {
-      title: "Register your membership",
-      sub: "Optional — you can always do this later.",
-    },
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-16">
-      <div className="w-full max-w-sm">
+      <div className={`w-full transition-all duration-300 ${step === "account" ? "max-w-sm" : "max-w-lg"}`}>
 
         {/* Logo + heading */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <Image
-            src="/icons/logo.webp"
-            alt="AWSSBG-UC logo"
-            width={44}
-            height={44}
-            className="rounded-md object-contain"
-          />
+          <Image src="/icons/logo.webp" alt="AWSSBG-UC logo" width={44} height={44} className="rounded-md object-contain" />
           <div className="text-center">
-            <h1 className="text-xl font-bold tracking-tight text-neutral-100">
-              {headings[step].title}
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500">{headings[step].sub}</p>
+            <h1 className="text-xl font-bold tracking-tight text-neutral-100">{HEADINGS[step].title}</h1>
+            <p className="mt-1 text-sm text-neutral-500">{HEADINGS[step].sub}</p>
           </div>
         </div>
 
-        {/* Step indicator — 3 steps */}
+        {/* Step indicator */}
         <div className="mb-6 flex items-center gap-2">
           <StepDot n={1} active={step === "account"}    done={step === "profile" || step === "membership"} label="Account" />
           <div className="h-px flex-1 bg-neutral-800" />
@@ -71,9 +56,13 @@ export function SignupPage() {
           </>
         )}
 
-        {step === "profile" && <ProfileStep onContinue={() => setStep("membership")} />}
+        {step === "profile" && (
+          <ProfileStep onContinue={() => setStep("membership")} />
+        )}
 
-        {step === "membership" && <MembershipStep />}
+        {step === "membership" && (
+          <MembershipStep />
+        )}
 
       </div>
     </div>
@@ -85,16 +74,12 @@ export function SignupPage() {
 function StepDot({ n, active, done, label }: { n: number; active: boolean; done: boolean; label: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div
-        className={[
-          "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors",
-          done
-            ? "bg-[#00e482] text-[#161d27]"
-            : active
-            ? "border-2 border-[#00e482] text-[#00e482]"
-            : "border border-neutral-700 text-neutral-600",
-        ].join(" ")}
-      >
+      <div className={[
+        "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors",
+        done  ? "bg-[#00e482] text-[#161d27]"
+              : active ? "border-2 border-[#00e482] text-[#00e482]"
+              : "border border-neutral-700 text-neutral-600",
+      ].join(" ")}>
         {done ? (
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M20 6 9 17l-5-5" />
@@ -108,119 +93,170 @@ function StepDot({ n, active, done, label }: { n: number; active: boolean; done:
   );
 }
 
-/* ── Step 2: Profile interstitial (requires sign-in first) ─────────────── */
+/* ── Step 2: Profile setup (user is now signed in) ─────────────────────── */
 
 function ProfileStep({ onContinue }: { onContinue: () => void }) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [skills, setSkills] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
+    const body: Record<string, unknown> = {};
+    if (username.trim()) body.username = username.trim().toLowerCase();
+    if (bio.trim())      body.bio      = bio.trim();
+    if (skills.trim())   body.skills   = skills.trim();
+
+    if (Object.keys(body).length === 0) {
+      onContinue();
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        if (data.field) setFieldErrors({ [data.field]: data.error });
+        else setError(data.error);
+        setSaving(false);
+        return;
+      }
+      onContinue();
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setSaving(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      {/* Account confirmed */}
-      <div className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#00e482]/10">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#00e482]" aria-hidden="true">
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
+    <form onSubmit={handleSave} noValidate className="flex flex-col gap-5">
+
+      {/* Avatar */}
+      <div className="flex flex-col items-center gap-2">
+        <AvatarUpload avatarUrl={avatarUrl} username={username || null} onAvatarChange={setAvatarUrl} />
+        <p className="text-xs text-neutral-600">Click to upload a photo</p>
+      </div>
+
+      {/* Username + bio side by side on wider layout */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Username */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="su-username" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+            Username
+            <span className="text-[10px] font-normal text-[#00e482] uppercase tracking-wider">one-time</span>
+          </label>
+          <input
+            id="su-username"
+            type="text"
+            value={username}
+            onChange={(e) => { setUsername(e.target.value); setFieldErrors((f) => ({ ...f, username: "" })); }}
+            placeholder="e.g. cloudbuilder"
+            className={inputCls(!!fieldErrors.username)}
+          />
+          {fieldErrors.username
+            ? <p className="text-xs text-red-400">{fieldErrors.username}</p>
+            : <p className="text-xs text-neutral-600">6–24 chars, letter/number/_. Set once.</p>
+          }
         </div>
-        <div>
-          <p className="text-sm font-semibold text-neutral-100">Account created</p>
-          <p className="text-xs text-neutral-500">Check your email to verify your address.</p>
+
+        {/* Skills */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="su-skills" className="text-sm font-medium text-neutral-300">Skills</label>
+          <input
+            id="su-skills"
+            type="text"
+            value={skills}
+            onChange={(e) => { setSkills(e.target.value); setFieldErrors((f) => ({ ...f, skills: "" })); }}
+            placeholder="e.g. Python, AWS, React"
+            className={inputCls(!!fieldErrors.skills)}
+          />
+          {fieldErrors.skills
+            ? <p className="text-xs text-red-400">{fieldErrors.skills}</p>
+            : <p className="text-xs text-neutral-600">Comma-separated, up to 20 tags.</p>
+          }
         </div>
       </div>
 
-      {/* What profile setup includes */}
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Profile setup lets you
-        </p>
-        <ul className="flex flex-col gap-2">
-          {[
-            { label: "Choose your username", note: "One-time — choose carefully" },
-            { label: "Upload a profile photo", note: "Shown on your public card" },
-            { label: "Write a short bio", note: "Up to 280 characters" },
-            { label: "Add your skills", note: "Comma-separated tags" },
-          ].map(({ label, note }) => (
-            <li key={label} className="flex items-start gap-2.5">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00e482]" aria-hidden="true" />
-              <div>
-                <span className="text-sm text-neutral-300">{label}</span>
-                <span className="ml-2 text-xs text-neutral-600">{note}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {/* Bio */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="su-bio" className="text-sm font-medium text-neutral-300">Bio</label>
+        <textarea
+          id="su-bio"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          placeholder="e.g. AWS enthusiast, studying cloud security."
+          rows={3}
+          maxLength={280}
+          className={inputCls(false) + " resize-none"}
+        />
+        <p className="text-right text-[10px] text-neutral-700">{bio.length}/280</p>
       </div>
 
-      {/* CTAs */}
+      {error && (
+        <p className="rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-2.5 text-sm text-red-400">{error}</p>
+      )}
+
       <div className="flex flex-col gap-2.5">
-        {/* Sign in → goes to /profile-setup after auth */}
-        <Link
-          href="/login?redirect=%2Fprofile-setup"
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#161d27] px-4 py-3 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90"
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#161d27] px-4 py-3 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          Sign in and set up profile
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </Link>
+          {saving ? "Saving…" : "Save and continue"}
+          {!saving && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          )}
+        </button>
         <button
           type="button"
           onClick={onContinue}
           className="flex items-center justify-center rounded-lg border border-neutral-800 px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300"
         >
-          Skip — go to membership
+          Skip for now
         </button>
       </div>
-
-      <p className="text-center text-xs text-neutral-700">
-        You can set up your profile anytime from your account settings.
-      </p>
-    </div>
+    </form>
   );
 }
 
-/* ── Step 3: Membership interstitial ───────────────────────────────────── */
+/* ── Step 3: Membership (user is signed in, MemberLinkForm works) ───────── */
 
 function MembershipStep() {
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          SBG Membership includes
-        </p>
-        <ul className="flex flex-col gap-2">
-          {[
-            "Your official SBG-UC-YYXXXX member ID",
-            "Event attendance tracking via QR code",
-            "Member roster recognition across all org activities",
-          ].map((item) => (
-            <li key={item} className="flex items-start gap-2.5 text-sm text-neutral-400">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00e482]" aria-hidden="true" />
-              {item}
-            </li>
-          ))}
-        </ul>
+      <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+        <MemberLinkForm onSuccess={() => { window.location.href = "/"; }} />
       </div>
-
-      <div className="flex flex-col gap-2.5">
-        <Link
-          href="/login?redirect=%2Fmember"
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#161d27] px-4 py-3 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90"
+      <div className="text-center">
+        <a
+          href="/"
+          className="text-xs text-neutral-600 underline-offset-2 hover:text-neutral-400 hover:underline"
         >
-          Sign in and register membership
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </Link>
-        <Link
-          href="/login"
-          className="flex items-center justify-center rounded-lg border border-neutral-800 px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300"
-        >
-          Skip — just sign in
-        </Link>
+          Skip — go to home
+        </a>
       </div>
-
-      <p className="text-center text-xs text-neutral-700">
-        You can register your membership later from your profile.
-      </p>
     </div>
   );
+}
+
+function inputCls(hasError: boolean): string {
+  return [
+    "w-full rounded-lg border bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100",
+    "placeholder:text-neutral-600 focus:outline-none focus:ring-2 transition-colors",
+    hasError
+      ? "border-red-700 focus:ring-red-600/30"
+      : "border-neutral-700 focus:ring-[#00e482]/20 focus:border-[#00e482]/30",
+  ].join(" ");
 }
