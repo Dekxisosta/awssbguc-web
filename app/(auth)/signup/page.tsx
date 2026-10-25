@@ -1,2 +1,7 @@
-export { signupMetadata as metadata } from "@/src/_pages/signup";
-export { SignupPage as default } from "@/src/_pages/signup";
+import { SignupPage } from "@/src/_pages/signup";
+
+export const metadata = {
+  title: "Sign up — AWSSBG-UC",
+};
+
+export default SignupPage;

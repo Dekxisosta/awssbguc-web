@@ -6,10 +6,6 @@ import { focusRing } from "@/src/features/auth";
 import { SignupWizard, type WizardStep } from "@/src/features/signup-wizard";
 import { AuthShell } from "@/src/widgets/auth-shell";
 
-export const signupMetadata = {
-  title: "Sign up — AWSSBG-UC",
-};
-
 const HEADINGS: Record<WizardStep, { title: string; sub: string; bubble: string }> = {
   account:    { title: "Create your account",       sub: "Start here. Nothing is created until the last step.",        bubble: "I don't bite" },
   profile:    { title: "Set up your profile",       sub: "All fields optional. You can update these anytime.",          bubble: "Looking good!" },
