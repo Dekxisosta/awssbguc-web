@@ -38,3 +38,24 @@ export interface PublicMemberProfile {
   /** Self-reported skill tags, e.g. ["Python", "AWS", "React"]. Null when not set. */
   skills: string[] | null;
 }
+
+/**
+ * Public member profile for the detail page at /members/[username].
+ * Same public-safe fields as the directory card: the page reads the same
+ * `public_member_profiles` view, so a member only has a page when they have
+ * opted into the directory.
+ */
+export type PublicMemberDetail = PublicMemberProfile;
+
+/** An event a public member is going to / went to, from `event_public_attendees` joined to `events`. */
+export interface MemberEventSummary {
+  event_id: string;
+  slug: string;
+  name: string;
+  summary: string | null;
+  starts_at: string;
+  ends_at: string;
+  timezone: string;
+  location: string | null;
+  status: "not_started" | "ongoing" | "completed" | "cancelled";
+}

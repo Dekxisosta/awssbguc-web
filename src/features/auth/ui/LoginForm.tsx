@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/src/shared/supabase/client";
+import { bannerCls, errTxt, eyeBtnCls, inputClass, labelCls, submitCls } from "./pixel-form";
 
 type FormState =
   | { status: "idle" }
@@ -68,7 +69,7 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
       {globalError && (
         <div
           role="alert"
-          className="flex items-start gap-2.5 rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-400"
+          className={bannerCls}
         >
           <AlertIcon />
           <span>{globalError}</span>
@@ -79,7 +80,7 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="email"
-          className="text-sm font-medium text-neutral-300"
+          className={labelCls}
         >
           Email address
         </label>
@@ -102,7 +103,7 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
           className={inputClass(!!fieldError("email"))}
         />
         {fieldError("email") && (
-          <p id="email-error" role="alert" className="flex items-center gap-1.5 text-xs text-red-400">
+          <p id="email-error" role="alert" className={errTxt}>
             <AlertIcon small />
             {fieldError("email")}
           </p>
@@ -114,7 +115,7 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
         <div className="flex items-center justify-between">
           <label
             htmlFor="password"
-            className="text-sm font-medium text-neutral-300"
+            className={labelCls}
           >
             Password
           </label>
@@ -145,13 +146,13 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
             onClick={() => setShowPassword((v) => !v)}
             aria-label={showPassword ? "Hide password" : "Show password"}
             tabIndex={-1}
-            className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
+            className={eyeBtnCls}
           >
             <EyeIcon open={showPassword} />
           </button>
         </div>
         {fieldError("password") && (
-          <p id="password-error" role="alert" className="flex items-center gap-1.5 text-xs text-red-400">
+          <p id="password-error" role="alert" className={errTxt}>
             <AlertIcon small />
             {fieldError("password")}
           </p>
@@ -162,7 +163,7 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
       <button
         type="submit"
         disabled={isSubmitting}
-        className="relative mt-1 flex items-center justify-center rounded-lg bg-[#161d27] px-4 py-2.5 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00e482] focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+        className={submitCls}
       >
         {isSubmitting ? (
           <>
@@ -178,16 +179,6 @@ export function LoginForm({ onPasswordFocus, onPasswordBlur, redirectTo = "/" }:
 }
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
-
-function inputClass(hasError: boolean): string {
-  const base =
-    "w-full rounded-lg border bg-neutral-900 px-3 py-2.5 text-sm text-neutral-100 " +
-    "placeholder:text-neutral-600 transition-colors focus:outline-none focus:ring-2 " +
-    "disabled:opacity-50";
-  return hasError
-    ? `${base} border-red-700 focus:ring-red-600/40`
-    : `${base} border-neutral-700 focus:ring-[#00e482]/30 focus:border-[#00e482]/40`;
-}
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (

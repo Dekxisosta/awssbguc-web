@@ -1,25 +1,80 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  MessageSquare,
-  Bell,
-  Users,
-  Wrench,
-  Calendar,
-  Camera,
-  Megaphone,
-  LinkIcon,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
-  UserRound,
-} from "lucide-react";
+import { Pixelify_Sans, Jersey_10 } from "next/font/google";
 import type { PublicMemberProfile } from "@/src/entities/member";
 import { SOCIALS } from "@/src/shared/config/socials";
 
 export const membersMetadata = { title: "Community — AWSSBG-UC" };
+
+/**
+ * Community page in the pixel-art direction of the home page:
+ * black ground, butter-yellow type, Jersey 10 headlines, stripe dividers, square corners, hard offset shadows.
+ */
+
+const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
+
+// Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
+const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+
+const STRIPES: [string, number][] = [
+  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
+  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
+];
+const STRIPE_BG = (() => {
+  let at = 0;
+  const stops = STRIPES.map(([c, w]) => {
+    const s = `${c} ${at}% ${at + w}%`;
+    at += w;
+    return s;
+  });
+  return `linear-gradient(90deg, ${stops.join(", ")})`;
+})();
+
+const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+
+const btnPrimary = `inline-flex items-center justify-center gap-2 border-4 border-[#fff7a1] bg-[#fff7a1] px-6 py-3 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
+const btnDark = `inline-flex items-center justify-center gap-2 border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
+
+const CARD_BORDERS = ["border-[#2c8f8f]", "border-[#b89a0a]", "border-[#b32a0e]", "border-[#3aaa6e]"];
+
+function Stripes({ className = "h-4" }: { className?: string }) {
+  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+}
+
+// ─── Pixelated avatar ─────────────────────────────────────────────────────────
+
+function PixelPhoto({ src, width = 24, height = 24 }: { src: string; width?: number; height?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const img = new window.Image();
+    img.onload = () => {
+      const k = Math.max(width / img.width, height / img.height); // cover
+      const w = img.width * k;
+      const h = img.height * k;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+    };
+    img.src = src;
+  }, [src, width, height]);
+  return (
+    <canvas
+      ref={ref}
+      width={width}
+      height={height}
+      aria-hidden="true"
+      style={{ aspectRatio: `${width} / ${height}` }}
+      className="block w-full [image-rendering:pixelated]"
+    />
+  );
+}
 
 // ─── Discord SVG ──────────────────────────────────────────────────────────────
 
@@ -67,7 +122,7 @@ const CHANNELS = [
 function DiscordMock() {
   return (
     <div
-      className="flex h-[500px] w-full overflow-hidden rounded-xl shadow-2xl shadow-black/60 sm:h-[540px]"
+      className="flex h-[500px] w-full overflow-hidden border-4 border-[#fff7a1] shadow-[8px_8px_0_#2c8f8f] sm:h-[540px]"
       aria-label="Discord community preview"
       role="img"
     >
@@ -183,185 +238,169 @@ function DiscordMock() {
   );
 }
 
-// ─── Discord CTA (dark panel) ────────────────────────────────────────────────
+// ─── Discord CTA ──────────────────────────────────────────────────────────────
 
 const DISCORD_PERKS = [
-  { icon: MessageSquare, text: "Channels for AWS services, study sessions, and job sharing" },
-  { icon: Bell,          text: "First to hear about upcoming events and workshops" },
-  { icon: Users,         text: "Connect directly with officers, mentors, and alumni" },
-  { icon: Wrench,        text: "Project feedback, career tips, and certification support" },
-] as const;
+  { text: "Channels for AWS services, study sessions, and job sharing", dot: "bg-[#2c8f8f]" },
+  { text: "First to hear about upcoming events and workshops", dot: "bg-[#b89a0a]" },
+  { text: "Connect directly with officers, mentors, and alumni", dot: "bg-[#b32a0e]" },
+  { text: "Project feedback, career tips, and certification support", dot: "bg-[#3aaa6e]" },
+];
 
 function DiscordCTA() {
   return (
     <div className="flex flex-col justify-center">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">Community</p>
+      <p className="text-xl">Community</p>
+      <h2 className={`${hd} mt-3 text-[clamp(4.5rem,9vw,8rem)]`}>
+        Where the <span className="text-[#3aaa6e]">community</span> lives.
+      </h2>
 
-      <div className="relative">
-        <h2 className="text-4xl font-bold tracking-tight text-neutral-100 sm:text-5xl">
-          Where the{" "}
-          <span className="text-[#00e482]">community</span>{" "}
-          lives.
-        </h2>
-      </div>
-
-      <p className="mt-4 max-w-md text-base leading-relaxed text-neutral-400">
+      <p className="mt-6 max-w-md text-lg leading-snug">
         Ask questions, share projects, get feedback on your AWS journey, and meet members across every year level — all in one place.
       </p>
 
-      <ul className="mt-6 flex flex-col gap-2.5">
-        {DISCORD_PERKS.map(({ icon: Icon, text }) => (
-          <li key={text} className="flex items-start gap-3 text-sm text-neutral-400">
-            <Icon size={15} className="mt-0.5 shrink-0 text-[#00e482]" aria-hidden="true" />
-            {text}
+      <ul className="mt-6 flex flex-col gap-3">
+        {DISCORD_PERKS.map((p) => (
+          <li key={p.text} className="flex items-start gap-3 leading-snug">
+            <span aria-hidden="true" className={`mt-1.5 h-3 w-3 shrink-0 ${p.dot}`} />
+            {p.text}
           </li>
         ))}
       </ul>
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <a
-          href={SOCIALS.discord}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#5865F2] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#4752c4] active:scale-[0.98]"
-        >
-          <DiscordIcon size={16} />
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+        <a href={SOCIALS.discord} target="_blank" rel="noopener noreferrer" className={btnPrimary}>
+          <DiscordIcon size={18} />
           Join the Discord
         </a>
-        <span className="text-xs text-neutral-600">Free · Open to all members</span>
+        <span className="text-[#fff7a1]/70">Free · Open to all members</span>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5">
-        <span className="font-mono text-xs text-neutral-600">discord.gg/</span>
-        <span className="font-mono text-xs font-semibold text-neutral-400">JxACGrMAMK</span>
+      <div className="mt-6 flex w-fit max-w-full items-center gap-3 border-4 border-[#2c8f8f] px-4 py-2">
+        <span className="text-[#fff7a1]/60">discord.gg/</span>
+        <span className="font-bold">JxACGrMAMK</span>
         <a
           href={SOCIALS.discord}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open Discord invite"
-          className="ml-auto flex items-center gap-1 rounded-md border border-neutral-800 px-2 py-1 text-[11px] font-medium text-neutral-600 transition-colors hover:border-neutral-700 hover:text-neutral-300"
+          className={`ml-2 border-2 border-[#fff7a1]/60 px-2 py-0.5 text-sm transition-colors hover:bg-[#2c8f8f] hover:text-black ${focus}`}
         >
-          <ArrowUpRight size={10} />
-          Open
+          Open ↗
         </a>
       </div>
     </div>
   );
 }
 
-// ─── Facebook CTA (light panel) ───────────────────────────────────────────────
+// ─── Facebook CTA (butter panel) ──────────────────────────────────────────────
 
 const FB_PERKS = [
-  { icon: Calendar,  text: "Upcoming workshops, hackathons, and org events posted first" },
-  { icon: Camera,    text: "Event photos and recaps from every activity" },
-  { icon: Megaphone, text: "Official org announcements and important updates" },
-  { icon: LinkIcon,  text: "Registration links and partner event listings" },
-] as const;
+  "Upcoming workshops, hackathons, and org events posted first",
+  "Event photos and recaps from every activity",
+  "Official org announcements and important updates",
+  "Registration links and partner event listings",
+];
 
 function FacebookCTA() {
   return (
     <div className="order-1 flex flex-col justify-center lg:order-2">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">Facebook</p>
+      <p className="text-xl">Facebook</p>
+      <h2 className={`${hd} mt-3 text-[clamp(4rem,8vw,7rem)]`}>
+        Events, updates, <span className="text-[#b32a0e]">announcements.</span>
+      </h2>
 
-      <div className="relative">
-        <h2 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
-          Events, updates,{" "}
-          <span className="text-[#1877F2]">announcements.</span>
-        </h2>
-      </div>
-
-      <p className="mt-4 max-w-md text-base leading-relaxed text-neutral-600">
+      <p className="mt-6 max-w-md text-lg leading-snug">
         Our Facebook page is the primary channel for official announcements, event postings, and recaps. Follow to stay in the loop.
       </p>
 
-      <ul className="mt-6 flex flex-col gap-2.5">
-        {FB_PERKS.map(({ icon: Icon, text }) => (
-          <li key={text} className="flex items-start gap-3 text-sm text-neutral-600">
-            <Icon size={15} className="mt-0.5 shrink-0 text-neutral-400" aria-hidden="true" />
+      <ul className="mt-6 flex flex-col gap-3">
+        {FB_PERKS.map((text) => (
+          <li key={text} className="flex items-start gap-3 leading-snug">
+            <span aria-hidden="true" className="mt-1.5 h-3 w-3 shrink-0 bg-black" />
             {text}
           </li>
         ))}
       </ul>
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <a
-          href={SOCIALS.facebook}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#1877F2] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#1565d8] active:scale-[0.98]"
-        >
-          <FacebookIcon size={16} />
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+        <a href={SOCIALS.facebook} target="_blank" rel="noopener noreferrer" className={btnDark}>
+          <FacebookIcon size={18} />
           Follow on Facebook
         </a>
-        <span className="text-xs text-neutral-400">facebook.com/awsccpnc</span>
+        <span className="text-black/70">facebook.com/awsccpnc</span>
       </div>
     </div>
   );
 }
 
-// ─── Member card (dark panel) ─────────────────────────────────────────────────
+// ─── Member card ──────────────────────────────────────────────────────────────
 
-function MemberCard({ member }: { member: PublicMemberProfile }) {
+function MemberCard({ member, border }: { member: PublicMemberProfile; border: string }) {
   const handle = member.username ?? member.display_name ?? "Member";
   const isMemberId = /^SBG-UC-\d{6}$/.test(member.member_id);
 
   return (
-    <div className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 transition-colors hover:border-neutral-700">
-
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-neutral-800 transition-all group-hover:ring-[#00e482]/20">
-          {member.avatar_url ? (
-            <Image src={member.avatar_url} alt={`${handle}'s avatar`} fill sizes="40px" className="object-cover" />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-neutral-600 bg-neutral-800">
-              {handle.slice(0, 1).toUpperCase()}
-            </span>
-          )}
-        </div>
+    <div className={`relative flex h-full w-full flex-col border-4 ${border} transition-colors focus-within:bg-[#fff7a1]/5 hover:bg-[#fff7a1]/5`}>
+      <div className="flex items-center gap-4 p-4">
+        {member.avatar_url ? (
+          <div className="h-16 w-16 shrink-0 border-4 border-[#fff7a1]">
+            <PixelPhoto src={member.avatar_url} width={24} height={24} />
+          </div>
+        ) : (
+          <span className={`${hd} flex h-16 w-16 shrink-0 items-center justify-center border-4 border-[#fff7a1] bg-[#fff7a1] text-4xl text-black`}>
+            {handle.slice(0, 1).toUpperCase()}
+          </span>
+        )}
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-neutral-100">
-            {member.display_name ?? member.username ?? "—"}
-          </p>
-          {member.username && (
-            <p className="truncate text-[11px] text-neutral-500">@{member.username}</p>
-          )}
-          {isMemberId && (
-            <p className="font-mono text-[10px] text-neutral-600 truncate">{member.member_id}</p>
-          )}
+          <h3 className={`${hd} truncate text-3xl`}>
+            {member.username ? (
+              // Stretched link: the whole card opens the profile; the GitHub link below sits above it.
+              <Link href={`/members/${encodeURIComponent(member.username)}`} className={`after:absolute after:inset-0 ${focus}`}>
+                {member.display_name ?? member.username}
+              </Link>
+            ) : (
+              member.display_name ?? "—"
+            )}
+          </h3>
+          {member.username && <p className="truncate text-sm text-[#fff7a1]/70">@{member.username}</p>}
+          {isMemberId && <p className="truncate text-xs text-[#fff7a1]/50">{member.member_id}</p>}
         </div>
       </div>
 
       {member.bio ? (
-        <p className="px-4 pb-3 text-xs leading-relaxed text-neutral-500 line-clamp-2">{member.bio}</p>
+        <p className="line-clamp-2 px-4 pb-3 text-sm leading-snug text-[#fff7a1]/85">{member.bio}</p>
       ) : (
-        <p className="px-4 pb-3 text-xs text-neutral-700 italic">No bio added.</p>
+        <p className="px-4 pb-3 text-sm italic text-[#fff7a1]/40">No bio added.</p>
       )}
 
       {member.skills && member.skills.length > 0 && (
-        <div className="flex flex-wrap gap-1 px-4 pb-3" aria-label="Skills">
+        <ul className="flex flex-wrap gap-2 px-4 pb-4" aria-label="Skills">
           {member.skills.slice(0, 5).map((skill) => (
-            <span key={skill} className="rounded-full border border-neutral-800 bg-neutral-800/50 px-2 py-0.5 text-[10px] font-medium text-neutral-500">{skill}</span>
+            <li key={skill} className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-xs">
+              {skill}
+            </li>
           ))}
           {member.skills.length > 5 && (
-            <span className="rounded-full border border-neutral-800 bg-neutral-800/50 px-2 py-0.5 text-[10px] font-medium text-neutral-600">+{member.skills.length - 5}</span>
+            <li className="border-2 border-[#fff7a1]/30 px-2 py-0.5 text-xs text-[#fff7a1]/60">+{member.skills.length - 5}</li>
           )}
-        </div>
+        </ul>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-neutral-800/60 px-4 py-3">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t-4 border-dashed border-[#fff7a1]/20 px-4 py-3">
         {member.github_username ? (
           <a
             href={`https://github.com/${member.github_username}`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${handle} on GitHub`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-800/40 px-2.5 py-1 text-[11px] font-medium text-neutral-500 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-neutral-300"
+            className={`relative z-10 inline-flex items-center gap-2 border-2 border-[#fff7a1]/60 px-2.5 py-1 text-sm transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
           >
-            <GitHubIcon size={11} />
+            <GitHubIcon size={12} />
             GitHub
           </a>
         ) : (
-          <span className="text-[11px] italic text-neutral-700">No socials added.</span>
+          <span className="text-sm italic text-[#fff7a1]/40">No socials added.</span>
         )}
       </div>
     </div>
@@ -383,46 +422,44 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
   if (end - start < windowSize - 1) start = Math.max(1, end - windowSize + 1);
   const pageNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
 
-  const btnBase = "flex h-9 min-w-[2.25rem] items-center justify-center rounded-md px-2.5 text-sm font-medium transition-colors";
+  const btn = `flex h-10 min-w-[2.5rem] items-center justify-center px-2.5 text-lg transition-colors ${focus}`;
+  const btnLink = `${btn} border-4 border-[#2c8f8f] hover:bg-[#2c8f8f] hover:text-black`;
+  const btnOff = `${btn} border-4 border-[#fff7a1]/20 text-[#fff7a1]/30`;
 
   return (
-    <nav className="mt-10 flex items-center justify-center gap-1" aria-label="Pagination">
+    <nav className="mt-12 flex flex-wrap items-center justify-center gap-2" aria-label="Pagination">
       {prevHref ? (
-        <Link href={prevHref} aria-label="Previous page" className={`${btnBase} border border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:bg-neutral-800 hover:text-neutral-200`}>
-          <ChevronLeft size={14} />
-        </Link>
+        <Link href={prevHref} aria-label="Previous page" className={btnLink}>&lt;</Link>
       ) : (
-        <span className={`${btnBase} border border-neutral-800/40 text-neutral-700 cursor-not-allowed`} aria-disabled="true"><ChevronLeft size={14} /></span>
+        <span className={btnOff} aria-disabled="true">&lt;</span>
       )}
 
       {start > 1 && (
         <>
-          <Link href="/members?page=1" className={`${btnBase} border border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:bg-neutral-800`}>1</Link>
-          {start > 2 && <span className={`${btnBase} text-neutral-700`}>…</span>}
+          <Link href="/members?page=1" className={btnLink}>1</Link>
+          {start > 2 && <span className={`${btn} text-[#fff7a1]/50`}>…</span>}
         </>
       )}
 
       {pageNumbers.map((n) =>
         n === page ? (
-          <span key={n} aria-current="page" className={`${btnBase} border border-[#00e482]/30 bg-[#00e482]/10 text-[#00e482]`}>{n}</span>
+          <span key={n} aria-current="page" className={`${btn} border-4 border-[#fff7a1] bg-[#fff7a1] text-black shadow-[3px_3px_0_#b32a0e]`}>{n}</span>
         ) : (
-          <Link key={n} href={`/members?page=${n}`} className={`${btnBase} border border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:bg-neutral-800`}>{n}</Link>
+          <Link key={n} href={`/members?page=${n}`} className={btnLink}>{n}</Link>
         )
       )}
 
       {end < totalPages && (
         <>
-          {end < totalPages - 1 && <span className={`${btnBase} text-neutral-700`}>…</span>}
-          <Link href={`/members?page=${totalPages}`} className={`${btnBase} border border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:bg-neutral-800`}>{totalPages}</Link>
+          {end < totalPages - 1 && <span className={`${btn} text-[#fff7a1]/50`}>…</span>}
+          <Link href={`/members?page=${totalPages}`} className={btnLink}>{totalPages}</Link>
         </>
       )}
 
       {nextHref ? (
-        <Link href={nextHref} aria-label="Next page" className={`${btnBase} border border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:bg-neutral-800 hover:text-neutral-200`}>
-          <ChevronRight size={14} />
-        </Link>
+        <Link href={nextHref} aria-label="Next page" className={btnLink}>&gt;</Link>
       ) : (
-        <span className={`${btnBase} border border-neutral-800/40 text-neutral-700 cursor-not-allowed`} aria-disabled="true"><ChevronRight size={14} /></span>
+        <span className={btnOff} aria-disabled="true">&gt;</span>
       )}
     </nav>
   );
@@ -438,149 +475,71 @@ interface MembersPageProps {
 }
 
 export function MembersPage({ members, page, totalPages, totalCount }: MembersPageProps) {
+  const shared = totalCount ?? 0;
   return (
-    <div>
+    <div className={`${pixel.className} bg-black tracking-normal text-[#fff7a1]`}>
 
-      {/* ── Section 1: Discord — DARK ────────────────────────────────────── */}
-      <section className="relative overflow-hidden border-b border-neutral-800 bg-neutral-900">
-        {/* Decorative absolute images */}
-        <Image
-          src="/images/additional/community.png"
-          alt=""
-          width={260}
-          height={260}
-          aria-hidden="true"
-          className="animate-rain pointer-events-none absolute -bottom-12 -right-10 w-52 select-none lg:w-64"
-          style={{ "--rain-opacity": "0.04", "--rain-duration": "7s", "--rain-delay": "0s" } as React.CSSProperties}
-        />
-        <Image
-          src="/images/additional/sound.png"
-          alt=""
-          width={160}
-          height={160}
-          aria-hidden="true"
-          className="animate-rain pointer-events-none absolute -top-8 left-1/2 w-32 -translate-x-1/2 select-none lg:left-auto lg:right-[48%] lg:translate-x-0"
-          style={{ "--rain-opacity": "0.03", "--rain-duration": "9s", "--rain-delay": "-3s" } as React.CSSProperties}
-        />
-
-        <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-            <DiscordCTA />
-            <DiscordMock />
-          </div>
+      {/* ── Discord ── */}
+      <section className={`${wrap} py-14 sm:py-20`}>
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+          <DiscordCTA />
+          <DiscordMock />
         </div>
       </section>
 
-      {/* ── Section 2: Facebook — LIGHT ──────────────────────────────────── */}
-      <section className="relative overflow-hidden border-b border-neutral-200 bg-white">
-        {/* Decorative absolute images */}
-        <Image
-          src="/images/additional/trophy2.png"
-          alt=""
-          width={220}
-          height={220}
-          aria-hidden="true"
-          className="animate-rain pointer-events-none absolute -top-6 -left-8 w-44 select-none lg:w-56"
-          style={{ "--rain-opacity": "0.04", "--rain-duration": "8s", "--rain-delay": "-1.5s" } as React.CSSProperties}
-        />
-        <Image
-          src="/images/additional/ladder.png"
-          alt=""
-          width={180}
-          height={180}
-          aria-hidden="true"
-          className="animate-rain pointer-events-none absolute bottom-0 right-4 w-36 select-none lg:w-44"
-          style={{ "--rain-opacity": "0.03", "--rain-duration": "10s", "--rain-delay": "-5s" } as React.CSSProperties}
-        />
-
-        <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
+      {/* ── Facebook (butter panel) ── */}
+      <Stripes />
+      <section className="bg-[#fff7a1] text-black">
+        <div className={`${wrap} py-14 sm:py-20`}>
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-            <div className="relative order-2 lg:order-1">
-              <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-lg shadow-neutral-100">
-                <Image
-                  src="/images/facebook/facebook_image.png"
-                  alt="AWSSBG-UC Facebook page"
-                  width={800}
-                  height={600}
-                  className="w-full object-cover"
-                  priority={false}
-                />
-              </div>
+            <div className="order-2 border-4 border-black bg-black shadow-[8px_8px_0_#b32a0e] lg:order-1">
+              <Image
+                src="/images/facebook/facebook_image.png"
+                alt="AWSSBG-UC Facebook page"
+                width={800}
+                height={600}
+                className="w-full object-cover"
+              />
             </div>
             <FacebookCTA />
           </div>
         </div>
       </section>
 
-      {/* ── Section 3: Member directory — DARK ───────────────────────────── */}
-      <section className="relative overflow-hidden bg-neutral-900">
-        {/* Decorative absolute images */}
-        <Image
-          src="/images/additional/smile.png"
-          alt=""
-          width={200}
-          height={200}
-          aria-hidden="true"
-          className="animate-rain pointer-events-none absolute -top-6 right-8 w-40 select-none lg:w-48"
-          style={{ "--rain-opacity": "0.03", "--rain-duration": "11s", "--rain-delay": "-2s" } as React.CSSProperties}
-        />
-        <Image
-          src="/images/additional/key2.png"
-          alt=""
-          width={180}
-          height={180}
-          aria-hidden="true"
-          className="animate-rain pointer-events-none absolute bottom-16 -left-6 w-36 select-none lg:w-44"
-          style={{ "--rain-opacity": "0.04", "--rain-duration": "8.5s", "--rain-delay": "-4s" } as React.CSSProperties}
-        />
+      {/* ── Member directory ── */}
+      <Stripes />
+      <section className={`${wrap} py-14 sm:py-20`}>
+        <h2 className={`${hd} text-6xl sm:text-8xl`}>Member directory</h2>
+        <p className="mt-5 max-w-xl text-lg leading-relaxed">
+          Members who have opted into the public directory.
+          {shared > 0 && (
+            <span className="ml-1 text-[#fff7a1]/70">
+              {shared} {shared !== 1 ? "profiles" : "profile"} shared.
+            </span>
+          )}
+        </p>
 
-        {/* Header */}
-        <div className="relative border-b border-neutral-800 px-6 py-8">
-          <div className="mx-auto max-w-5xl flex items-center gap-5">
-            <Image
-              src="/images/additional/community.png"
-              alt=""
-              width={66}
-              height={66}
-              aria-hidden="true"
-              className="shrink-0 opacity-70"
-            />
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-neutral-100">Member Directory</h2>
-              <p className="mt-0.5 text-sm text-neutral-500">
-                Members who have opted into the public directory.
-                {(totalCount ?? 0) > 0 && (
-                  <span className="ml-1 text-neutral-400">
-                    {totalCount} {totalCount !== 1 ? "profiles" : "profile"} shared.
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mx-auto max-w-5xl px-6 py-10">
+        <div className="mt-10">
           {members.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-800 py-20 text-center">
-              <UserRound size={36} className="mb-4 text-neutral-700" aria-hidden="true" />
-              <p className="text-sm font-medium text-neutral-400">No public profiles yet</p>
-              <p className="mt-1 text-xs text-neutral-600">Members who opt into the directory will appear here.</p>
+            <div className="flex flex-col items-center justify-center border-4 border-dashed border-[#2c8f8f]/60 px-6 py-20 text-center">
+              <p className={`${hd} text-4xl`}>No public profiles yet</p>
+              <p className="mt-3 text-[#fff7a1]/70">Members who opt into the directory will appear here.</p>
             </div>
           ) : (
             <>
               <ul
-                className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3"
                 aria-label={`Members, page ${page} of ${totalPages}`}
               >
-                {members.map((member) => (
+                {members.map((member, i) => (
                   <li key={member.member_id} className="flex">
-                    <MemberCard member={member} />
+                    <MemberCard member={member} border={CARD_BORDERS[i % CARD_BORDERS.length]} />
                   </li>
                 ))}
               </ul>
               <Pagination page={page} totalPages={totalPages} />
               {totalPages > 1 && (
-                <p className="mt-4 text-center text-xs text-neutral-700">Page {page} of {totalPages}</p>
+                <p className="mt-4 text-center text-sm text-[#fff7a1]/60">Page {page} of {totalPages}</p>
               )}
             </>
           )}
@@ -589,4 +548,3 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
     </div>
   );
 }
-

@@ -6,7 +6,7 @@ import type { MembershipRow } from "@/src/entities/member";
 export const metadata = memberMetadata;
 
 export default async function MemberRoute() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 

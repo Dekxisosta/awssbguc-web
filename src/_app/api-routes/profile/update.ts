@@ -76,7 +76,7 @@ interface ProfilePatchBody {
 }
 
 export async function handleProfileUpdate(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

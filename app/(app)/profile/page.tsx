@@ -6,7 +6,7 @@ import { ProfilePage, profileMetadata } from "@/src/_pages/profile";
 export const metadata = profileMetadata;
 
 export default async function ProfileRoute() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

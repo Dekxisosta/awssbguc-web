@@ -15,10 +15,74 @@ export interface SetupInput {
   confirmPassword: string;
 }
 
+/** Every field the signup wizard can attach an error to. */
+export type RegistrationField =
+  | keyof RegisterInput
+  | "username"
+  | "discordId"
+  | "githubUsername"
+  | "bio"
+  | "skills"
+  | "studentNumber"
+  | "firstName"
+  | "middleName"
+  | "lastName"
+  | "yearLevel"
+  | "program"
+  | "section";
+
+/** Optional profile details collected by the signup wizard. */
+export interface RegistrationProfileInput {
+  username?: string;
+  discordId?: string;
+  githubUsername?: string;
+  bio?: string;
+  /** Comma-separated string or a pre-split array. */
+  skills?: string | string[];
+}
+
+/** Self-reported membership details. Supplying these is what makes someone a member. */
+export interface RegistrationMembershipInput {
+  studentNumber: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  yearLevel: string;
+  program: string;
+  section: string;
+}
+
+/**
+ * Body of POST /api/auth/register. The account fields are required; `profile`
+ * and `membership` are optional. Omitting `membership` creates an account
+ * without membership.
+ */
+export interface RegistrationPayload extends RegisterInput {
+  profile?: RegistrationProfileInput;
+  membership?: RegistrationMembershipInput;
+}
+
+/** What happened to the optional membership step after the account was created. */
+export type MembershipOutcome =
+  | { status: "skipped" }
+  | { status: "registered"; memberId: string }
+  | { status: "failed"; error: string; field?: RegistrationField };
+
 /** Shape of the JSON body returned by POST /api/auth/register. */
 export type RegisterResponse =
-  | { success: true; message: string }
-  | { success: false; error: string; field?: keyof RegisterInput };
+  | { success: true; message: string; membership: MembershipOutcome }
+  | {
+      success: false;
+      error: string;
+      field?: RegistrationField;
+      /** Every field-level error found, so the wizard can flag them all at once. */
+      errors?: Partial<Record<RegistrationField, string>>;
+    };
+
+/** Shape of the JSON body returned by POST /api/auth/check-availability. */
+export type AvailabilityResponse =
+  | { success: true; taken: RegistrationField[] }
+  | { success: false; error: string };
 
 /** Shape of the JSON body returned by POST /api/auth/setup. */
 export type SetupResponse =

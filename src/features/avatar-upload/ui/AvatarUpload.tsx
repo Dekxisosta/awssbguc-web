@@ -39,7 +39,47 @@ interface AvatarUploadProps {
   avatarUrl: string | null;
   username: string | null;
   onAvatarChange: (url: string | null) => void;
+  /** "pixel" matches the home-page pixel-art style (used by the profile editor). Default look is unchanged. */
+  variant?: "default" | "pixel";
 }
+
+const PX_FOCUS =
+  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+
+const STYLES = {
+  default: {
+    preview: "group relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-neutral-700 bg-neutral-800 transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 disabled:pointer-events-none disabled:opacity-50",
+    initials: "flex h-full w-full items-center justify-center text-2xl font-semibold text-neutral-300",
+    hoverOverlay: "absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100",
+    busyOverlay: "absolute inset-0 flex items-center justify-center rounded-full bg-black/60",
+    change: "rounded-md border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-500 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50",
+    remove: "rounded-md px-3 py-1.5 text-xs text-neutral-500 transition-colors hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+    error: "flex w-full max-w-xs items-start gap-2 rounded-md border border-red-800 bg-red-950/50 px-3 py-2 text-xs text-red-400",
+    errorDismiss: "shrink-0 text-red-500 hover:text-red-300",
+    cropPanel: "flex w-full max-w-lg flex-col gap-4 rounded-xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl",
+    cropTitle: "text-sm font-semibold text-neutral-100",
+    cropHelp: "text-xs text-neutral-500",
+    cropArea: "max-h-[60vh] overflow-auto rounded-lg bg-neutral-900",
+    cancel: "rounded-md border border-neutral-700 px-4 py-2 text-xs text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-200",
+    apply: "rounded-md bg-white px-4 py-2 text-xs font-semibold text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40",
+  },
+  pixel: {
+    preview: `group relative h-28 w-28 shrink-0 overflow-hidden border-4 border-[#fff7a1] bg-black transition-opacity hover:opacity-80 disabled:pointer-events-none disabled:opacity-50 ${PX_FOCUS}`,
+    initials: "flex h-full w-full items-center justify-center text-5xl text-[#fff7a1]",
+    hoverOverlay: "absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100",
+    busyOverlay: "absolute inset-0 flex items-center justify-center bg-black/70",
+    change: `border-4 border-[#fff7a1] px-4 py-1.5 text-base text-[#fff7a1] transition-colors hover:bg-[#fff7a1] hover:text-black disabled:cursor-not-allowed disabled:opacity-50 ${PX_FOCUS}`,
+    remove: `px-3 py-1.5 text-base text-[#fff7a1]/70 underline underline-offset-4 transition-colors hover:text-[#e26a56] ${PX_FOCUS}`,
+    error: "flex w-full max-w-xs items-start gap-2 border-4 border-[#b32a0e] bg-[#b32a0e] px-3 py-2 text-sm text-[#fff7a1]",
+    errorDismiss: "shrink-0 text-[#fff7a1] hover:underline",
+    cropPanel: "flex w-full max-w-lg flex-col gap-4 border-4 border-[#fff7a1] bg-black p-5 text-[#fff7a1] shadow-[8px_8px_0_#2c8f8f]",
+    cropTitle: "text-xl",
+    cropHelp: "text-sm text-[#fff7a1]/70",
+    cropArea: "max-h-[60vh] overflow-auto border-4 border-[#2c8f8f] bg-black",
+    cancel: `border-4 border-[#fff7a1] px-4 py-2 text-base text-[#fff7a1] transition-colors hover:bg-[#fff7a1] hover:text-black ${PX_FOCUS}`,
+    apply: `border-4 border-[#fff7a1] bg-[#fff7a1] px-4 py-2 text-base text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:opacity-40 disabled:shadow-none ${PX_FOCUS}`,
+  },
+} as const;
 
 function initCrop(width: number, height: number): Crop {
   return centerCrop(
@@ -103,7 +143,8 @@ async function compressCrop(
   return fallback;
 }
 
-export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUploadProps) {
+export function AvatarUpload({ avatarUrl, username, onAvatarChange, variant = "default" }: AvatarUploadProps) {
+  const s = STYLES[variant];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -228,13 +269,13 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
         onClick={() => !busy && fileInputRef.current?.click()}
         disabled={busy}
         aria-label="Change profile photo"
-        className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-neutral-700 bg-neutral-800 transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 disabled:pointer-events-none disabled:opacity-50"
+        className={s.preview}
       >
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={avatarUrl} alt="Profile photo" className="h-full w-full object-cover" />
         ) : (
-          <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-neutral-300">
+          <span className={s.initials}>
             {userInitials || "?"}
           </span>
         )}
@@ -242,7 +283,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
         {!busy && (
           <span
             aria-hidden="true"
-            className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+            className={s.hoverOverlay}
           >
             <CameraIcon />
           </span>
@@ -251,7 +292,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
         {busy && (
           <span
             aria-hidden="true"
-            className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60"
+            className={s.busyOverlay}
           >
             <SpinnerIcon />
           </span>
@@ -264,7 +305,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
-          className="rounded-md border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-500 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className={s.change}
         >
           {busy ? busyLabel : "Change photo"}
         </button>
@@ -273,7 +314,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
           <button
             type="button"
             onClick={handleRemove}
-            className="rounded-md px-3 py-1.5 text-xs text-neutral-500 transition-colors hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+            className={s.remove}
           >
             Remove
           </button>
@@ -283,14 +324,14 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
       {error && (
         <div
           role="alert"
-          className="flex w-full max-w-xs items-start gap-2 rounded-md border border-red-800 bg-red-950/50 px-3 py-2 text-xs text-red-400"
+          className={s.error}
         >
           <span className="flex-1">{error}</span>
           <button
             type="button"
             onClick={() => setError(null)}
             aria-label="Dismiss error"
-            className="shrink-0 text-red-500 hover:text-red-300"
+            className={s.errorDismiss}
           >
             ✕
           </button>
@@ -314,14 +355,14 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
           aria-modal="true"
           aria-label="Crop profile photo"
         >
-          <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl">
-            <h2 className="text-sm font-semibold text-neutral-100">
+          <div className={s.cropPanel}>
+            <h2 className={s.cropTitle}>
               Crop photo
             </h2>
-            <p className="text-xs text-neutral-500">
+            <p className={s.cropHelp}>
               Drag to reposition. The crop area is always square.
             </p>
-            <div className="max-h-[60vh] overflow-auto rounded-lg bg-neutral-900">
+            <div className={s.cropArea}>
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -346,7 +387,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
               <button
                 type="button"
                 onClick={handleCancelCrop}
-                className="rounded-md border border-neutral-700 px-4 py-2 text-xs text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-200"
+                className={s.cancel}
               >
                 Cancel
               </button>
@@ -354,7 +395,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange }: AvatarUplo
                 type="button"
                 onClick={handleApplyCrop}
                 disabled={!completedCrop || completedCrop.width === 0}
-                className="rounded-md bg-white px-4 py-2 text-xs font-semibold text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40"
+                className={s.apply}
               >
                 Apply crop
               </button>

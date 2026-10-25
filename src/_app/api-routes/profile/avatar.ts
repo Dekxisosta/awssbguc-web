@@ -14,7 +14,7 @@ function json(body: object, status: number) {
 }
 
 export async function handleAvatarUpload(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return json({ success: false, error: "You must be signed in." }, 401);
 
@@ -68,7 +68,7 @@ export async function handleAvatarUpload(request: NextRequest) {
 }
 
 export async function handleAvatarDelete(_request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return json({ success: false, error: "You must be signed in." }, 401);
 
