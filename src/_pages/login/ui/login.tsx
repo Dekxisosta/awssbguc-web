@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { LoginForm } from "@/src/features/auth";
+import { AuthShell } from "@/src/widgets/auth-shell";
 
 export const loginMetadata = {
   title: "Sign in — AWSSBG-UC",
@@ -12,43 +12,27 @@ interface LoginPageProps {
 
 export function LoginPage({ redirectTo }: LoginPageProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-16">
-      <div className="w-full max-w-sm">
+    <AuthShell
+      title="Sign in"
+      sub={
+        redirectTo === "/member"
+          ? "Sign in to complete your membership registration."
+          : "AWSSBG-UC member portal"
+      }
+      bubble="I don't bite"
+    >
+      <LoginForm redirectTo={redirectTo} />
 
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <Image
-            src="/icons/logo.webp"
-            alt="AWSSBG-UC logo"
-            width={44}
-            height={44}
-            className="rounded-md object-contain"
-          />
-          <div className="text-center">
-            <h1 className="text-xl font-bold tracking-tight text-neutral-100">
-              Sign in
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500">
-              {redirectTo === "/member"
-                ? "Sign in to complete your membership registration."
-                : "AWSSBG-UC member portal"}
-            </p>
-          </div>
-        </div>
-
-        <LoginForm redirectTo={redirectTo} />
-
-        <p className="mt-6 text-center text-xs text-neutral-600">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="font-medium text-neutral-400 underline-offset-2 hover:underline"
-          >
-            Create one
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-6 text-center text-base">
+        Don&apos;t have an account?{" "}
+        <Link
+          href="/signup"
+          className="underline underline-offset-4 hover:bg-black hover:text-[#fff7a1] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]"
+        >
+          Create one
+        </Link>
+      </p>
+    </AuthShell>
   );
 }
 

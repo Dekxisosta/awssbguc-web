@@ -8,7 +8,7 @@ function json(body: SetupResponse, status: number) {
 }
 
 export async function handleSetup(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user)
