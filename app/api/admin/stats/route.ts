@@ -1,31 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/src/shared/supabase/server";
 import { createAdminClient } from "@/src/shared/supabase/admin";
+import { requirePermission, PERMISSIONS } from "@/src/shared/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
-async function isAdmin(userId: string): Promise<boolean> {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("participants")
-    .select("participant_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!data) return false;
-  const { data: role } = await admin
-    .from("participant_roles")
-    .select("role")
-    .eq("participant_id", data.participant_id)
-    .eq("role", "admin")
-    .maybeSingle();
-  return !!role;
-}
-
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!await isAdmin(user.id)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const deny = await requirePermission(user?.id, PERMISSIONS.PARTICIPANTS_READ);
+  if (deny) return deny;
 
   const admin = createAdminClient();
 
@@ -44,10 +29,10 @@ export async function GET() {
   ]);
 
   return NextResponse.json({
-    participantCount: participantCount ?? 0,
-    memberCount:      memberCount      ?? 0,
-    accountCount:     accountCount     ?? 0,
-    eventCount:       eventCount       ?? 0,
-    registrationCount:registrationCount?? 0,
+    participantCount:  participantCount  ?? 0,
+    memberCount:       memberCount       ?? 0,
+    accountCount:      accountCount      ?? 0,
+    eventCount:        eventCount        ?? 0,
+    registrationCount: registrationCount ?? 0,
   });
 }
