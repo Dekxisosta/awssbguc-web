@@ -1,27 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { EventRow, RegistrationRow } from "@/src/entities/event";
+import Link from "next/link";
+import { STATUS_COLORS, STATUS_LABELS, type EventRow, type RegistrationRow } from "@/src/entities/event";
+
+/**
+ * Event card in the pixel-art direction of the home page: thick colored border + hard offset shadow,
+ * a date block on the left, status badge in the stripe palette, square buttons, no rounded corners.
+ * Inherits Pixelify Sans from the page; the Jersey 10 headline class is passed in as `headingClass`.
+ */
 
 interface EventCardProps {
   event: EventRow;
   registrationStatus: RegistrationRow["status"] | null;
   participantId: string | null;
+  /** Class that applies the Jersey 10 headline font (passed in by the page, which loads the font). */
+  headingClass?: string;
 }
-
-const STATUS_LABELS: Record<EventRow["status"], string> = {
-  not_started: "Upcoming",
-  ongoing: "Ongoing",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
-const STATUS_COLORS: Record<EventRow["status"], string> = {
-  not_started: "bg-blue-500/15 text-blue-400",
-  ongoing: "bg-green-500/15 text-green-400",
-  completed: "bg-neutral-500/20 text-neutral-400",
-  cancelled: "bg-red-500/15 text-red-400",
-};
 
 const REG_LABELS: Record<RegistrationRow["status"], string> = {
   registered: "Registered",
@@ -29,28 +24,35 @@ const REG_LABELS: Record<RegistrationRow["status"], string> = {
   not_attended: "Not attended",
 };
 
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+
+// Fixed to Philippine time so server and browser render the same text.
+const TZ = "Asia/Manila";
+
+const dateOnly = (d: Date) =>
+  d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: TZ });
+const timeOnly = (d: Date) =>
+  d.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: TZ });
+
 function formatDateRange(starts: string, ends: string): string {
-  const fmt = (d: Date) =>
-    d.toLocaleString("en-PH", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
   const s = new Date(starts);
   const e = new Date(ends);
-  if (s.toDateString() === e.toDateString()) {
-    return `${s.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} · ${s.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", hour12: true })} – ${e.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", hour12: true })}`;
+  if (dateOnly(s) === dateOnly(e)) {
+    return `${dateOnly(s)} · ${timeOnly(s)} – ${timeOnly(e)}`;
   }
-  return `${fmt(s)} – ${fmt(e)}`;
+  return `${dateOnly(s)} ${timeOnly(s)} – ${dateOnly(e)} ${timeOnly(e)}`;
 }
 
-export function EventCard({ event, registrationStatus, participantId }: EventCardProps) {
+export function EventCard({ event, registrationStatus, participantId, headingClass = "" }: EventCardProps) {
   const [regStatus, setRegStatus] = useState<RegistrationRow["status"] | null>(registrationStatus);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const color = STATUS_COLORS[event.status];
+  const start = new Date(event.starts_at);
+  const day = start.toLocaleDateString("en-PH", { day: "numeric", timeZone: TZ });
+  const month = start.toLocaleDateString("en-PH", { month: "short", timeZone: TZ });
+  const year = start.toLocaleDateString("en-PH", { year: "numeric", timeZone: TZ });
 
   const canRegister =
     participantId !== null &&
@@ -99,88 +101,100 @@ export function EventCard({ event, registrationStatus, participantId }: EventCar
   }
 
   return (
-    <article className="rounded-lg border border-neutral-800 bg-neutral-900 p-5">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <h2 className="truncate text-base font-semibold text-neutral-100">
-            {event.name}
-          </h2>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            {formatDateRange(event.starts_at, event.ends_at)}
-          </p>
+    <article
+      className="flex flex-col gap-5 border-4 bg-black p-5 sm:flex-row sm:gap-6"
+      style={{ borderColor: color, boxShadow: `6px 6px 0 ${color}` }}
+    >
+      {/* Date block */}
+      <div
+        aria-hidden="true"
+        className="flex h-24 w-24 shrink-0 flex-col items-center justify-center self-start text-black"
+        style={{ background: color }}
+      >
+        <span className={`${headingClass} text-5xl`}>{day}</span>
+        <span className="text-base uppercase leading-none">{month}</span>
+        <span className="text-xs leading-none opacity-80">{year}</span>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className={`${headingClass} break-words text-4xl`}>
+              <Link href={`/events/${event.slug}`} className={`underline-offset-4 hover:underline ${focus}`}>
+                {event.name}
+              </Link>
+            </h2>
+            <p className="mt-2 text-base text-[#fff7a1]/70">{formatDateRange(event.starts_at, event.ends_at)}</p>
+          </div>
+
+          <span className="shrink-0 px-2 py-0.5 text-base text-black" style={{ background: color }}>
+            {STATUS_LABELS[event.status]}
+          </span>
         </div>
 
-        <span
-          className={[
-            "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
-            STATUS_COLORS[event.status],
-          ].join(" ")}
-        >
-          {STATUS_LABELS[event.status]}
-        </span>
-      </div>
-
-      {event.location && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-neutral-400">
-          <LocationIcon />
-          {event.location}
-        </p>
-      )}
-
-      {event.description && (
-        <p className="mt-3 text-sm text-neutral-300 leading-relaxed">
-          {event.description}
-        </p>
-      )}
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {regStatus !== null && (
-          <span className="rounded-full bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-300">
-            {REG_LABELS[regStatus]}
-          </span>
+        {event.location && (
+          <p className="mt-3 flex items-center gap-2 text-base">
+            <LocationIcon />
+            {event.location}
+          </p>
         )}
 
-        {canRegister && (
-          <button
-            type="button"
-            onClick={handleRegister}
-            disabled={isPending}
-            className="rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-80 disabled:opacity-50"
+        {event.description && (
+          <p className="mt-3 text-lg leading-snug text-[#fff7a1]/85">{event.description}</p>
+        )}
+
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          {regStatus !== null && (
+            <span className="border-4 border-[#fff7a1] px-2 py-0.5 text-base">{REG_LABELS[regStatus]}</span>
+          )}
+
+          {canRegister && (
+            <button
+              type="button"
+              onClick={handleRegister}
+              disabled={isPending}
+              className={`border-4 border-[#fff7a1] bg-[#fff7a1] px-5 py-2 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:opacity-50 ${focus}`}
+            >
+              {isPending ? "Registering…" : "Register"}
+            </button>
+          )}
+
+          {canUnregister && (
+            <button
+              type="button"
+              onClick={handleUnregister}
+              disabled={isPending}
+              className={`border-4 border-[#2c8f8f] px-5 py-2 text-lg transition-colors hover:bg-[#2c8f8f] hover:text-black disabled:opacity-50 ${focus}`}
+            >
+              {isPending ? "Removing…" : "Unregister"}
+            </button>
+          )}
+
+          <Link
+            href={`/events/${event.slug}`}
+            className={`border-4 border-[#fff7a1]/60 px-5 py-2 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
           >
-            {isPending ? "Registering…" : "Register"}
-          </button>
-        )}
+            Details
+          </Link>
 
-        {canUnregister && (
-          <button
-            type="button"
-            onClick={handleUnregister}
-            disabled={isPending}
-            className="rounded-md border border-neutral-700 px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200 disabled:opacity-50"
-          >
-            {isPending ? "Removing…" : "Unregister"}
-          </button>
-        )}
+          {!participantId && (event.status === "not_started" || event.status === "ongoing") && (
+            <span className="text-base text-[#fff7a1]/70">Complete your profile to register for events.</span>
+          )}
+        </div>
 
-        {!participantId && (event.status === "not_started" || event.status === "ongoing") && (
-          <span className="text-xs text-neutral-500">
-            Complete your profile to register for events.
-          </span>
+        {error && (
+          <p role="alert" className="mt-3 inline-block bg-[#b32a0e] px-3 py-1 text-base text-[#fff7a1]">
+            {error}
+          </p>
         )}
       </div>
-
-      {error && (
-        <p className="mt-2 text-xs text-red-400" role="alert">
-          {error}
-        </p>
-      )}
     </article>
   );
 }
 
 function LocationIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true" className="shrink-0">
       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
       <circle cx="12" cy="10" r="3" />
     </svg>

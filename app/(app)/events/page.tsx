@@ -1,11 +1,11 @@
 import { createClient } from "@/src/shared/supabase/server";
 import { EventsPage, eventsMetadata } from "@/src/_pages/events";
-import type { EventRow, RegistrationRow } from "@/src/entities/event";
+import { EVENT_PUBLIC_COLUMNS, type EventRow, type RegistrationRow } from "@/src/entities/event";
 
 export const metadata = eventsMetadata;
 
 export default async function EventsRoute() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   // Resolve participant only when authenticated — guests get a read-only view.
@@ -19,7 +19,7 @@ export default async function EventsRoute() {
 
   const { data: events, error } = await supabase
     .from("events")
-    .select("event_id, name, description, location, starts_at, ends_at, status")
+    .select(EVENT_PUBLIC_COLUMNS)
     .order("starts_at", { ascending: true });
 
   const { data: registrations } = participant
@@ -35,7 +35,7 @@ export default async function EventsRoute() {
 
   return (
     <EventsPage
-      events={(events ?? []) as EventRow[]}
+      events={(events ?? []) as unknown as EventRow[]}
       registrationMap={registrationMap}
       participantId={participant?.participant_id ?? null}
       error={!!error}

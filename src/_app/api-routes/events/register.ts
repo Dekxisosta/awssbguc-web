@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/src/shared/supabase/server";
 
 export async function handleEventRegister(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -42,6 +42,13 @@ export async function handleEventRegister(req: NextRequest) {
   if (error) {
     if (error.code === "23505")
       return NextResponse.json({ error: "You are already registered for this event" }, { status: 409 });
+    // Raised by the event_registrations_guard trigger (migration 20260011).
+    if (error.message.includes("EVENT_FULL"))
+      return NextResponse.json({ error: "This event is full" }, { status: 409 });
+    if (error.message.includes("REGISTRATION_NOT_OPEN"))
+      return NextResponse.json({ error: "Registration has not opened yet" }, { status: 422 });
+    if (error.message.includes("REGISTRATION_CLOSED"))
+      return NextResponse.json({ error: "Registration is closed for this event" }, { status: 422 });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -49,7 +56,7 @@ export async function handleEventRegister(req: NextRequest) {
 }
 
 export async function handleEventUnregister(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
