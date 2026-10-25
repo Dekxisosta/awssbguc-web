@@ -11,7 +11,10 @@
  */
 
 import { createAdminClient } from "@/src/shared/supabase/admin";
+import type { NormalizedMembership, NormalizedProfile } from "./validation";
 import type {
+  MembershipOutcome,
+  RegistrationField,
   ProvisionResult,
   ProvisionError,
   BulkProvisionResult,
@@ -65,28 +68,8 @@ export function generateTemporaryPassword(): string {
   return parts.join("-");
 }
 
-/**
- * Validate a user-chosen password.
- * Returns null if valid, or an error string if not.
- */
-export function validatePassword(password: string): string | null {
-  if (!password || password.length < 8) {
-    return "Password must be at least 8 characters.";
-  }
-  if (password.length > 72) {
-    return "Password must be 72 characters or fewer.";
-  }
-  if (!/[A-Z]/.test(password)) {
-    return "Password must contain at least one uppercase letter.";
-  }
-  if (!/[a-z]/.test(password)) {
-    return "Password must contain at least one lowercase letter.";
-  }
-  if (!/[0-9]/.test(password)) {
-    return "Password must contain at least one number.";
-  }
-  return null;
-}
+// Password rules live in ./validation so the browser and server share them.
+export { validatePassword } from "./validation";
 
 // ---------------------------------------------------------------------------
 // Display name utilities
@@ -449,84 +432,259 @@ export async function provisionMembersWithEmail(
 }
 
 // ---------------------------------------------------------------------------
-// FLOW 2: Normal self-service registration
+// FLOW 2: Self-service registration (multi-step signup wizard)
+//
+// The wizard collects everything client-side and calls this once, at the end.
+//   1. Account  (auth user + participant + profile) is the critical part and is
+//      rolled back as a whole if any piece fails.
+//   2. Membership is separate: creating an account does not make someone a
+//      member, but supplying the membership fields does. A membership failure
+//      does NOT undo the account; it is reported so the user can retry later.
 // ---------------------------------------------------------------------------
 
-export interface RegisterMemberInput {
+export class RegistrationError extends Error {
+  constructor(
+    message: string,
+    public readonly code: "field_taken" | "auth_error" | "internal",
+    public readonly field?: RegistrationField
+  ) {
+    super(message);
+    this.name = "RegistrationError";
+  }
+}
+
+export interface AvailabilityInput {
+  email?: string;
+  username?: string;
+  discordId?: string;
+  githubUsername?: string;
+  studentNumber?: string;
+}
+
+/** Which of the supplied values are already in use. Advisory; DB constraints are the authority. */
+export async function getTakenFields(input: AvailabilityInput): Promise<RegistrationField[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.rpc("check_registration_availability", {
+    p_email: input.email ?? null,
+    p_username: input.username ?? null,
+    p_discord_id: input.discordId ?? null,
+    p_github_username: input.githubUsername ?? null,
+    p_student_number: input.studentNumber ?? null,
+  });
+  if (error) throw new Error(`Availability check failed: ${error.message}`);
+  return (data ?? []) as RegistrationField[];
+}
+
+const TAKEN_MESSAGES: Partial<Record<RegistrationField, string>> = {
+  email: "An account with that email already exists.",
+  username: "That username is already taken.",
+  discordId: "That Discord ID is already linked to another account.",
+  githubUsername: "That GitHub username is already linked to another account.",
+  studentNumber:
+    "That student number already has an active SBG membership. If this is you, contact an administrator.",
+};
+
+function takenMessage(field: RegistrationField): string {
+  return TAKEN_MESSAGES[field] ?? "That value is already in use.";
+}
+
+function isUniqueViolation(error: { code?: string } | null): boolean {
+  return error?.code === "23505";
+}
+
+/** Map a unique-violation message to the wizard field it belongs to. */
+function fieldFromConstraint(message: string): RegistrationField | undefined {
+  const m = message.toLowerCase();
+  if (m.includes("username")) return "username";
+  if (m.includes("discord")) return "discordId";
+  if (m.includes("github")) return "githubUsername";
+  if (m.includes("email")) return "email";
+  return undefined;
+}
+
+async function rollbackAuthUser(supabase: AdminClient, authUserId: string): Promise<void> {
+  // profiles cascades from auth.users; no participant row exists yet at any
+  // point where this is called.
+  const { error } = await supabase.auth.admin.deleteUser(authUserId);
+  if (error) {
+    console.error(`[registerAccount] rollback failed for auth user ${authUserId}:`, error.message);
+  }
+}
+
+async function registerMembershipForParticipant(
+  supabase: AdminClient,
+  participantId: string,
+  membership: NormalizedMembership
+): Promise<MembershipOutcome> {
+  const { data: registered, error: registerErr } = (await supabase
+    .rpc("register_member_self_reported", {
+      p_student_number: membership.studentNumber,
+      p_first_name: membership.firstName,
+      p_middle_name: membership.middleName,
+      p_last_name: membership.lastName,
+      p_year_level: membership.yearLevel,
+      p_program: membership.program,
+      p_section: membership.section,
+    })
+    .maybeSingle()) as {
+    data: { member_id: string; student_number: string } | null;
+    error: { code?: string; message: string } | null;
+  };
+
+  if (registerErr) {
+    if (isUniqueViolation(registerErr) || registerErr.message.toLowerCase().includes("already has an active")) {
+      return { status: "failed", error: takenMessage("studentNumber"), field: "studentNumber" };
+    }
+    console.error("[registerAccount] register_member_self_reported failed:", registerErr.message);
+    return { status: "failed", error: "Membership could not be registered. You can try again from your member page." };
+  }
+  if (!registered) {
+    return { status: "failed", error: "Membership could not be registered. You can try again from your member page." };
+  }
+
+  const { error: linkErr } = await supabase
+    .from("participants")
+    .update({ member_roster_id: registered.member_id })
+    .eq("participant_id", participantId)
+    .is("member_roster_id", null);
+
+  if (linkErr) {
+    console.error("[registerAccount] membership link failed:", linkErr.message);
+    // Do not leave an unlinked membership (and its student data) behind.
+    await supabase.from("member_roster").delete().eq("member_id", registered.member_id);
+    await supabase.from("student_data").delete().eq("student_number", registered.student_number);
+    return { status: "failed", error: "Membership could not be registered. You can try again from your member page." };
+  }
+
+  return { status: "registered", memberId: registered.member_id };
+}
+
+export interface RegisterAccountInput {
   email: string;
   fullName: string;
   password: string;
+  profile?: NormalizedProfile;
+  membership?: NormalizedMembership | null;
 }
 
-export interface RegisterMemberResult {
+export interface RegisterAccountResult {
   authUserId: string;
+  participantId: string;
+  membership: MembershipOutcome;
 }
 
-export async function registerMember(
-  input: RegisterMemberInput
-): Promise<RegisterMemberResult> {
+export async function registerAccount(input: RegisterAccountInput): Promise<RegisterAccountResult> {
   const supabase = createAdminClient();
 
-  const sanitizedEmail = input.email.trim().toLowerCase();
-  const sanitizedName  = input.fullName.trim();
+  const email = input.email.trim().toLowerCase();
+  const fullName = input.fullName.trim();
+  const profile = input.profile ?? {};
 
-  const { data: authData, error: authError } =
-    await supabase.auth.admin.createUser({
-      email: sanitizedEmail,
-      password: input.password,
-      email_confirm: true,
-      user_metadata: { full_name: sanitizedName },
-    });
+  // Authoritative re-check right before creating anything. studentNumber is
+  // deliberately excluded: a taken student number must not block the account.
+  const taken = await getTakenFields({
+    email,
+    username: profile.username,
+    discordId: profile.discordId,
+    githubUsername: profile.githubUsername,
+  });
+  if (taken.length > 0) {
+    throw new RegistrationError(takenMessage(taken[0]), "field_taken", taken[0]);
+  }
+
+  // 1. auth user
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
 
   if (authError || !authData.user) {
     const isDuplicate =
-      authError?.message.toLowerCase().includes("already registered") ||
-      authError?.code === "email_exists";
-    throw Object.assign(
-      new Error(
-        isDuplicate
-          ? "An account with that email already exists."
-          : `Auth user creation failed: ${authError?.message}`
-      ),
-      { code: isDuplicate ? "email_taken" : "auth_error", field: isDuplicate ? "email" : undefined }
-    );
+      authError?.message.toLowerCase().includes("already registered") || authError?.code === "email_exists";
+    throw isDuplicate
+      ? new RegistrationError(takenMessage("email"), "field_taken", "email")
+      : new RegistrationError(`Auth user creation failed: ${authError?.message}`, "auth_error");
   }
-
   const authUserId = authData.user.id;
 
   try {
-    await createProfile(supabase, {
-      authUserId,
-      initialSetupCompleted: true,
-      username: null,
+    // 2. profile (+ the participant's pseudonymous display name)
+    let displayName = await resolveUniqueDisplayName(supabase);
+    const username = profile.username ?? (await resolveUniqueUsername(supabase, displayName));
+
+    const { error: profileErr } = await supabase.from("profiles").insert({
+      profile_id: authUserId,
+      initial_setup_completed: true,
+      username,
+      // A user-chosen username uses up the one-time change; an auto-assigned one does not.
+      username_changed_at: profile.username ? new Date().toISOString() : null,
+      discord_id: profile.discordId ?? null,
+      github_username: profile.githubUsername ?? null,
+      bio: profile.bio ?? null,
+      skills: profile.skills ?? null,
     });
-  } catch (profileErr) {
-    await supabase.auth.admin.deleteUser(authUserId);
-    throw profileErr;
+
+    if (profileErr) {
+      if (isUniqueViolation(profileErr)) {
+        const field = fieldFromConstraint(profileErr.message);
+        throw new RegistrationError(field ? takenMessage(field) : "That value is already in use.", "field_taken", field);
+      }
+      throw new RegistrationError(`Profile insert failed: ${profileErr.message}`, "internal");
+    }
+
+    // 3. participant (retry if the generated display name raced with another signup)
+    let participantId: string | null = null;
+    for (let attempt = 0; attempt < 3 && !participantId; attempt++) {
+      const { data: participant, error: participantErr } = await supabase
+        .from("participants")
+        .insert({
+          supplied_name: fullName,
+          email,
+          member_roster_id: null,
+          user_id: authUserId,
+          display_name: displayName,
+        })
+        .select("participant_id")
+        .single();
+
+      if (!participantErr && participant) {
+        participantId = participant.participant_id as string;
+        break;
+      }
+      if (participantErr && isUniqueViolation(participantErr)) {
+        if (participantErr.message.toLowerCase().includes("display_name")) {
+          displayName = await resolveUniqueDisplayName(supabase);
+          continue;
+        }
+        throw new RegistrationError(takenMessage("email"), "field_taken", "email");
+      }
+      throw new RegistrationError(`Participant insert failed: ${participantErr?.message}`, "internal");
+    }
+    if (!participantId) {
+      throw new RegistrationError("Participant insert failed: display name collision.", "internal");
+    }
+
+    // 4. membership: separate from the account, failure is reported not fatal
+    let membership: MembershipOutcome = { status: "skipped" };
+    if (input.membership) {
+      try {
+        membership = await registerMembershipForParticipant(supabase, participantId, input.membership);
+      } catch (membershipErr) {
+        console.error("[registerAccount] membership step threw:", membershipErr);
+        membership = {
+          status: "failed",
+          error: "Membership could not be registered. You can try again from your member page.",
+        };
+      }
+    }
+
+    return { authUserId, participantId, membership };
+  } catch (err) {
+    await rollbackAuthUser(supabase, authUserId);
+    throw err;
   }
-
-  const displayName = await resolveUniqueDisplayName(supabase);
-
-  const { error: participantErr } = await supabase.from("participants").insert({
-    supplied_name:    sanitizedName,
-    email:            sanitizedEmail,
-    member_roster_id: null,
-    user_id:          authUserId,
-    display_name:     displayName,
-  });
-
-  if (participantErr) {
-    console.error("[registerMember] participant insert failed:", participantErr.message);
-  } else {
-    const username = await resolveUniqueUsername(supabase, displayName, authUserId);
-    await supabase
-      .from("profiles")
-      .update({ username })
-      .eq("profile_id", authUserId)
-      .is("username", null);
-  }
-
-  return { authUserId };
 }
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ function json(body: JsonResponse, status: number) {
 // If a deletion is already scheduled it returns the existing scheduled date.
 // ---------------------------------------------------------------------------
 export async function handleScheduleAccountDeletion(_request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -66,7 +66,7 @@ export async function handleScheduleAccountDeletion(_request: NextRequest) {
 // Cancels a pending soft-delete by clearing deletion_scheduled_at.
 // ---------------------------------------------------------------------------
 export async function handleCancelAccountDeletion(_request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
