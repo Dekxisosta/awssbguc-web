@@ -6,7 +6,7 @@ import { ProfileSetupPage, profileSetupMetadata } from "@/src/_pages/profile-set
 export const metadata = profileSetupMetadata;
 
 export default async function ProfileSetupRoute() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?redirect=/profile-setup");
 

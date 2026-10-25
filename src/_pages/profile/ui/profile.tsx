@@ -1,7 +1,24 @@
-import Image from "next/image";
+import { Pixelify_Sans, Jersey_10 } from "next/font/google";
 import { ProfileCard } from "@/src/features/profile-edit";
+import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
 export const profileMetadata = { title: "Profile — AWSSBG-UC" };
+
+/**
+ * Profile page in the pixel-art direction of the home page: black ground, butter-yellow type,
+ * Jersey 10 headlines, drifting clouds and edge pixels. The interactive body (member pass, detail
+ * tiles, edit modal) lives in the profile-edit feature.
+ */
+
+// Same fonts as the home page. (Rebuilt here: this is a server component, and non-component exports
+// from the "use client" HomeClient module arrive as client references, not strings.)
+const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
+
+// Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
+const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+
+const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
 
 export interface ProfilePageProps {
   fullName: string;
@@ -26,80 +43,23 @@ export interface ProfilePageProps {
   usernameChangedAt: string | null;
 }
 
-/**
- * Zone measurements from the 1224×936 source image (px → % of image):
- *
- *   Big card:  x1=220 y1=100  x2=1195 y2=690
- *     left=18%   top=10.7%  right=2.4%   bottom=26.3%
- *
- *   Pill:      x1=220 y1=720  x2=980  y2=870
- *     left=18%   top=76.9%  right=19.9%  bottom=7%
- */
-
 export function ProfilePage(props: ProfilePageProps) {
   return (
-    <div>
-      {/* ── Mobile layout (< sm) — free flex stack, no artboard wrapper ─── */}
-      <div className="sm:hidden px-4 py-6">
-        {/* Slot divs for portals — still needed so ProfileCard mounts cleanly */}
-        <div id="profile-card-zone-mobile" className="hidden" />
-        <div id="profile-pill-zone-mobile" className="hidden" />
-        <div id="profile-qr-zone-mobile" className="hidden" />
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+      <PixelClouds />
+      <SidePixels side="left" />
+      <SidePixels side="right" />
 
-        <ProfileCard
-          {...props}
-          cardSlotId="profile-card-zone-mobile"
-          pillSlotId="profile-pill-zone-mobile"
-          qrSlotId="profile-qr-zone-mobile"
-          mobileLayout
-        />
-      </div>
+      <div className="relative z-10">
+        <section className={`${wrap} pb-10 pt-10 sm:pb-14 sm:pt-14`}>
+          <p className="text-xl">AWSSBG-UC</p>
+          <h1 className={`${hd} mt-3 text-[clamp(5rem,13vw,10rem)]`}>Profile</h1>
+          <p className="mt-6 max-w-2xl text-2xl leading-snug">
+            Your member pass, and what other members see about you.
+          </p>
+        </section>
 
-      {/* ── Desktop layout (sm+) — artboard with positioned zones ──────── */}
-      <div className="hidden sm:block">
-        <div className="mx-auto w-full max-w-2xl px-6 py-10">
-          {/* Aspect-ratio shell — 1224:936 ≈ 76.47% */}
-          <div className="relative w-full" style={{ paddingBottom: "76.47%" }}>
-
-            {/* Background artwork */}
-            <Image
-              src="/profile/main_container.png"
-              alt=""
-              fill
-              sizes="896px"
-              className="pointer-events-none select-none object-contain"
-              priority
-            />
-
-            {/* ── Big card zone ── */}
-            <div
-              id="profile-card-zone"
-              className="absolute overflow-visible"
-              style={{ left: "18%", top: "10.7%", right: "14%", bottom: "26.3%" }}
-            />
-
-            {/* ── Pill zone ── */}
-            <div
-              id="profile-pill-zone"
-              className="absolute overflow-hidden"
-              style={{ left: "18%", top: "76.9%", right: "19.9%", bottom: "7%" }}
-            />
-
-            {/* ── QR zone ── */}
-            <div
-              id="profile-qr-zone"
-              className="absolute"
-              style={{ right: "6%", bottom: "8%", width: "12%", aspectRatio: "1" }}
-            />
-
-            <ProfileCard
-              {...props}
-              cardSlotId="profile-card-zone"
-              pillSlotId="profile-pill-zone"
-              qrSlotId="profile-qr-zone"
-            />
-          </div>
-        </div>
+        <ProfileCard {...props} bodyClass={pixel.className} headingClass={hd} />
       </div>
     </div>
   );

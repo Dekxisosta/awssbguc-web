@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { PencilIcon, btnSmGhost, btnSmSolid, focus } from "./pixel";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -13,8 +14,14 @@ interface EditableFieldProps {
   readOnly?: boolean;
   inputType?: string;
   placeholder?: string;
+  /** Small tag shown next to the label (e.g. "one-time"). */
+  badge?: React.ReactNode;
 }
 
+/**
+ * Click the pencil to edit in place; Enter saves, Escape cancels.
+ * Renders a <div> holding a <dt>/<dd> pair, so it belongs inside a <dl>.
+ */
 export function EditableField({
   label,
   value,
@@ -24,6 +31,7 @@ export function EditableField({
   readOnly = false,
   inputType = "text",
   placeholder,
+  badge,
 }: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -37,6 +45,12 @@ export function EditableField({
       inputRef.current?.select();
     }
   }, [editing]);
+
+  // After a failed save, put focus back in the field. Done in an effect because the input is
+  // still `disabled` while saving, so focusing it synchronously would silently do nothing.
+  useEffect(() => {
+    if (saveState === "error") inputRef.current?.focus();
+  }, [saveState]);
 
   function startEditing() {
     setDraft(value ?? "");
@@ -66,7 +80,6 @@ export function EditableField({
     if (error) {
       setSaveState("error");
       setErrorMessage(error);
-      inputRef.current?.focus();
     } else {
       setSaveState("saved");
       setEditing(false);
@@ -79,6 +92,9 @@ export function EditableField({
       e.preventDefault();
       commitEdit();
     } else if (e.key === "Escape") {
+      // Cancel just this edit; without this the surrounding modal would close too.
+      e.preventDefault();
+      e.stopPropagation();
       cancelEditing();
     }
   }
@@ -89,28 +105,29 @@ export function EditableField({
 
   return (
     <div>
-      <dt className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
+      <dt className="flex flex-wrap items-center gap-2 text-sm uppercase tracking-wide text-[#fff7a1]/70">
         {label}
+        {badge}
         {!readOnly && !editing && (
           <button
             type="button"
             onClick={startEditing}
             aria-label={`Edit ${label}`}
-            className="rounded p-0.5 text-neutral-600 transition-colors hover:text-neutral-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
+            className={`border-2 border-[#fff7a1]/40 p-1 text-[#fff7a1]/80 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
           >
-            <PencilIcon />
+            <PencilIcon size={13} />
           </button>
         )}
         {saveState === "saved" && (
-          <span className="text-xs font-normal normal-case tracking-normal text-green-400">
+          <span role="status" className="text-sm normal-case tracking-normal text-[#3aaa6e]">
             Saved
           </span>
         )}
       </dt>
 
       {editing ? (
-        <dd className="mt-1">
-          <div className="flex items-center gap-2">
+        <dd className="mt-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               ref={inputRef}
               id={id}
@@ -126,76 +143,40 @@ export function EditableField({
               onKeyDown={handleKeyDown}
               disabled={isSaving}
               placeholder={placeholder}
+              aria-label={label}
               aria-invalid={saveState === "error"}
-              aria-describedby={
-                saveState === "error"
-                  ? inputErrorId
-                  : hint
-                  ? inputHintId
-                  : undefined
-              }
+              aria-describedby={saveState === "error" ? inputErrorId : hint ? inputHintId : undefined}
               className={[
-                "w-full rounded-md border px-3 py-1.5 text-sm",
-                "bg-neutral-900 text-neutral-100 placeholder:text-neutral-600",
-                "focus:outline-none focus:ring-2 disabled:opacity-50 transition-colors",
-                saveState === "error"
-                  ? "border-red-700 focus:ring-red-600"
-                  : "border-neutral-700 focus:ring-neutral-500",
+                "w-full min-w-0 border-4 bg-black px-3 py-1.5 text-lg text-[#fff7a1] sm:flex-1",
+                "placeholder:text-[#fff7a1]/40 disabled:opacity-50",
+                focus,
+                saveState === "error" ? "border-[#e26a56]" : "border-[#2c8f8f]",
               ].join(" ")}
             />
-            <button
-              type="button"
-              onClick={commitEdit}
-              disabled={isSaving}
-              aria-label="Save"
-              className="shrink-0 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {isSaving ? "Saving…" : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={cancelEditing}
-              disabled={isSaving}
-              aria-label="Cancel edit"
-              className="shrink-0 rounded-md border border-neutral-700 px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-200 disabled:opacity-50"
-            >
-              Cancel
-            </button>
+            <div className="flex shrink-0 gap-2">
+              <button type="button" onClick={commitEdit} disabled={isSaving} aria-label="Save" className={btnSmSolid}>
+                {isSaving ? "Saving…" : "Save"}
+              </button>
+              <button type="button" onClick={cancelEditing} disabled={isSaving} aria-label="Cancel edit" className={btnSmGhost}>
+                Cancel
+              </button>
+            </div>
           </div>
 
           {saveState === "error" && errorMessage && (
-            <p id={inputErrorId} role="alert" className="mt-1.5 text-xs text-red-400">
+            <p id={inputErrorId} role="alert" className="mt-2 text-sm text-[#e26a56]">
               {errorMessage}
             </p>
           )}
           {saveState !== "error" && hint && (
-            <p id={inputHintId} className="mt-1.5 text-xs text-neutral-500">
+            <p id={inputHintId} className="mt-2 text-sm text-[#fff7a1]/60">
               {hint}
             </p>
           )}
         </dd>
       ) : (
-        <dd className="mt-1 text-sm text-neutral-100">{value ?? "—"}</dd>
+        <dd className={`mt-1 break-words text-lg ${value ? "text-[#fff7a1]" : "text-[#fff7a1]/50"}`}>{value || "—"}</dd>
       )}
     </div>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-    </svg>
   );
 }
