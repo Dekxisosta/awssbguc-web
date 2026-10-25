@@ -7,10 +7,10 @@ import { cookies } from "next/headers";
  *
  * Note: cookies().set() throws when called from a Server Component
  * (not a Route Handler or Server Action) — the try/catch below lets
- * middleware handle session refresh in that case instead.
+ * proxy handle session refresh in that case instead.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,14 +24,14 @@ export function createClient() {
           try {
             cookieStore.set({ name, value, ...options });
           } catch {
-            // Called from a Server Component — middleware refreshes instead.
+            // Called from a Server Component — proxy refreshes instead.
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: "", ...options });
           } catch {
-            // Called from a Server Component — middleware refreshes instead.
+            // Called from a Server Component — proxy refreshes instead.
           }
         },
       },

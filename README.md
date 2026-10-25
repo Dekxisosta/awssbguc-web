@@ -6,7 +6,7 @@ Next.js (App Router) + Supabase scaffold for AWSSBG-UC.
 
 - Next.js 14, TypeScript, Tailwind CSS
 - Supabase (`@supabase/ssr`) with cookie-based auth, wired for
-  Server Components, Client Components, and middleware session refresh
+  Server Components, Client Components, and proxy session refresh
 
 ## Structure
 
@@ -20,7 +20,7 @@ app/
 lib/supabase/
   client.ts          browser client (Client Components)
   server.ts          server client (Server Components, Route Handlers, Server Actions)
-middleware.ts         refreshes the Supabase session cookie on every request
+proxy.ts              refreshes the Supabase session cookie on every request
 types/supabase.ts      placeholder for generated DB types
 ```
 
@@ -38,8 +38,7 @@ types/supabase.ts      placeholder for generated DB types
   a `role` column + Postgres RLS policies)
 - Wire the login/signup forms to `supabase.auth.signInWithPassword` /
   `signUp`
-- Add route protection in `middleware.ts` for `/dashboard` once roles exist
+- Add route protection in `proxy.ts` for `/dashboard` once roles exist
 - Generate real DB types once the schema is in place:
   `npx supabase gen types typescript --project-id <id> > types/supabase.ts`
 - Event registration (v1.1 scope, per the existing PRD/SPEC)
-
