@@ -136,7 +136,7 @@ export default function LandingPage() {
       </section>
 
       {/* Below-fold teaser */}
-      <section className="mx-auto max-w-5xl px-6 py-24">
+      <section className="mx-auto max-w-7xl px-6 py-24">
         <div className="grid gap-8 sm:grid-cols-3">
           {[
             { label: "Cloud Workshops", body: "Hands-on labs on real AWS infrastructure, no credit card required." },

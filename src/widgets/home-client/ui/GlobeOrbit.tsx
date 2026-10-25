@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
+import { Pixelify_Sans } from "next/font/google";
 import {
   motion,
   AnimatePresence,
@@ -10,6 +11,15 @@ import {
   animate,
   type AnimationPlaybackControls,
 } from "framer-motion";
+
+const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+
+/**
+ * Pixel cloud silhouette: every edge is axis-aligned and every step is a fixed 6px, so the bumps
+ * stay blocky at any label width (the pill height is fixed, the width follows the label).
+ */
+const PIXEL_CLOUD =
+  "polygon(0 14px, 6px 14px, 6px 8px, 14px 8px, 14px 0, 42% 0, 42% 4px, calc(100% - 14px) 4px, calc(100% - 14px) 8px, calc(100% - 6px) 8px, calc(100% - 6px) 14px, 100% 14px, 100% calc(100% - 8px), calc(100% - 6px) calc(100% - 8px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 8px), 0 calc(100% - 8px))";
 
 const SERVICES: { label: string; desc: string }[] = [
   { label: "EC2",        desc: "Virtual servers in the cloud — scalable compute capacity." },
@@ -151,14 +161,14 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
         drag
         dragMomentum={false}
         dragElastic={0.18}
-        style={{ x: springX, y: springY, display: "block", clipPath: "url(#cloud-pill)" }}
+        style={{ x: springX, y: springY, display: "block", clipPath: PIXEL_CLOUD }}
         onDragStart={onDragStart}
         onDrag={(_, info) => { rawDragX.set(info.offset.x); rawDragY.set(info.offset.y); }}
         onDragEnd={onDragEnd}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        whileHover={{ scale: 1.12, zIndex: 30 }}
-        className="cursor-[inherit] select-none whitespace-nowrap bg-[#00e482] px-4 py-2 font-mono text-xs font-semibold text-[#0f1923] shadow-sm hover:bg-[#00c974]"
+        whileHover={{ zIndex: 30 }}
+        className={`${pixel.className} cursor-[inherit] select-none whitespace-nowrap bg-[#3aaa6e] px-5 py-3 text-sm leading-none text-black transition-colors hover:bg-[#b89a0a]`}
       >
         {tag.label}
       </motion.span>
@@ -172,7 +182,7 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-            className="pointer-events-none fixed w-56 rounded-lg border border-[#00e482]/25 bg-white px-3 py-2 shadow-lg"
+            className={`${pixel.className} pointer-events-none fixed w-56 border-4 border-black bg-[#fff7a1] px-3 py-2 shadow-[4px_4px_0_#b89a0a]`}
             style={{
               zIndex: 9999,
               left: pillRect.left + pillRect.width / 2 - 112,
@@ -180,15 +190,15 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
               transform: "translateY(-100%)",
             }}
           >
-            <p className="mb-1 font-mono text-xs font-bold text-[#00874d]">
+            <p className="mb-1 text-sm text-black">
               {tag.label}
             </p>
-            <p className="text-xs leading-snug text-neutral-600">
+            <p className="text-xs leading-snug text-black/80">
               {tag.desc}
             </p>
             <span
               aria-hidden="true"
-              className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-white"
+              className="absolute left-1/2 top-full -translate-x-1/2 border-x-8 border-t-8 border-x-transparent border-t-black"
             />
           </motion.div>
         </AnimatePresence>,
@@ -199,40 +209,6 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
 }
 
 // ─── Container with SVG lines ────────────────────────────────────────────────
-
-/**
- * Renders a hidden <svg> with a reusable cloud clipPath definition.
- * Each pill references it via clip-path: url(#cloud-pill).
- * The viewBox is 100×44 — normalised so the pill content fills nicely.
- */
-function CloudClipDefs() {
-  return (
-    <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-      <defs>
-        <clipPath id="cloud-pill" clipPathUnits="objectBoundingBox">
-          {/*
-            Cloud shape expressed in 0–1 space (objectBoundingBox).
-            A classic fluffy cloud: wide base with three rounded bumps on top.
-          */}
-          <path d="
-            M 0.18,0.72
-            C 0.06,0.72 0.00,0.62 0.00,0.52
-            C 0.00,0.40 0.08,0.32 0.18,0.30
-            C 0.18,0.18 0.26,0.08 0.38,0.08
-            C 0.44,0.08 0.50,0.10 0.54,0.15
-            C 0.58,0.06 0.66,0.00 0.76,0.00
-            C 0.88,0.00 0.98,0.10 1.00,0.22
-            C 1.00,0.22 1.00,0.22 1.00,0.24
-            C 1.00,0.38 0.92,0.48 0.82,0.50
-            C 0.84,0.54 0.84,0.58 0.84,0.62
-            C 0.84,0.68 0.78,0.72 0.72,0.72
-            Z
-          " />
-        </clipPath>
-      </defs>
-    </svg>
-  );
-}
 
 export function GlobeOrbit() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -260,7 +236,7 @@ export function GlobeOrbit() {
       svg!.setAttribute("width",  String(cRect.width));
       svg!.setAttribute("height", String(cRect.height));
 
-      const stroke = "rgba(0,0,0,1)";
+      const stroke = "#000000";
 
       const existing = svg!.querySelectorAll("line");
       CONNECTIONS.forEach(([i, j], idx) => {
@@ -276,9 +252,9 @@ export function GlobeOrbit() {
         line.setAttribute("x2", String(b.x));
         line.setAttribute("y2", String(b.y));
         line.setAttribute("stroke", stroke);
-        line.setAttribute("stroke-width", "1");
-        line.setAttribute("stroke-linecap", "round");
-        line.setAttribute("stroke-dasharray", "4 4");
+        line.setAttribute("stroke-width", "3");
+        line.setAttribute("stroke-linecap", "butt");
+        line.setAttribute("stroke-dasharray", "6 6");
       });
 
       rafRef.current = requestAnimationFrame(tick);
@@ -295,12 +271,11 @@ export function GlobeOrbit() {
       style={{ height: 320 }}
       aria-label="AWS services cloud"
     >
-      <CloudClipDefs />
       <svg
         ref={svgRef}
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
-        style={{ overflow: "visible" }}
+        style={{ overflow: "visible", shapeRendering: "crispEdges" }}
       />
       {TAGS.map((tag, i) => (
         <DriftTag key={tag.label} tag={tag} index={i} />
