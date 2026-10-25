@@ -22,6 +22,21 @@ const config: Config = {
           green: "#00e482",
           dark: "#161d27",
         },
+        // Palette sampled from the pixel-art reference: black ground, butter-yellow type, four stripe colours.
+        pix: {
+          ink: "#000000",
+          butter: "#fff7a1",
+          green: "#3aaa6e",
+          mustard: "#b89a0a",
+          rust: "#b32a0e",
+          teal: "#2c8f8f",
+        },
+        pine: {
+          950: "#0b1613",
+          900: "#12211c",
+          800: "#193029",
+          700: "#214238",
+        },
       },
     },
   },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { hd, focus } from "@/src/widgets/home-client";
 
 type SectionEntry = { id: string; label: string };
 type ArticleEntry = { id: string; label: string; sections: SectionEntry[] };
@@ -133,9 +134,9 @@ export function ConstitutionSidebar() {
   return (
     <nav
       aria-label="Article shortcuts"
-      className="pt-10 sticky top-[calc(3.75rem+2rem)] hidden h-[calc(100vh-3.75rem-2rem)] w-52 shrink-0 overflow-y-auto pb-10 lg:block"
+      className="sticky top-[calc(3.75rem+2rem)] hidden h-[calc(100vh-3.75rem-2rem)] w-60 shrink-0 overflow-y-auto pb-10 pr-2 pt-2 lg:block"
     >
-      <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+      <p className={`${hd} mb-3 border-b-4 border-[#2c8f8f] px-3 pb-2 text-3xl`}>
         Articles
       </p>
       <ul className="space-y-0.5">
@@ -151,10 +152,10 @@ export function ConstitutionSidebar() {
                   type="button"
                   onClick={() => scrollTo(article.id)}
                   className={[
-                    "flex-1 rounded-md py-1.5 pl-3 pr-1 text-left text-xs transition-colors",
+                    `flex-1 py-1.5 pl-3 pr-1 text-left text-sm transition-colors ${focus}`,
                     articleActive
-                      ? "font-semibold text-[#00e482]"
-                      : "text-neutral-400 hover:text-neutral-200",
+                      ? "bg-[#2c8f8f] text-black"
+                      : "text-[#fff7a1] hover:bg-[#fff7a1] hover:text-black",
                   ].join(" ")}
                 >
                   {article.label}
@@ -165,13 +166,13 @@ export function ConstitutionSidebar() {
                     aria-label={isOpen ? "Collapse sections" : "Expand sections"}
                     onClick={() => toggleArticle(article.id)}
                     className={[
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors",
+                      `flex h-7 w-7 shrink-0 items-center justify-center transition-colors ${focus}`,
                       articleActive
-                        ? "text-[#00e482]"
-                        : "text-neutral-500 hover:text-neutral-300",
+                        ? "text-[#2c8f8f]"
+                        : "text-[#fff7a1]/70 hover:bg-[#fff7a1] hover:text-black",
                     ].join(" ")}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={isOpen ? "rotate-180" : ""}>
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </button>
@@ -179,7 +180,7 @@ export function ConstitutionSidebar() {
               </div>
 
               {hasSections && isOpen && (
-                <ul className="mb-1 mt-0.5 border-l border-neutral-700 pl-3">
+                <ul className="mb-2 ml-3 mt-1 border-l-4 border-[#2c8f8f]/60 pl-2">
                   {article.sections.map((sec) => {
                     const secActive = activeId === sec.id;
                     return (
@@ -188,10 +189,10 @@ export function ConstitutionSidebar() {
                           type="button"
                           onClick={() => scrollTo(sec.id)}
                           className={[
-                            "w-full rounded py-1 pl-2 pr-1 text-left text-[11px] transition-colors",
+                            `w-full py-1 pl-2 pr-1 text-left text-xs transition-colors ${focus}`,
                             secActive
-                              ? "font-semibold text-[#00e482]"
-                              : "text-neutral-500 hover:text-neutral-200",
+                              ? "bg-[#b89a0a] text-black"
+                              : "text-[#fff7a1]/80 hover:bg-[#fff7a1] hover:text-black",
                           ].join(" ")}
                         >
                           {sec.label}

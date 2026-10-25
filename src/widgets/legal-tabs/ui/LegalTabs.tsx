@@ -9,13 +9,11 @@ const TABS: { key: LegalTabKey; label: string; href: string }[] = [
   { key: "privacy", label: "Privacy Policy", href: "/privacy" },
 ];
 
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+
 export function LegalTabs({ active }: { active: LegalTabKey }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Legal documents"
-      className="flex w-full gap-1 rounded-xl border border-neutral-800 bg-neutral-900 p-1 sm:w-fit"
-    >
+    <div role="tablist" aria-label="Legal documents" className="flex w-full flex-wrap gap-4">
       {TABS.map((tab) => {
         const isActive = tab.key === active;
         return (
@@ -25,10 +23,10 @@ export function LegalTabs({ active }: { active: LegalTabKey }) {
             role="tab"
             aria-selected={isActive}
             scroll={false}
-            className={`flex-1 rounded-lg px-4 py-2 text-center text-sm font-semibold transition-colors sm:flex-none sm:px-6 ${
+            className={`flex-1 border-4 px-5 py-2 text-center text-lg transition-transform sm:flex-none sm:px-8 ${focus} ${
               isActive
-                ? "bg-neutral-800 text-neutral-50 shadow-sm"
-                : "text-neutral-400 hover:text-neutral-100"
+                ? "border-black bg-[#fff7a1] text-black shadow-[4px_4px_0_#2c8f8f]"
+                : "border-[#2c8f8f] text-[#fff7a1] hover:bg-[#2c8f8f] hover:text-black"
             }`}
           >
             {tab.label}

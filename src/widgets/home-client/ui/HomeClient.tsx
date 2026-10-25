@@ -4,459 +4,56 @@ import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, MotionValue } from "framer-motion";
+import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { GlobeOrbit } from "./GlobeOrbit";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
+import type { PublicMemberProfile } from "@/src/entities/member";
 
-const PixelBlast = dynamic(
-  () => import("@/src/widgets/pixel-blast/ui/PixelBlast"),
-  { ssr: false }
-);
+/**
+ * Home page in the style of a pixel-art portfolio:
+ *  - black ground, butter-yellow type, bitmap fonts (Jersey 10 for headlines, Pixelify Sans for text)
+ *  - one motif: a vertical stripe "tunnel" with stepped edges, reused as thin dividers
+ *  - the hero photo is pixelated on a canvas; a butter card overlaps it
+ *  - hard offset shadows and square corners, no blur, no gradients, no rounded anything
+ *  - only the moving side pixels use the green-teal palette from the Operations poster
+ */
 
-const BorderGlow = dynamic(
-  () => import("@/src/widgets/border-glow/ui/BorderGlow"),
-  { ssr: false }
-);
+export const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 
-const HERO_IMAGES = [
-  "/images/hero/1.jpg",
-  "/images/hero/2.jpg",
-  "/images/hero/3.jpg",
-  "/images/hero/4.jpg"
+// Headlines: the element-level heading font in globals.css would win over inheritance, so set the class directly.
+export const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+
+const HERO_IMAGES = ["/images/hero/1.jpg", "/images/hero/2.jpg", "/images/hero/3.jpg", "/images/hero/4.jpg"];
+
+const STRIPES: [string, number][] = [
+  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
+  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
 ];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0 },
-};
-
-const fadeIn = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1 },
-};
-
-const stagger = (delayChildren = 0.05) => ({
-  hidden: {},
-  show: { transition: { staggerChildren: delayChildren } },
-});
-
-const viewport = { once: true, margin: "-60px" };
-
-function ParallaxSection({
-  children,
-  className = "",
-  accentBehind,
-}: {
-  children: (params: { headingY: MotionValue<number>; bodyY: MotionValue<number> }) => React.ReactNode;
-  className?: string;
-  accentBehind?: React.ReactNode;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const prefersReduced = useReducedMotion();
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-    layoutEffect: false,
+const STRIPE_BG = (() => {
+  let at = 0;
+  const stops = STRIPES.map(([c, w]) => {
+    const s = `${c} ${at}% ${at + w}%`;
+    at += w;
+    return s;
   });
+  return `linear-gradient(90deg, ${stops.join(", ")})`;
+})();
 
-  // Number-valued transforms — no string parsing per frame, GPU-composited via will-change
-  const headingY = useTransform(scrollYProgress, [0, 1], prefersReduced ? [0, 0] : [18, -18]);
-  const bodyY    = useTransform(scrollYProgress, [0, 1], prefersReduced ? [0, 0] : [10, -10]);
-  const accentY  = useTransform(scrollYProgress, [0, 1], prefersReduced ? [0, 0] : [-24, 24]);
+// Narrow column that widens into a stepped base, like the reference.
+const FLARE =
+  "polygon(12% 0, 88% 0, 88% 58%, 92% 58%, 92% 70%, 96% 70%, 96% 82%, 100% 82%, 100% 100%, 0 100%, 0 82%, 4% 82%, 4% 70%, 8% 70%, 8% 58%, 12% 58%)";
 
-  return (
-    <div ref={ref} className={`relative flex flex-col overflow-hidden ${className}`}>
-      {accentBehind && (
-        <motion.div
-          aria-hidden="true"
-          style={{ y: accentY, willChange: "transform" }}
-          className="pointer-events-none absolute inset-0"
-        >
-          {accentBehind}
-        </motion.div>
-      )}
-      <div className="flex flex-1 flex-col justify-center">
-        {children({ headingY, bodyY })}
-      </div>
-    </div>
-  );
+export const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+export const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+export const btnDark = `inline-block border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
+
+export function Stripes({ className = "h-4" }: { className?: string }) {
+  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
 }
 
-function EyebrowLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.p variants={fadeUp} className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]">
-      {children}
-    </motion.p>
-  );
-}
-
-function SectionHeading({ children, y, light = false }: { children: React.ReactNode; y: MotionValue<number>; light?: boolean }) {
-  return (
-    <motion.h2 variants={fadeUp} style={{ y, willChange: "transform" }} className={`text-4xl font-bold tracking-tight sm:text-5xl ${light ? "text-neutral-900" : "text-neutral-100"}`}>
-      {children}
-    </motion.h2>
-  );
-}
-
-function HeroSection() {
-  const [current, setCurrent] = useState(0);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    setIsDesktop(window.innerWidth >= 640);
-    const mq = window.matchMedia("(min-width: 640px)");
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrent((c) => (c + 1) % HERO_IMAGES.length);
-    }, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
-
-  return (
-    <div ref={ref} className="relative h-[70vh] min-h-[500px] overflow-hidden">
-
-      
-      
-      <div
-        aria-hidden="true"
-        className="pixel-bg pointer-events-none absolute inset-y-0 left-0 z-10 w-40 opacity-40"
-        style={{ maskImage: "linear-gradient(to right, black 0%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, black 0%, transparent 100%)" }}
-      />
-      
-      <div
-        aria-hidden="true"
-        className="pixel-bg pointer-events-none absolute inset-y-0 right-0 z-10 w-40 opacity-40"
-        style={{ maskImage: "linear-gradient(to left, black 0%, transparent 100%)", WebkitMaskImage: "linear-gradient(to left, black 0%, transparent 100%)" }}
-      />
-      
-      <motion.div
-        className="absolute inset-0"
-        style={{ y: imgY }}
-        aria-hidden="true"
-      >
-        {HERO_IMAGES.map((src, i) => (
-          <div
-            key={src}
-            className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
-            style={{ opacity: i === current ? 1 : 0 }}
-          >
-            <Image
-              src={src}
-              alt=""
-              fill
-              priority={i === 0}
-              className="object-cover object-center"
-              sizes="100vw"
-            />
-          </div>
-        ))}
-      </motion.div>
-
-      
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" aria-hidden="true" />
-
-      
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] opacity-20 mix-blend-screen">
-        {isDesktop && <PixelBlast
-          variant="square"
-          pixelSize={2}
-          color="#00e482"
-          patternScale={1.6}
-          patternDensity={0.9}
-          pixelSizeJitter={0.4}
-          enableRipples
-          rippleSpeed={0.35}
-          rippleThickness={0.1}
-          rippleIntensityScale={1.2}
-          liquid
-          liquidStrength={0.08}
-          liquidRadius={1.0}
-          liquidWobbleSpeed={4}
-          speed={0.5}
-          edgeFade={0.3}
-          transparent
-        />}
-      </div>
-
-      
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
-        <motion.div
-          variants={stagger(0.1)}
-          initial="hidden"
-          animate="show"
-          className="max-w-3xl"
-        >
-
-          <motion.h1
-            variants={fadeUp}
-            className="mt-8 text-5xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-8xl"
-          >
-            Build on the cloud.<br />
-            <span className="text-[#00e482]">Start here.</span>
-          </motion.h1>
-
-          <motion.div variants={fadeUp} className="mt-10 flex flex-wrap justify-center gap-4">
-            <BorderGlow
-              borderRadius={9999}
-              backgroundColor="#00e482"
-              glowColor="150 100 60"
-              glowRadius={32}
-              glowIntensity={1.2}
-              edgeSensitivity={20}
-              coneSpread={30}
-              colors={["#00e482", "#00c9ff", "#00e482"]}
-              fillOpacity={0.3}
-              className="rounded-full"
-            >
-              <Link
-                href="/signup"
-                className="rounded-full bg-[#00e482] px-8 py-3 text-base font-bold text-[#161d27] transition-opacity hover:opacity-90"
-              >
-                Join the community
-              </Link>
-            </BorderGlow>
-            <BorderGlow
-              borderRadius={9999}
-              backgroundColor="transparent"
-              glowColor="0 0 50"
-              glowRadius={32}
-              glowIntensity={0.2}
-              edgeSensitivity={20}
-              coneSpread={30}
-              colors={["#ffffff", "#a0c4ff", "#ffffff"]}
-              fillOpacity={0.15}
-              className="rounded-full"
-            >
-              <Link
-                href="/events"
-                className="rounded-full border border-white/30 bg-white/10 px-8 py-3 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-              >
-                Upcoming events
-              </Link>
-            </BorderGlow>
-          </motion.div>
-        </motion.div>
-
-        
-        <div className="absolute bottom-5 flex gap-1.5">
-          {HERO_IMAGES.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setCurrent(i)}
-              aria-label={`Go to slide ${i + 1}`}
-              aria-current={i === current}
-              className={[
-                "h-1.5 rounded-full transition-all duration-300",
-                i === current ? "w-6 bg-[#00e482]" : "w-1.5 bg-white/40 hover:bg-white/70",
-              ].join(" ")}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Member counter ──────────────────────────────────────────────────────────
-
-function CounterCard({
-  value,
-  label,
-  sublabel,
-  accent,
-  icon,
-}: {
-  value: number;
-  label: string;
-  sublabel: string;
-  accent: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <motion.div
-      variants={fadeUp}
-      initial="hidden"
-      whileInView="show"
-      viewport={viewport}
-      whileHover={{ y: -4, transition: { type: "spring", stiffness: 300, damping: 20 } }}
-      className="relative flex flex-1 flex-col gap-4 overflow-hidden border-2 border-neutral-200 bg-white p-8 shadow-sm shadow-neutral-100 transition-shadow hover:shadow-md"
-    >
-      {/* accent bar */}
-      <div className="absolute inset-x-0 top-0 h-1" style={{ background: accent }} />
-
-      {/* icon */}
-      <div
-        className="flex h-10 w-10 items-center justify-center"
-        style={{ background: `${accent}18`, color: accent }}
-      >
-        {icon}
-      </div>
-
-      {/* number */}
-      <span
-        className="text-7xl font-extrabold tabular-nums tracking-tight sm:text-8xl"
-        style={{ color: accent }}
-      >
-        {value.toLocaleString()}
-      </span>
-
-      {/* labels */}
-      <div>
-        <p className="text-base font-semibold text-neutral-800">{label}</p>
-        <p className="mt-0.5 text-sm text-neutral-400">{sublabel}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Tech domain marquee ─────────────────────────────────────────────────────
-
-import {
-  BrainCircuit,
-  Sparkles,
-  Globe,
-  Cloud,
-  GitBranch,
-  ShieldCheck,
-  BarChart2,
-  Zap,
-  Container,
-  Cpu,
-  Radio,
-  Database,
-  Network,
-  Smartphone,
-  Code2,
-  type LucideIcon,
-} from "lucide-react";
-
-const TECH_ITEMS: { label: string; Icon: LucideIcon; tip: string }[] = [
-  { label: "Machine Learning",        Icon: BrainCircuit, tip: "AWS SageMaker lets you build, train, and deploy ML models at scale — with managed infrastructure so you never have to wrangle servers." },
-  { label: "Artificial Intelligence", Icon: Sparkles,     tip: "AWS AI services like Rekognition, Comprehend, and Bedrock give you pre-built intelligence — vision, language, and foundation models — through a single API call." },
-  { label: "Web Development",         Icon: Globe,        tip: "Amplify, S3 static hosting, CloudFront CDN, and Lambda backends make AWS a full-stack platform for shipping web apps globally in minutes." },
-  { label: "Cloud Computing",         Icon: Cloud,        tip: "EC2, Lambda, and Fargate give you compute in every shape — VMs, functions, containers — so you only pay for what you actually run." },
-  { label: "DevOps",                  Icon: GitBranch,    tip: "CodePipeline, CodeBuild, and CodeDeploy wire together CI/CD from commit to production, while CloudFormation and CDK keep infrastructure as code." },
-  { label: "Cybersecurity",           Icon: ShieldCheck,  tip: "IAM, GuardDuty, Security Hub, and AWS Shield form a layered defense — identity, threat detection, compliance, and DDoS protection in one place." },
-  { label: "Data Engineering",        Icon: BarChart2,    tip: "Glue, Athena, Redshift, and Lake Formation handle the full data pipeline — ingestion, cataloging, querying petabytes, and governed data lakes." },
-  { label: "Serverless",              Icon: Zap,          tip: "Lambda, API Gateway, Step Functions, and EventBridge let you build event-driven systems that scale to zero when idle and to millions when needed." },
-  { label: "Containers",              Icon: Container,    tip: "ECS and EKS run Docker and Kubernetes workloads on AWS-managed control planes, while ECR stores your images close to where they run." },
-  { label: "Generative AI",           Icon: Cpu,          tip: "Amazon Bedrock provides on-demand access to foundation models from Anthropic, Meta, Mistral, and Amazon — no GPU provisioning required." },
-  { label: "IoT",                     Icon: Radio,        tip: "AWS IoT Core connects billions of devices, routes messages in real time, and integrates directly with Lambda and Kinesis for edge-to-cloud pipelines." },
-  { label: "Databases",               Icon: Database,     tip: "RDS, Aurora, DynamoDB, ElastiCache, and DocumentDB cover every data model — relational, key-value, document, graph — all fully managed." },
-  { label: "Networking",              Icon: Network,      tip: "VPC, Route 53, CloudFront, Transit Gateway, and Direct Connect give you private, global, and hybrid networking with fine-grained control." },
-  { label: "Mobile Development",      Icon: Smartphone,   tip: "Amplify's mobile libraries, Cognito for auth, and AppSync for real-time GraphQL make AWS the backend for iOS and Android apps at any scale." },
-  { label: "Software Engineering",    Icon: Code2,        tip: "Cloud9, CodeWhisperer, and the extensive AWS SDK ecosystem mean you can write, test, and ship cloud-native code without leaving AWS." },
-];
-
-const MARQUEE_ITEMS = [...TECH_ITEMS, ...TECH_ITEMS];
-
-function MarqueePill({ label, Icon, tip }: { label: string; Icon: LucideIcon; tip: string }) {
-  const [hovered, setHovered] = useState(false);
-  // viewport-absolute coords for the portal tooltip
-  const [cursor, setCursor] = useState({ x: 0, y: 0 });
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
-
-  function track(e: React.MouseEvent) {
-    setCursor({ x: e.clientX, y: e.clientY });
-  }
-
-  const tooltip =
-    mounted && hovered
-      ? createPortal(
-          <div
-            className="pointer-events-none fixed w-64 border border-neutral-700 bg-[#0d1117] px-3 py-2.5 text-xs leading-relaxed text-neutral-300 shadow-2xl"
-            style={{
-              zIndex: 99999,
-              left: cursor.x + 14,
-              // flip above cursor so it doesn't chase off-screen
-              top: cursor.y - 8,
-              transform: "translateY(-100%)",
-            }}
-          >
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#00e482]">
-              {label}
-            </p>
-            {tip}
-          </div>,
-          document.body
-        )
-      : null;
-
-  return (
-    <>
-      <div
-        onMouseEnter={(e) => { setHovered(true); track(e); }}
-        onMouseMove={track}
-        onMouseLeave={() => setHovered(false)}
-        className="flex items-center gap-2.5 whitespace-nowrap border border-neutral-200 bg-neutral-50 px-4 py-1.5 cursor-default transition-colors hover:border-[#00e482]/40 hover:bg-[#00e482]/5"
-      >
-        <Icon size={14} strokeWidth={1.75} className="shrink-0 text-[#00e482]" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-          {label}
-        </span>
-      </div>
-      {tooltip}
-    </>
-  );
-}
-
-function TechMarquee() {
-  const [paused, setPaused] = useState(false);
-
-  return (
-    <div
-      className="relative overflow-hidden border-y border-neutral-200 bg-white py-3 select-none"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      {/* fade-out edges */}
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24"
-        style={{ background: "linear-gradient(to right, #ffffff 0%, transparent 100%)" }}
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24"
-        style={{ background: "linear-gradient(to left, #ffffff 0%, transparent 100%)" }}
-      />
-
-      {/* scrolling track */}
-      <div
-        className="flex w-max gap-6"
-        style={{ animation: `marquee 65s linear infinite`, animationPlayState: paused ? "paused" : "running" }}
-      >
-        {MARQUEE_ITEMS.map(({ label, Icon, tip }, i) => (
-          <MarqueePill key={`${label}-${i}`} label={label} Icon={Icon} tip={tip} />
-        ))}
-      </div>
-
-      <style jsx>{`
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          div { animation: none !important; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ─── WIP Banner ───────────────────────────────────────────────────────────────
+// ─── WIP banner (unchanged) ──────────────────────────────────────────────────
 
 function WIPBanner() {
   const [visible, setVisible] = useState(false);
@@ -545,7 +142,7 @@ function WIPBanner() {
               >
                 {SOCIALS.email}
               </a>
-              {" "}and we'll get it fixed.
+              {" "}and we&apos;ll get it fixed.
             </p>
 
             <button
@@ -564,573 +161,837 @@ function WIPBanner() {
   );
 }
 
+// ─── Animated pixels at the page edges ───────────────────────────────────────
+
+// The moving side pixels use the green-teal palette from the Operations poster; the rest of the page keeps the original colors.
+const RAIN_COLORS = ["#2cf57f", "#1fb877", "#0d5c55", "#1b9c94", "#d9ffe9"];
+const CELL = 20; // size of one moving pixel (was 12)
+const SIDE_PIXEL_OPACITY = 0.35; // overall transparency of the moving pixels (1 = solid)
+
+// Left, up, right, down: every pixel walks in this order and then repeats it.
+const DIRS: [number, number][] = [[-1, 0], [0, -1], [1, 0], [0, 1]];
+
+type Mover = {
+  x: number;
+  y: number;
+  dir: number; // index into DIRS
+  left: number; // cells left to walk before turning
+  runs: number[]; // length of each leg, per direction
+  trail: { x: number; y: number }[]; // newest first
+  len: number;
+  color: string;
+};
+
+const rand = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+
+/**
+ * Pixels that crawl along the page edges: left, up, right, down, repeat. Each leg is a few cells long
+ * (and a little different per pixel, so they drift instead of tracing identical squares), and each pixel
+ * leaves a short fading trail. Densest at the outer edge, fading out toward the content.
+ */
+export function SidePixels({ side }: { side: "left" | "right" }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!wrap || !canvas || !ctx) return;
+
+    let w = 0, h = 0, cols = 0, rows = 0;
+    let movers: Mover[] = [];
+    const pick = () => RAIN_COLORS[Math.floor(Math.random() * RAIN_COLORS.length)];
+    // 1 at the outer edge, fading toward the content
+    const strength = (col: number) => {
+      const fromOuter = side === "left" ? col : cols - 1 - col;
+      return Math.max(0, 1 - fromOuter / Math.max(cols, 1));
+    };
+
+    const setup = () => {
+      w = Math.max(1, wrap.clientWidth);
+      h = Math.max(1, wrap.clientHeight);
+      canvas.width = w;
+      canvas.height = h;
+      cols = Math.floor(w / CELL);
+      rows = Math.ceil(h / CELL);
+      movers = [];
+      if (cols < 1) return;
+      for (let c = 0; c < cols; c++) {
+        const n = Math.round((strength(c) * rows) / 12);
+        for (let i = 0; i < n; i++) {
+          const runs = [rand(2, 5), rand(2, 5), rand(2, 5), rand(2, 5)];
+          const dir = rand(0, 3);
+          movers.push({ x: c, y: rand(0, rows - 1), dir, left: runs[dir], runs, trail: [], len: rand(4, 9), color: pick() });
+        }
+      }
+    };
+
+    const draw = (advance: boolean) => {
+      ctx.clearRect(0, 0, w, h);
+      for (const m of movers) {
+        if (advance) {
+          m.trail.unshift({ x: m.x, y: m.y });
+          if (m.trail.length > m.len) m.trail.pop();
+          const [dx, dy] = DIRS[m.dir];
+          m.x = (m.x + dx + cols) % cols;
+          m.y = (m.y + dy + rows) % rows;
+          if (--m.left <= 0) {
+            m.dir = (m.dir + 1) % 4;
+            m.left = m.runs[m.dir];
+          }
+        }
+        ctx.fillStyle = m.color;
+        const cells = [{ x: m.x, y: m.y }, ...m.trail];
+        cells.forEach((cell, k) => {
+          const a = Math.ceil((1 - k / (m.len + 1)) * 4) / 4 * strength(cell.x); // four hard fade steps down the trail
+          if (a <= 0.05) return;
+          ctx.globalAlpha = Math.min(1, Math.ceil(a * 4) / 4) * SIDE_PIXEL_OPACITY;
+          ctx.fillRect(cell.x * CELL, cell.y * CELL, CELL - 3, CELL - 3);
+        });
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    setup();
+    draw(false);
+    const ro = new ResizeObserver(() => {
+      setup();
+      draw(false);
+    });
+    ro.observe(wrap);
+
+    // ~3 steps per second: slow, blocky drift, and cheap on tall pages.
+    const timer = reduce ? undefined : window.setInterval(() => !document.hidden && draw(true), 320);
+    return () => {
+      ro.disconnect();
+      if (timer) window.clearInterval(timer);
+    };
+  }, [side, reduce]);
+
+  return (
+    <div
+      ref={wrapRef}
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-y-0 z-0 w-[clamp(16px,calc((100%_-_1300px)/2),320px)] ${side === "left" ? "left-0" : "right-0"}`}
+    >
+      <canvas ref={canvasRef} className="block h-full w-full" />
+    </div>
+  );
+}
+
+// ─── Pixel clouds (background) ───────────────────────────────────────────────
+
+/** Cloud sprites: "X" is a filled pixel. Kept small so the drift reads as blocky, not smooth. */
+const CLOUD_SHAPES: string[][] = [
+  [
+    "......XXXX........",
+    "...XXXXXXXXXX.XX..",
+    "..XXXXXXXXXXXXXXX.",
+    "XXXXXXXXXXXXXXXXXX",
+    ".XXXXXXXXXXXXXXXX.",
+  ],
+  [
+    "....XXX.......",
+    "..XXXXXXX.XX..",
+    ".XXXXXXXXXXXX.",
+    "XXXXXXXXXXXXXX",
+  ],
+  [
+    "...XX.....",
+    ".XXXXXX.X.",
+    "XXXXXXXXXX",
+  ],
+];
+
+const CLOUD_PX = 12; // size of one cloud pixel in viewBox units
+const CLOUD_VB_W = 1440;
+const CLOUD_VB_H = 900;
+
+// y: top edge, s: scale, dur: seconds to cross the screen, delay: negative so they start spread out,
+// x: resting position when motion is reduced, o: opacity (kept very low on purpose).
+const CLOUDS = [
+  { shape: 0, y: 60,  s: 2,   dur: 170, delay: -30,  x: 160,  c: "#fff7a1", o: 0.05 },
+  { shape: 2, y: 170, s: 1.5, dur: 120, delay: -90,  x: 900,  c: "#2c8f8f", o: 0.07 },
+  { shape: 1, y: 300, s: 2.5, dur: 210, delay: -140, x: 520,  c: "#fff7a1", o: 0.04 },
+  { shape: 0, y: 450, s: 1.5, dur: 150, delay: -60,  x: 1100, c: "#3aaa6e", o: 0.05 },
+  { shape: 2, y: 580, s: 2,   dur: 130, delay: -10,  x: 300,  c: "#fff7a1", o: 0.05 },
+  { shape: 1, y: 700, s: 1.5, dur: 190, delay: -120, x: 780,  c: "#2c8f8f", o: 0.06 },
+  { shape: 0, y: 810, s: 2.5, dur: 240, delay: -170, x: 40,   c: "#fff7a1", o: 0.04 },
+];
+
+/** Merge each row of a sprite into horizontal runs so a cloud is a handful of rects, not hundreds. */
+function cloudRects(rows: string[]) {
+  const rects: { x: number; y: number; w: number }[] = [];
+  rows.forEach((row, r) => {
+    let start = -1;
+    for (let c = 0; c <= row.length; c++) {
+      const on = c < row.length && row[c] === "X";
+      if (on && start < 0) start = c;
+      if (!on && start >= 0) {
+        rects.push({ x: start * CLOUD_PX, y: r * CLOUD_PX, w: (c - start) * CLOUD_PX });
+        start = -1;
+      }
+    }
+  });
+  return rects;
+}
+
+/** Very faint pixel clouds drifting left to right behind the page. Static when reduced motion is on. */
+export function PixelClouds() {
+  const reduce = useReducedMotion();
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox={`0 0 ${CLOUD_VB_W} ${CLOUD_VB_H}`}
+      preserveAspectRatio="xMidYMid slice"
+      shapeRendering="crispEdges"
+      className="pointer-events-none fixed inset-0 z-0 h-full w-full"
+    >
+      {CLOUDS.map((cl, i) => {
+        const rows = CLOUD_SHAPES[cl.shape];
+        const width = rows[0].length * CLOUD_PX * cl.s;
+        return (
+          <g key={i} fill={cl.c} opacity={cl.o}>
+            <g transform={reduce ? `translate(${cl.x} 0)` : undefined}>
+              {!reduce && (
+                <animateTransform
+                  attributeName="transform"
+                  type="translate"
+                  from={`${-width} 0`}
+                  to={`${CLOUD_VB_W} 0`}
+                  dur={`${cl.dur}s`}
+                  begin={`${cl.delay}s`}
+                  repeatCount="indefinite"
+                />
+              )}
+              <g transform={`translate(0 ${cl.y}) scale(${cl.s})`}>
+                {cloudRects(rows).map((r, k) => (
+                  <rect key={k} x={r.x} y={r.y} width={r.w} height={CLOUD_PX} />
+                ))}
+              </g>
+            </g>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Pixelated photo ─────────────────────────────────────────────────────────
+
+const PW = 40;
+const PH = 50;
+
+export function PixelPhoto({ src, width = PW, height = PH }: { src: string; width?: number; height?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const img = new window.Image();
+    img.onload = () => {
+      const k = Math.max(width / img.width, height / img.height); // cover
+      const w = img.width * k;
+      const h = img.height * k;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+    };
+    img.src = src;
+  }, [src, width, height]);
+  return (
+    <canvas
+      ref={ref}
+      width={width}
+      height={height}
+      aria-hidden="true"
+      style={{ aspectRatio: `${width} / ${height}` }}
+      className="block w-full [image-rendering:pixelated]"
+    />
+  );
+}
+
+// ─── Wandering duck ──────────────────────────────────────────────────────────
+
+const DUCK_PX = 4;
+const DUCK_COLS = 39;
+const DUCK_ROWS = 48;
+const DUCK_W = DUCK_COLS * DUCK_PX;
+
+/**
+ * The duck is a horizontal sprite sheet (public/images/duck/duck-sprites.svg): frames sit side by side,
+ * each DUCK_COLS x DUCK_ROWS units. Frame 0 is the standing pose; the walk cycle loops through all of them.
+ * After adding frames to the SVG, update DUCK_FRAME_COUNT to match.
+ */
+const DUCK_SHEET = "/images/duck/duck-sprites.svg";
+const DUCK_FRAME_COUNT = 2;
+
+function DuckSprite({ frame }: { frame: number }) {
+  return (
+    <div
+      style={{
+        width: DUCK_W,
+        height: DUCK_ROWS * DUCK_PX,
+        backgroundImage: `url(${DUCK_SHEET})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: `${DUCK_FRAME_COUNT * 100}% 100%`,
+        backgroundPosition: `${DUCK_FRAME_COUNT > 1 ? (frame / (DUCK_FRAME_COUNT - 1)) * 100 : 0}% 0`,
+        imageRendering: "pixelated",
+      }}
+    />
+  );
+}
+
+const DUCK_LINES = ["Join Us!", "I love matcha!"];
+
+/**
+ * An engineer duck (hard hat, laptop under one wing, coffee in the other) that strolls back and forth
+ * under the hero's right-hand text and alternates between "Join Us!" and "I love matcha!".
+ * Stands still (saying "Join Us!") when reduced motion is on.
+ */
+function WanderingDuck() {
+  const reduce = useReducedMotion();
+  const [pos, setPos] = useState(0.5); // 0..1 along the walkable strip
+  const [dur, setDur] = useState(0);
+  const [facing, setFacing] = useState<1 | -1>(1);
+  const [walking, setWalking] = useState(false);
+  const [frame, setFrame] = useState(0);
+  const [line, setLine] = useState(0);
+  const posRef = useRef(0.5);
+  const walkingRef = useRef(false);
+  const timer = useRef<number | undefined>(undefined);
+
+  const wander = () => {
+    let target = Math.random();
+    while (Math.abs(target - posRef.current) < 0.2) target = Math.random();
+    const dist = Math.abs(target - posRef.current);
+    setFacing(target > posRef.current ? 1 : -1);
+    setDur(dist * 7); // a full pass takes about 7 seconds
+    setLine((l) => (l + 1) % DUCK_LINES.length);
+    setPos(target);
+    posRef.current = target;
+    walkingRef.current = true;
+    setWalking(true);
+  };
+
+  const arrived = () => {
+    if (!walkingRef.current) return;
+    walkingRef.current = false;
+    setWalking(false);
+    timer.current = window.setTimeout(wander, 1800 + Math.random() * 2400);
+  };
+
+  useEffect(() => {
+    if (reduce) return;
+    timer.current = window.setTimeout(wander, 1200);
+    return () => window.clearTimeout(timer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduce]);
+
+  // Alternate leg poses while walking.
+  useEffect(() => {
+    if (!walking) {
+      setFrame(0);
+      return;
+    }
+    const id = window.setInterval(() => setFrame((f) => (f + 1) % DUCK_FRAME_COUNT), 180);
+    return () => window.clearInterval(id);
+  }, [walking]);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none relative mx-auto mt-10 h-[260px] w-full max-w-sm border-b-4 border-dashed border-[#2c8f8f]/40"
+    >
+      <div className="absolute bottom-0 left-0 h-full" style={{ width: `calc(100% - ${DUCK_W}px)` }}>
+        <motion.div
+          className="absolute bottom-0"
+          initial={false}
+          animate={{ left: `${pos * 100}%` }}
+          transition={{ duration: reduce ? 0 : dur, ease: "linear" }}
+          onAnimationComplete={arrived}
+        >
+          <motion.div
+            className="relative"
+            style={{ width: DUCK_W }}
+            animate={walking && !reduce ? { y: [0, -4, 0] } : { y: 0 }}
+            transition={walking ? { duration: 0.36, repeat: Infinity, ease: "easeInOut" } : { duration: 0.1 }}
+          >
+            <div
+              className="absolute bottom-full mb-3 -translate-x-1/2 whitespace-nowrap border-4 border-black bg-[#fff7a1] px-3 py-1 text-lg leading-none text-black shadow-[4px_4px_0_#2c8f8f]"
+              style={{ left: `${facing === 1 ? 65 : 35}%` }}
+            >
+              {DUCK_LINES[line]}
+              <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b-4 border-r-4 border-black bg-[#fff7a1]" />
+            </div>
+            <div style={{ transform: `scaleX(${facing})` }}>
+              <DuckSprite frame={frame} />
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Pixelated map ───────────────────────────────────────────────────────────
+
+/**
+ * Draws a transparent PNG (the world map) at a tiny resolution and scales it up with hard edges.
+ * Alpha is thresholded afterwards, so every cell is either solid or empty (no blurry anti-aliased fringe).
+ */
+function PixelMap({ src, width = 128, height = 80 }: { src: string; width?: number; height?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas?.getContext("2d", { willReadFrequently: true });
+    if (!canvas || !ctx) return;
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.imageSmoothingEnabled = true; // averaging while shrinking gives clean coverage per cell
+      ctx.drawImage(img, 0, 0, width, height);
+      const data = ctx.getImageData(0, 0, width, height);
+      for (let i = 3; i < data.data.length; i += 4) data.data[i] = data.data[i] > 100 ? 255 : 0;
+      ctx.putImageData(data, 0, 0);
+    };
+    img.src = src;
+  }, [src, width, height]);
+  return (
+    <canvas
+      ref={ref}
+      width={width}
+      height={height}
+      aria-hidden="true"
+      style={{ aspectRatio: `${width} / ${height}` }}
+      className="block h-auto w-full [image-rendering:pixelated]"
+    />
+  );
+}
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
+function Tunnel({ registeredCount, participantCount }: { registeredCount: number; participantCount: number }) {
+  const [index, setIndex] = useState(0);
+  const reduce = useReducedMotion();
+
+  // Advance every 5s. Picking a dot changes `index`, which restarts this timer.
+  useEffect(() => {
+    if (reduce) return;
+    const id = setTimeout(() => setIndex((i) => (i + 1) % HERO_IMAGES.length), 5000);
+    return () => clearTimeout(id);
+  }, [index, reduce]);
+
+  const stats = [
+    { value: registeredCount, label: "registered" },
+    { value: participantCount, label: "participants" },
+  ].filter((s) => s.value > 0);
+
+  return (
+    <div className="relative mx-auto w-full max-w-[400px] pb-8">
+      <div aria-hidden="true" className="absolute inset-0" style={{ background: STRIPE_BG, clipPath: FLARE }} />
+      {/* Photo sits above the card (only a sliver of overlap) so it can be seen in full. */}
+      <div className="relative mx-auto w-[64%] border-4 border-black bg-black shadow-[6px_6px_0_#000]">
+        <PixelPhoto src={HERO_IMAGES[index]} width={64} height={80} />
+        <div className="absolute inset-x-0 bottom-6 flex justify-center">
+          {HERO_IMAGES.map((_, i) => (
+            <button
+              key={HERO_IMAGES[i]}
+              type="button"
+              onClick={() => setIndex(i)}
+              aria-label={`Show photo ${i + 1} of ${HERO_IMAGES.length}`}
+              aria-current={i === index}
+              className={`p-2 ${focus}`}
+            >
+              <span className={`block h-2 w-2 border border-black ${i === index ? "bg-[#fff7a1]" : "bg-[#fff7a1]/40"}`} />
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="relative z-10 mx-auto -mt-5 w-[80%] bg-[#fff7a1] p-5 text-center text-black shadow-[6px_6px_0_#000]">
+        <h2 className={`${hd} text-4xl text-balance`}>Ready to build with us?</h2>
+        <p className="mt-3 text-sm leading-snug">Free for every University of Cabuyao student. No experience needed.</p>
+        {stats.length > 0 && (
+          <dl className="mt-4 flex justify-center gap-6">
+            {stats.map((s) => (
+              <div key={s.label} className="flex flex-col-reverse">
+                <dt className="text-xs">{s.label}</dt>
+                <dd className={`${hd} text-4xl tabular-nums`}>{s.value.toLocaleString()}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        <Link href="/signup" className={`${btnDark} mt-5 w-full`}>
+          Join the community
+        </Link>
+        <Link href="/events" className={`mt-3 block underline underline-offset-4 ${focus}`}>
+          See upcoming events
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Hero({ registeredCount, participantCount }: { registeredCount: number; participantCount: number }) {
+  const socials = [
+    { label: "Discord", href: SOCIALS.discord, external: true },
+    { label: "Facebook", href: SOCIALS.facebook, external: true },
+    { label: "Email", href: MAILTO, external: false },
+  ];
+  return (
+    <section className={`${wrap} pb-14 pt-6`}>
+      <nav aria-label="Find us" className="flex flex-wrap justify-center gap-3 lg:justify-end">
+        {socials.map((l) => (
+          <a
+            key={l.label}
+            href={l.href}
+            {...(l.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+            className={`border-4 border-[#2c8f8f] px-3 py-1 transition-colors hover:bg-[#2c8f8f] hover:text-black ${focus}`}
+          >
+            {l.label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="mt-8 grid items-center gap-12 lg:grid-cols-[1fr_400px_1fr] lg:gap-8">
+        <div className="text-center">
+          <p className="text-xl">Hi, we are</p>
+          <h1 className={`${hd} mt-3 text-[clamp(6rem,15vw,11rem)]`}>
+            <span className="sr-only">AWS Student Builder Group, University of Cabuyao</span>
+            <span aria-hidden="true" className="block">AWS</span>
+            <span aria-hidden="true" className="block">SBG</span>
+            <span aria-hidden="true" className="block">UC</span>
+          </h1>
+          <p className={`${hd} mt-4 text-5xl`}>&amp;</p>
+          <p className="mt-3 text-lg leading-snug">
+            we learn cloud by building
+            <br />
+            really cool things
+          </p>
+        </div>
+
+        <Tunnel registeredCount={registeredCount} participantCount={participantCount} />
+
+        <div className="text-center">
+          <p className={`${hd} text-[clamp(5rem,10vw,8rem)]`}>We&apos;re</p>
+          <p className="mx-auto mt-4 max-w-xs text-2xl uppercase leading-tight">Students, builders, tinkerers, dreamers</p>
+          <p className="mx-auto mt-6 max-w-xs leading-relaxed">
+            The AWS Student Builder Group of the University of Cabuyao. We run workshops, ship projects, and learn AWS together, for free.
+          </p>
+          <WanderingDuck />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Section wrapper ─────────────────────────────────────────────────────────
+
+export function Section({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
+  return (
+    <>
+      <Stripes />
+      <section className={`${wrap} py-14 sm:py-20`}>
+        <h2 className={`${hd} text-6xl sm:text-8xl`}>{title}</h2>
+        {intro && <p className="mt-5 max-w-xl text-lg leading-relaxed">{intro}</p>}
+        <div className="mt-10">{children}</div>
+      </section>
+    </>
+  );
+}
+
+// ─── Community partners ──────────────────────────────────────────────────────
+
+const COMMUNITY_PARTNERS: { name: string; logo: string; href?: string; isCircle?: boolean }[] = [
+  { name: "TutorialsDojo",                                                              logo: "/images/logos/tutorials-dojo.png",  href: "https://tutorialsdojo.com/" },
+  { name: "BayanHealth",                                                                logo: "/images/logos/bayanhealth.png",      href: "https://bayanhealth.com/" },
+  { name: "DEVCON Laguna Chapter",                                                      logo: "/images/logos/devcon-laguna.png" },
+  { name: "Association of Computer Science Students - UC",                              logo: "/images/logos/acss-uc.png" },
+  { name: "Society of Information Technology Students - UC",                            logo: "/images/logos/sits-uc.png" },
+  { name: "Junior Mechatronics and Robotics Society of the Philippines - UC Chapter",   logo: "/images/logos/jmrsp-uc.png" },
+  { name: "Junior Institute of Electronics Engineers of the Philippines - UC",          logo: "/images/logos/jieep-uc.png" },
+  { name: "Association of Computer Engineering Students - UC",                          logo: "/images/logos/aces-uc.png" },
+  { name: "AWS Learning Club - Polar",                                                  logo: "/images/logos/awslc-polar.png",     isCircle: true },
+  { name: "AWS Student Builder Group - Aeris",                                          logo: "/images/logos/awssbg-aeris.png",    isCircle: true },
+  { name: "AWS Student User Group Philippines",                                         logo: "/images/logos/awsug-ph.png",        isCircle: true },
+];
+
+function PartnerTile({ name, logo, href, isCircle }: { name: string; logo: string; href?: string; isCircle: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null; // logo file missing: drop the tile instead of showing a broken image
+  const tile = (
+    <span className="relative block h-24 w-24 border-4 border-[#2c8f8f] bg-[#fff7a1] p-2 shadow-[4px_4px_0_#2c8f8f] transition-transform group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-[2px_2px_0_#2c8f8f]">
+      <span className={`relative block h-full w-full overflow-hidden ${isCircle ? "rounded-full" : ""}`}>
+        <Image src={logo} alt={name} title={name} fill sizes="80px" className="object-contain" onError={() => setFailed(true)} />
+      </span>
+    </span>
+  );
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={`group block ${focus}`}>
+      {tile}
+    </a>
+  ) : (
+    <span className="group block">{tile}</span>
+  );
+}
+
+function Partners() {
+  return (
+    <Section title="Community partners" intro="Student organizations and cloud communities that run events with us.">
+      <div className="flex flex-wrap gap-6">
+        {COMMUNITY_PARTNERS.map((p) => (
+          <PartnerTile key={p.name} name={p.name} logo={p.logo} href={p.href} isCircle={p.isCircle ?? true} />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── What and why AWSSBG-UC ──────────────────────────────────────────────────
+
+const PILLARS = [
+  { title: "Education", body: "Hands-on labs, workshops, and certification prep on real AWS infrastructure.", icon: "/images/additional/wrench2.png", border: "border-[#2c8f8f]" },
+  { title: "Outreach", body: "Events, partnerships, and programs that bring cloud skills to more students.", icon: "/images/additional/community.png", border: "border-[#b89a0a]" },
+  { title: "Governance", body: "Constitution-backed processes, officer roles, and democratic decision-making.", icon: "/images/additional/key2.png", border: "border-[#b32a0e]" },
+  { title: "Institutional growth", body: "Alumni networks, school partnerships, and a track record that outlasts any batch.", icon: "/images/additional/ladder.png", border: "border-[#3aaa6e]" },
+  { title: "Recognition", body: "Certifications, competition wins, and org-wide recognition for members who level up.", icon: "/images/additional/trophy2.png", border: "border-[#2c8f8f]" },
+  { title: "Technical innovation", body: "Hackathons, internal tools, and projects that solve real problems with cloud tech.", icon: "/images/additional/thunder2.png", border: "border-[#b89a0a]" },
+];
+
+function About() {
+  return (
+    <>
+      {/* Custom section (not <Section>) so the title, text and images share one row and line up. */}
+      <Stripes />
+      <section className={`${wrap} py-14 sm:py-20`}>
+        <div className="grid items-center gap-10 md:grid-cols-[1fr_auto]">
+          <div>
+            <h2 className={`${hd} text-6xl sm:text-8xl`}>What is AWSSBG-UC?</h2>
+            <p className="mt-6 max-w-2xl text-2xl leading-snug">
+              We&apos;re the AWS Student Builder Group at the University of Cabuyao. We run workshops, ship projects, and build cloud skills together, all free and all on AWS. Every UC student is welcome. No experience needed.
+            </p>
+          </div>
+          {/* Stacked: duck engineer in front, logo/mascot behind it at the upper right. */}
+          <div className="relative mx-auto w-44 sm:w-52 lg:w-60">
+            <Image
+              src="/icons/temp_mascot.webp"
+              alt="AWSSBG-UC mascot"
+              width={220}
+              height={220}
+              className="absolute -right-4 top-0 z-0 h-auto w-3/5 sm:-right-8"
+            />
+            {/* Save the SVG as public/images/additional/duck-engineer.svg.
+                `unoptimized` because next/image blocks SVGs unless dangerouslyAllowSVG is enabled. */}
+            <Image
+              src="/images/additional/duck-engineer.svg"
+              alt="Pixel-art engineer duck with a hard hat, laptop and coffee"
+              width={368}
+              height={472}
+              unoptimized
+              className="relative z-10 h-auto w-full [image-rendering:pixelated]"
+            />
+          </div>
+        </div>
+      </section>
+
+      <Section title="Why join?" intro="Six pillars guide everything we do, with AWS cloud technology as the common thread.">
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {PILLARS.map((p) => (
+            <li key={p.title} className={`border-4 ${p.border} p-5`}>
+              <Image src={p.icon} alt="" width={40} height={40} className="h-10 w-10 object-contain" />
+              <h3 className={`${hd} mt-6 text-3xl`}>{p.title}</h3>
+              <p className="mt-2 leading-snug">{p.body}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+    </>
+  );
+}
+
+// ─── What is AWS ─────────────────────────────────────────────────────────────
+
+function WhatIsAws() {
+  return (
+    <Section title="What is AWS?">
+      <div className="grid items-center gap-12 lg:grid-cols-2">
+        <div>
+          <p className="text-2xl leading-snug">
+            Amazon Web Services powers millions of businesses, from startups to governments. With over 200 services spanning compute, storage, databases, AI/ML, and security, it&apos;s the on-ramp to building anything at scale.
+          </p>
+          <p className="mt-5 leading-relaxed text-[#fff7a1]/80">
+            As a member you get hands-on time with the same infrastructure used by Netflix, Airbnb, and NASA. Hover a service in the globe to see what it does.
+          </p>
+          <Link href="/aws" className={`mt-8 inline-block border-4 border-[#fff7a1] px-6 py-3 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}>
+            Browse free AWS resources
+          </Link>
+        </div>
+        <div className="relative mx-auto w-full max-w-[560px] border-4 border-[#b89a0a] bg-[#fff7a1] p-4 text-black shadow-[8px_8px_0_#b89a0a]">
+          <PixelMap src="/images/hero/globe.png" />
+          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2">
+            <GlobeOrbit />
+          </div>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+// ─── Members ─────────────────────────────────────────────────────────────────
+
+const MEMBER_BORDERS = ["border-[#2c8f8f]", "border-[#b89a0a]", "border-[#b32a0e]", "border-[#3aaa6e]"];
+
+function MemberCard({ member, border }: { member: PublicMemberProfile; border: string }) {
+  const name = member.display_name ?? member.username ?? "Member";
+  const skills = (member.skills ?? []).slice(0, 3);
+  return (
+    <li className={`relative border-4 ${border} p-4 transition-colors focus-within:bg-[#fff7a1]/5 hover:bg-[#fff7a1]/5`}>
+      <div className="flex items-center gap-4">
+        {member.avatar_url ? (
+          <div className="h-20 w-20 shrink-0 border-4 border-[#fff7a1]">
+            <PixelPhoto src={member.avatar_url} width={24} height={24} />
+          </div>
+        ) : (
+          <span className={`${hd} flex h-20 w-20 shrink-0 items-center justify-center border-4 border-[#fff7a1] bg-[#fff7a1] text-5xl text-black`}>
+            {name.slice(0, 1).toUpperCase()}
+          </span>
+        )}
+        <div className="min-w-0">
+          <h3 className={`${hd} truncate text-3xl`}>
+            {member.username ? (
+              <Link href={`/members/${encodeURIComponent(member.username)}`} className={`after:absolute after:inset-0 ${focus}`}>
+                {name}
+              </Link>
+            ) : (
+              name
+            )}
+          </h3>
+          {member.username && <p className="truncate text-sm text-[#fff7a1]/70">@{member.username}</p>}
+        </div>
+      </div>
+      {skills.length > 0 && (
+        <ul className="mt-4 flex flex-wrap gap-2" aria-label="Skills">
+          {skills.map((skill) => (
+            <li key={skill} className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-xs">
+              {skill}
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function Members({ members, memberCount }: { members: PublicMemberProfile[]; memberCount: number }) {
+  const intro =
+    memberCount > 0
+      ? `${memberCount.toLocaleString()} ${memberCount === 1 ? "member has" : "members have"} a public profile in our directory.`
+      : "Member profiles show up here once students add theirs to the directory.";
+  return (
+    <Section title="Meet our members" intro={intro}>
+      {members.length > 0 && (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {members.map((m, i) => (
+            <MemberCard key={m.member_id} member={m} border={MEMBER_BORDERS[i % MEMBER_BORDERS.length]} />
+          ))}
+        </ul>
+      )}
+      <Link
+        href={memberCount > 0 ? "/members" : "/signup"}
+        className={`${members.length > 0 ? "mt-10" : ""} inline-block border-4 border-[#fff7a1] px-6 py-3 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+      >
+        {memberCount > 0 ? "See all members" : "Join the community"}
+      </Link>
+    </Section>
+  );
+}
+
+// ─── Final CTA ───────────────────────────────────────────────────────────────
+
+function JoinCta() {
+  const reduce = useReducedMotion();
+  return (
+    <>
+      <Stripes className="h-4" />
+      <section className="bg-[#fff7a1] text-black">
+        <div className={`${wrap} py-16 sm:py-24`}>
+          <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto] lg:gap-8">
+            <div className="text-center">
+              <h2 className={`${hd} text-[clamp(4.5rem,10vw,9rem)]`}>
+                What are you
+                <br />
+                waiting for?
+              </h2>
+              <p className="mx-auto mt-6 max-w-lg text-xl leading-snug">
+                Joining is free and open to every University of Cabuyao student. Make an account and come to the next event.
+              </p>
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
+                <Link href="/signup" className={`${btnDark} px-10 py-4 text-xl`}>
+                  Join now, it&apos;s free
+                </Link>
+                <Link href="/about" className={`inline-block border-4 border-black px-8 py-3.5 text-xl transition-colors hover:bg-black hover:text-[#fff7a1] ${focus}`}>
+                  Learn more
+                </Link>
+              </div>
+            </div>
+
+            {/* Crying duck at the side, vertically centered with the text. The bubble floats above it so it doesn't shift the centering. */}
+            <div className="relative mx-auto mt-14 lg:mt-0">
+              <div className="absolute bottom-full left-1/2 mb-3 -translate-x-1/2 whitespace-nowrap border-4 border-black bg-black px-4 py-2 text-lg leading-none text-[#fff7a1] shadow-[4px_4px_0_#b32a0e]">
+                Please join us... I&apos;m begging you
+                <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b-4 border-r-4 border-black bg-black" />
+              </div>
+              {/* Save the SVG as public/images/additional/duck-crying.svg */}
+              <motion.div
+                animate={reduce ? undefined : { y: [0, -4, 0] }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Image
+                  src="/images/additional/duck-crying.svg"
+                  alt="A pixel-art duck crying and begging you to join"
+                  width={384}
+                  height={472}
+                  unoptimized
+                  className="h-auto w-48 [image-rendering:pixelated] sm:w-60 lg:w-72"
+                />
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <Stripes className="h-4" />
+    </>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function HomeClient({
   registeredCount = 0,
   participantCount = 0,
+  members = [],
+  memberCount = 0,
 }: {
   registeredCount?: number;
   participantCount?: number;
+  members?: PublicMemberProfile[];
+  memberCount?: number;
 }) {
   return (
-    <div>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
       <WIPBanner />
-      <HeroSection />
-
-      {/* white breathing room above the marquee + socials */}
-      <div className="bg-white pt-10">
-        <TechMarquee />
-
-        <div className="border-b border-neutral-200 bg-white overflow-x-auto">
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-8 px-6 py-7 min-w-0 flex-wrap">
-          <span className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Follow us</span>
-          <div className="h-5 w-px bg-neutral-300" aria-hidden="true" />
-          <div className="flex items-center gap-2">
-            
-            <a
-              href={SOCIALS.discord}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Discord server"
-              className="flex items-center gap-2.5 rounded-lg px-4 py-3 text-neutral-500 transition-colors hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-              </svg>
-              <span className="text-sm font-semibold">Discord</span>
-            </a>
-            
-            <a
-              href={SOCIALS.facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook page"
-              className="flex items-center gap-2.5 rounded-lg px-4 py-3 text-neutral-500 transition-colors hover:bg-[#1877F2]/10 hover:text-[#1877F2]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              <span className="text-sm font-semibold">Facebook</span>
-            </a>
-            
-            <a
-              href={MAILTO}
-              aria-label="Email us"
-              className="flex items-center gap-2.5 rounded-lg px-4 py-3 text-neutral-500 transition-colors hover:bg-[#00e482]/10 hover:text-[#00b86b]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect width="20" height="16" x="2" y="4" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-              <span className="text-sm font-semibold">Email</span>
-            </a>
-          </div>
-        </div>
+      <PixelClouds />
+      <SidePixels side="left" />
+      <SidePixels side="right" />
+      <div className="relative z-10">
+        <Hero registeredCount={registeredCount} participantCount={participantCount} />
+        <Partners />
+        <About />
+        <WhatIsAws />
+        <Members members={members} memberCount={memberCount} />
+        <JoinCta />
       </div>
-
-      </div>{/* end white wrapper */}
-
-      
-      <ParallaxSection
-        className="border-b border-neutral-200 bg-white min-h-screen"
-        accentBehind={<div className="absolute -left-20 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-[#00e482]/8 blur-3xl" />}
-      >
-        {({ headingY, bodyY }) => (
-          <>
-          <div className="mx-auto max-w-5xl px-6 py-20">
-            <motion.div className="grid gap-12 sm:grid-cols-2 sm:items-center" variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={viewport}>
-              <div>
-                <EyebrowLabel>About AWS</EyebrowLabel>
-                <SectionHeading y={headingY} light>The world runs on the cloud.</SectionHeading>
-                <motion.p variants={fadeUp} style={{ y: bodyY, willChange: "transform" }} className="mt-6 text-base leading-relaxed text-neutral-600">
-                  Amazon Web Services powers millions of businesses globally — from startups to governments. With over 200 fully featured services spanning compute, storage, databases, AI/ML, and security, AWS is the on-ramp to building anything at scale.
-                </motion.p>
-                <motion.p variants={fadeUp} style={{ y: bodyY, willChange: "transform" }} className="mt-4 text-base leading-relaxed text-neutral-600">
-                  As members of AWSSBG-UC, you get hands-on exposure to the same infrastructure used by Netflix, Airbnb, NASA, and thousands more.
-                </motion.p>
-              </div>
-              <motion.div className="relative flex items-center justify-center" variants={fadeIn}>
-                
-                <Image
-                  src="/images/hero/globe.png"
-                  alt="AWS global infrastructure"
-                  width={640}
-                  height={400}
-                  className="w-full max-w-[640px] rounded-xl object-contain opacity-90"
-                />
-                
-                
-                <div className="absolute w-full max-w-[640px]" style={{ top: "50%", transform: "translateY(-50%)" }}>
-                  <GlobeOrbit />
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          
-          <div className="pointer-events-none absolute inset-x-0 bottom-0" aria-hidden="true">
-            <svg viewBox="0 0 1440 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="block w-full">
-              
-              <g fill="#171717" opacity="0.5">
-                <rect x="0"    y="110" width="60"  height="50" />
-                <rect x="80"   y="90"  width="40"  height="70" />
-                <rect x="140"  y="100" width="55"  height="60" />
-                <rect x="210"  y="80"  width="35"  height="80" />
-                <rect x="260"  y="105" width="50"  height="55" />
-                <rect x="330"  y="95"  width="45"  height="65" />
-                <rect x="390"  y="115" width="30"  height="45" />
-                <rect x="440"  y="85"  width="40"  height="75" />
-                <rect x="500"  y="100" width="55"  height="60" />
-                <rect x="570"  y="90"  width="35"  height="70" />
-                <rect x="620"  y="110" width="50"  height="50" />
-                <rect x="690"  y="80"  width="40"  height="80" />
-                <rect x="750"  y="95"  width="45"  height="65" />
-                <rect x="810"  y="105" width="30"  height="55" />
-                <rect x="860"  y="85"  width="55"  height="75" />
-                <rect x="930"  y="100" width="40"  height="60" />
-                <rect x="990"  y="90"  width="35"  height="70" />
-                <rect x="1040" y="110" width="50"  height="50" />
-                <rect x="1110" y="80"  width="40"  height="80" />
-                <rect x="1170" y="95"  width="45"  height="65" />
-                <rect x="1230" y="105" width="55"  height="55" />
-                <rect x="1300" y="85"  width="30"  height="75" />
-                <rect x="1350" y="100" width="50"  height="60" />
-                <rect x="1400" y="90"  width="40"  height="70" />
-              </g>
-              
-              <g fill="#171717">
-                <rect x="10"   y="70"  width="45"  height="90" />
-                <rect x="30"   y="55"  width="4"   height="16" />
-                <rect x="100"  y="50"  width="55"  height="110" />
-                <rect x="108"  y="40"  width="38"  height="12" />
-                <rect x="118"  y="30"  width="18"  height="12" />
-                <rect x="170"  y="65"  width="40"  height="95" />
-                <rect x="230"  y="35"  width="30"  height="125" />
-                <rect x="243"  y="20"  width="4"   height="17" />
-                <rect x="275"  y="75"  width="45"  height="85" />
-                <rect x="340"  y="55"  width="50"  height="105" />
-                <rect x="348"  y="44"  width="34"  height="13" />
-                <rect x="410"  y="70"  width="35"  height="90" />
-                <rect x="460"  y="42"  width="48"  height="118" />
-                <rect x="482"  y="26"  width="4"   height="18" />
-                <rect x="525"  y="60"  width="42"  height="100" />
-                <rect x="585"  y="48"  width="30"  height="112" />
-                <rect x="640"  y="68"  width="50"  height="92" />
-                <rect x="710"  y="38"  width="40"  height="122" />
-                <rect x="728"  y="22"  width="4"   height="18" />
-                <rect x="770"  y="58"  width="35"  height="102" />
-                <rect x="825"  y="44"  width="48"  height="116" />
-                <rect x="833"  y="33"  width="32"  height="13" />
-                <rect x="890"  y="62"  width="42"  height="98" />
-                <rect x="950"  y="50"  width="38"  height="110" />
-                <rect x="967"  y="34"  width="4"   height="18" />
-                <rect x="1005" y="70"  width="45"  height="90" />
-                <rect x="1065" y="40"  width="52"  height="120" />
-                <rect x="1073" y="28"  width="36"  height="14" />
-                <rect x="1083" y="16"  width="16"  height="14" />
-                <rect x="1135" y="58"  width="38"  height="102" />
-                <rect x="1190" y="45"  width="44"  height="115" />
-                <rect x="1210" y="28"  width="4"   height="19" />
-                <rect x="1250" y="66"  width="48"  height="94" />
-                <rect x="1315" y="52"  width="36"  height="108" />
-                <rect x="1365" y="42"  width="50"  height="118" />
-                <rect x="1373" y="30"  width="34"  height="14" />
-                <rect x="1420" y="68"  width="20"  height="92" />
-              </g>
-              <rect x="0" y="155" width="1440" height="5" fill="#171717" />
-            </svg>
-          </div>
-          </>
-        )}
-      </ParallaxSection>
-
-      {/* Section: Free Learning Resources — DARK */}
-      <ParallaxSection
-        className="border-b border-neutral-800 bg-neutral-900 min-h-screen"
-        accentBehind={
-          <>
-            <div className="absolute -right-16 top-0 h-72 w-72 rounded-full bg-[#00e482]/5 blur-3xl" />
-            
-            <div className="pointer-events-none absolute -bottom-8 -left-8 overflow-hidden select-none" aria-hidden="true">
-              <svg viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg" className="w-[420px] opacity-[0.04] -rotate-12">
-                <text
-                  x="0"
-                  y="75%"
-                  fontFamily="ui-sans-serif, system-ui, sans-serif"
-                  fontWeight="900"
-                  fontSize="160"
-                  letterSpacing="-6"
-                  fill="#00e482"
-                >
-                  FREE
-                </text>
-              </svg>
-            </div>
-            
-            <div className="pointer-events-none absolute right-8 top-8 opacity-[0.06] rotate-12" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="#00e482" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l7.59-7.59a1 1 0 0 0 0-1.41z"/>
-                <circle cx="7" cy="7" r="1.5" fill="#00e482"/>
-              </svg>
-            </div>
-          </>
-        }
-      >
-        {({ headingY, bodyY }) => (
-          <div className="mx-auto max-w-5xl px-6 py-20">
-            {/* Header block — eyebrow, heading, subtext all aligned */}
-            <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={viewport}>
-              <EyebrowLabel>100% Free</EyebrowLabel>
-              <SectionHeading y={headingY}>Build real things. No credit card.</SectionHeading>
-              <motion.p variants={fadeUp} style={{ y: bodyY, willChange: "transform" }} className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-400">
-                AWS provides hands-on labs, guided workshops, and project starters that run in real cloud environments — all at zero cost through AWS Builder Labs, Builder Center, Skill Builder, and the Free Tier.
-              </motion.p>
-              <motion.div variants={fadeUp} className="mt-6">
-                <Link
-                  href="/aws"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#00e482]/40 bg-[#00e482]/10 px-5 py-2.5 text-sm font-semibold text-[#00e482] transition-colors hover:bg-[#00e482]/20"
-                >
-                  View all free resources
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </Link>
-              </motion.div>
-            </motion.div>
-
-            {/* Cards container — visually separated */}
-            <motion.div
-              className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
-              variants={stagger(0.1)}
-              initial="hidden"
-              whileInView="show"
-              viewport={viewport}
-            >
-                {[
-                  {
-                    label: "Builder Labs",
-                    image: "/images/hero/builder_labs.png",
-                    href: "https://builder.aws.com/start?trk=9f01212c-9819-4534-ad0a-4c5e491af39a&sc_channel=el",
-                    desc: "Guided, hands-on labs in a live AWS environment. No setup, no cost — just build.",
-                    items: ["Real AWS console access", "Step-by-step guidance", "No credit card required"],
-                  },
-                  {
-                    label: "Builder Center",
-                    image: "/images/hero/builder_center.jpg",
-                    href: "https://builder.aws.com/start?trk=9f01212c-9819-4534-ad0a-4c5e491af39a&sc_channel=el",
-                    desc: "Your personal AWS learning hub — tracks, challenges, and curated content in one place.",
-                    items: ["Personalized learning paths", "Challenges & quests", "Community-driven content"],
-                  },
-                  {
-                    label: "Workshops",
-                    image: "/images/hero/workshops.png",
-                    href: "https://workshops.aws/",
-                    desc: "Self-paced workshop content built by AWS engineers covering every major service.",
-                    items: ["Serverless & containers", "ML & AI applications", "Security & DevOps"],
-                  },
-                  {
-                    label: "Project Hub",
-                    image: "/images/hero/projects.jpg",
-                    href: "https://aws.amazon.com/getting-started/hands-on/",
-                    desc: "End-to-end project tutorials — build a website, an API, a chatbot, and more.",
-                    items: ["Host a static website", "Deploy a REST API", "Build a serverless app"],
-                  },
-                ].map(({ label, image, href, desc, items }) => (
-                  <motion.a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    variants={fadeUp}
-                    whileHover={{ y: -4, transition: { type: "spring", stiffness: 300, damping: 20 } }}
-                    className="group flex flex-col rounded-xl border border-neutral-800 bg-neutral-900/60 overflow-hidden transition-colors hover:border-neutral-700"
-                  >
-                    
-                    <div className="relative h-40 w-full shrink-0 overflow-hidden">
-                      <Image
-                        src={image}
-                        alt={label}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/70 to-transparent" />
-                    </div>
-                    
-                    <div className="flex flex-1 flex-col px-6 py-5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-[#00e482]">{label}</p>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#00e482] opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true">
-                          <path d="M7 7h10v10" /><path d="M7 17 17 7" />
-                        </svg>
-                      </div>
-                      <p className="mt-3 text-sm leading-relaxed text-neutral-400">{desc}</p>
-                      <ul className="mt-4 space-y-2">
-                        {items.map((item) => (
-                          <li key={item} className="flex items-start gap-2 text-sm text-neutral-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0 text-[#00e482]" aria-hidden="true">
-                              <path d="M20 6 9 17l-5-5" />
-                            </svg>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-5 text-xs font-semibold text-[#00e482] opacity-0 transition-opacity group-hover:opacity-100">
-                        Explore →
-                      </p>
-                    </div>
-                  </motion.a>
-                ))}
-              </motion.div>
-          </div>
-        )}
-      </ParallaxSection>
-
-      
-      <ParallaxSection
-        className="bg-white min-h-screen overflow-visible"
-        accentBehind={<div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00e482]/6 blur-3xl" />}
-      >
-        {({ headingY }) => (
-          <>
-            
-            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 -translate-y-full overflow-hidden leading-none text-white" aria-hidden="true">
-              <svg viewBox="0 0 1440 56" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="block h-10 w-full sm:h-14">
-                <path d="M0,56 L60,0 L120,56 L180,0 L240,56 L300,0 L360,56 L420,0 L480,56 L540,0 L600,56 L660,0 L720,56 L780,0 L840,56 L900,0 L960,56 L1020,0 L1080,56 L1140,0 L1200,56 L1260,0 L1320,56 L1380,0 L1440,56 L1440,56 Z" fill="currentColor" />
-              </svg>
-            </div>
-
-            <div className="mx-auto max-w-5xl px-6 py-28">
-              {/* Top row — mascot + heading side by side on lg, stacked on mobile */}
-              <motion.div
-                className="flex flex-col items-start gap-10 lg:flex-row lg:items-center lg:gap-14"
-                variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={viewport}
-              >
-                {/* Mascot */}
-                <motion.div
-                  variants={fadeIn}
-                  className="flex shrink-0 items-center justify-center self-center"
-                  whileHover={{ rotate: [-1, 1, -1, 0], transition: { duration: 0.5 } }}
-                >
-                  <Image
-                    src="/icons/temp_mascot.webp"
-                    alt="AWSSBG-UC mascot"
-                    width={260}
-                    height={260}
-                    className="drop-shadow-2xl w-full max-w-[260px]"
-                  />
-                </motion.div>
-
-                {/* Heading block */}
-                <div>
-                  <EyebrowLabel>Why AWSSBG-UC</EyebrowLabel>
-                  <motion.h2 variants={fadeUp} className="text-4xl font-bold tracking-tight sm:text-5xl text-neutral-900">
-                    Everything maps back to six pillars.
-                  </motion.h2>
-                  <motion.p variants={fadeUp} className="mt-4 max-w-xl text-base leading-relaxed text-neutral-500">
-                    Education, outreach, governance, institutional growth, recognition, and technical innovation — with AWS cloud technology as the common thread.
-                  </motion.p>
-                </div>
-              </motion.div>
-
-              {/* Cards — full width below the header row */}
-              <motion.div
-                className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                variants={stagger(0.09)} initial="hidden" whileInView="show" viewport={viewport}
-              >
-                    {[
-                      {
-                        category: "Education",
-                        tag: "Free for all members",
-                        title: "Learn by building",
-                        body: "Hands-on labs, workshops, and certification prep on real AWS infrastructure.",
-                        image: "/images/additional/wrench2.png",
-                      },
-                      {
-                        category: "Outreach",
-                        tag: "Open to everyone",
-                        title: "Grow the community",
-                        body: "Events, partnerships, and programs that bring cloud skills to more students.",
-                        image: "/images/additional/community.png",
-                      },
-                      {
-                        category: "Governance",
-                        tag: "Structured & transparent",
-                        title: "Run like an org",
-                        body: "Constitution-backed processes, officer roles, and democratic decision-making.",
-                        image: "/images/additional/key2.png",
-                      },
-                      {
-                        category: "Institutional Growth",
-                        tag: "Long-term impact",
-                        title: "Build something lasting",
-                        body: "Alumni networks, school partnerships, and a track record that outlasts any batch.",
-                        image: "/images/additional/ladder.png",
-                      },
-                      {
-                        category: "Recognition",
-                        tag: "Member milestones",
-                        title: "Celebrate achievement",
-                        body: "Certifications, competition wins, and org-wide recognition for members who level up.",
-                        image: "/images/additional/trophy2.png",
-                      },
-                      {
-                        category: "Technical Innovation",
-                        tag: "Powered by AWS",
-                        title: "Ship real things",
-                        body: "Hackathons, internal tools, and projects that solve real problems using cloud tech.",
-                        image: "/images/additional/thunder2.png",
-                      },
-                    ].map(({ category, tag, title, body, image }) => (
-                      <motion.div
-                        key={title}
-                        variants={fadeUp}
-                        whileHover={{ boxShadow: "0 8px 24px -4px rgba(0,0,0,0.10)", transition: { duration: 0.2 } }}
-                        className="relative flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-5 shadow-sm"
-                      >
-                        {/* pixel dot grid — bottom-right decorative accent */}
-                        <svg
-                          aria-hidden="true"
-                          className="pointer-events-none absolute bottom-0 right-0 h-24 w-24 opacity-[0.07]"
-                          viewBox="0 0 80 80"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          {Array.from({ length: 6 }, (_, row) =>
-                            Array.from({ length: 6 }, (_, col) => (
-                              <rect
-                                key={`${row}-${col}`}
-                                x={col * 14 + 2}
-                                y={row * 14 + 2}
-                                width="4"
-                                height="4"
-                                rx="1"
-                                fill="#00e482"
-                              />
-                            ))
-                          )}
-                        </svg>
-
-                        {/* icon */}
-                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-neutral-100 shadow-sm">
-                          <Image src={image} alt={title} width={28} height={28} className="object-contain" />
-                        </div>
-
-                        {/* category pill */}
-                        <div className="mb-2">
-                          <span className="inline-block rounded-full border border-neutral-300 bg-white px-2.5 py-0.5 text-[11px] font-medium text-neutral-500">
-                            {category}
-                          </span>
-                        </div>
-
-                        {/* tag row */}
-                        <div className="mb-3 flex items-center gap-1.5 text-neutral-400">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l7.59-7.59a1 1 0 0 0 0-1.41z"/>
-                            <circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/>
-                          </svg>
-                          <span className="text-[11px]">{tag}</span>
-                        </div>
-
-                        <p className="text-base font-bold leading-snug text-neutral-900">{title}</p>
-                        <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">{body}</p>
-                      </motion.div>
-                    ))}
-              </motion.div>
-            </div>
-
-            
-
-            
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 translate-y-full overflow-hidden leading-none text-white" aria-hidden="true">
-              <svg viewBox="0 0 1440 56" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="block h-10 w-full sm:h-14">
-                <path d="M0,0 L60,56 L120,0 L180,56 L240,0 L300,56 L360,0 L420,56 L480,0 L540,56 L600,0 L660,56 L720,0 L780,56 L840,0 L900,56 L960,0 L1020,56 L1080,0 L1140,56 L1200,0 L1260,56 L1320,0 L1380,56 L1440,0 L1440,0 Z" fill="currentColor" />
-              </svg>
-            </div>
-          </>
-        )}
-      </ParallaxSection>
-
-      {/* Section: Community — DARK, CTA */}
-      <ParallaxSection
-        accentBehind={
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -left-20 bottom-0 h-[500px] w-[500px] rounded-full bg-[#00e482]/6 blur-3xl" />
-            <div className="absolute -right-20 top-0 h-[400px] w-[400px] rounded-full bg-[#00e482]/4 blur-3xl" />
-          </div>
-        }
-        className="bg-neutral-900 min-h-screen"
-      >
-        {({ headingY }) => (
-          <div className="mx-auto max-w-4xl px-6 py-20 text-center">
-            <motion.div variants={stagger(0.09)} initial="hidden" whileInView="show" viewport={viewport}>
-              <EyebrowLabel>AWSSBG-UC</EyebrowLabel>
-              <SectionHeading y={headingY}>
-                What are you<br />waiting for?
-              </SectionHeading>
-
-              <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-neutral-400">
-                Over 100 students have already joined. We run workshops, ship projects, and build cloud skills together — all free, all on AWS.
-              </motion.p>
-
-              {/* Pillars — no hard numbers, just what we do */}
-              <motion.div className="mt-12 grid gap-4 sm:grid-cols-3 text-left" variants={stagger(0.08)}>
-                {[
-                  {
-                    icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>,
-                    title: "Hands-on labs",
-                    body: "Real AWS accounts. Real deployments. Not just slides.",
-                  },
-                  {
-                    icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-                    title: "A real community",
-                    body: "People who actually show up, help each other, and build stuff.",
-                  },
-                  {
-                    icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
-                    title: "Something on your CV",
-                    body: "Certifications, projects, and events worth talking about.",
-                  },
-                ].map(({ icon, title, body }) => (
-                  <motion.div
-                    key={title}
-                    variants={fadeUp}
-                    className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-6 py-5"
-                  >
-                    <div className="mb-3 text-[#00e482]">{icon}</div>
-                    <p className="text-sm font-semibold text-neutral-100">{title}</p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-neutral-400">{body}</p>
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              {/* CTAs */}
-              <motion.div variants={fadeUp} className="mt-12 flex flex-wrap justify-center gap-4">
-                <div className="border-spin rounded-full bg-[#161d27]">
-                  <Link
-                    href="/signup"
-                    className="relative block rounded-full bg-[#00e482] px-10 py-3.5 text-base font-bold text-[#0f1923] transition-opacity hover:opacity-90"
-                  >
-                    Join now — it&apos;s free
-                  </Link>
-                </div>
-                <div>
-                  <Link
-                    href="/about"
-                    className="block rounded-full border border-neutral-700 px-8 py-3.5 text-base font-semibold text-neutral-300 transition-colors hover:border-neutral-500 hover:text-neutral-100"
-                  >
-                    Learn more
-                  </Link>
-                </div>
-              </motion.div>
-
-              <motion.p variants={fadeUp} className="mt-6 text-xs text-neutral-600">
-                Open to all University of Cabuyao students. No experience needed.
-              </motion.p>
-            </motion.div>
-          </div>
-        )}
-      </ParallaxSection>
     </div>
   );
 }

@@ -6,11 +6,11 @@ import { AdminDashboard } from "@/src/_pages/admin";
 export const metadata = { title: "Admin — AWSSBG-UC" };
 
 export default async function AdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const admin = createAdminClient();
+  const admin = await createAdminClient();
 
   // Resolve participant + confirm admin role server-side
   const { data: participant } = await admin

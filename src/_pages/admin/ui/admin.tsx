@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 import {
   Users, ShieldCheck, CalendarDays, LayoutDashboard,
   UserCog, Megaphone, Plus, Search, ChevronLeft,
   ChevronRight, RefreshCw, Check, X, AlertTriangle,
-  BadgeCheck, Clock, CircleMinus, Loader2,
+  BadgeCheck, Loader2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -42,55 +44,119 @@ interface EventRow {
 }
 
 type Tab = "overview" | "members" | "events" | "provision" | "roles";
+type ToastState = { message: string; type: "success" | "error" } | null;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Shared look — same pixel-art language as the Events page and the nav ─────
+// Black ground, butter (#fff7a1) type, Jersey 10 headings, Pixelify Sans text,
+// 4px square borders, hard offset shadows, stripe palette for accents.
+
+const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
+const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+const focus =
+  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+
+const STRIPES: [string, number][] = [
+  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
+  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
+];
+const STRIPE_BG = (() => {
+  let at = 0;
+  const stops = STRIPES.map(([c, w]) => {
+    const st = `${c} ${at}% ${at + w}%`;
+    at += w;
+    return st;
+  });
+  return `linear-gradient(90deg, ${stops.join(", ")})`;
+})();
+
+function Stripes({ className = "h-4" }: { className?: string }) {
+  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+}
+
+// Event status — same four states as the public Events page, in stripe colours.
+const STATUS_LABELS: Record<EventRow["status"], string> = {
+  not_started: "Upcoming",
+  ongoing: "Ongoing",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+const STATUS_COLORS: Record<EventRow["status"], string> = {
+  not_started: "border-[#2c8f8f] text-[#2c8f8f]",
+  ongoing: "border-[#3aaa6e] bg-[#3aaa6e] text-black",
+  completed: "border-[#fff7a1]/50 text-[#fff7a1]/70",
+  cancelled: "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]",
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  admin: "border-[#b89a0a] bg-[#b89a0a] text-black",
+  officer: "border-[#2c8f8f] text-[#2c8f8f]",
+  member: "border-[#fff7a1]/50 text-[#fff7a1]/70",
+};
+
+const ACCOUNT_STATUS_COLORS: Record<string, string> = {
+  active: "border-[#3aaa6e] bg-[#3aaa6e] text-black",
+};
+const ACCOUNT_STATUS_FALLBACK = "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]";
+
+const BOX = "border-4 border-[#2c8f8f]";
+
+const BTN_PRIMARY =
+  `inline-flex items-center justify-center gap-2 border-4 border-[#fff7a1] bg-[#fff7a1] px-4 py-1.5 text-base text-black shadow-[3px_3px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_#b32a0e] disabled:pointer-events-none disabled:opacity-40 ${focus}`;
+const BTN_SECONDARY =
+  `inline-flex items-center justify-center gap-2 border-4 border-[#2c8f8f] px-4 py-1.5 text-base text-[#fff7a1] transition-colors hover:bg-[#2c8f8f] hover:text-black disabled:pointer-events-none disabled:opacity-40 ${focus}`;
+const BTN_SUBMIT =
+  `flex items-center justify-center gap-2 border-4 border-[#fff7a1] bg-[#fff7a1] px-6 py-3 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:pointer-events-none disabled:opacity-50 ${focus}`;
+
+const TH = "px-4 py-3 text-left text-base font-normal text-[#fff7a1]/60";
+
+function inputCls(hasError?: boolean) {
+  const base =
+    "w-full border-4 bg-black px-3 py-2 text-lg text-[#fff7a1] placeholder:text-[#fff7a1]/35 " +
+    "transition-colors focus:outline-none disabled:opacity-50";
+  return hasError
+    ? `${base} border-[#b32a0e] focus:border-[#e26a56]`
+    : `${base} border-[#fff7a1]/50 focus:border-[#2c8f8f]`;
+}
 
 function fmt(date: string) {
-  return new Date(date).toLocaleDateString(undefined, {
+  return new Date(date).toLocaleDateString("en-PH", {
     year: "numeric", month: "short", day: "numeric",
   });
 }
 
-function fmtDateTimeLocal(iso: string) {
-  return iso.slice(0, 16); // "YYYY-MM-DDTHH:MM" for datetime-local input
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  not_started: "text-neutral-400 border-neutral-700 bg-neutral-800/50",
-  ongoing:     "text-[#00e482] border-[#00e482]/30 bg-[#00e482]/10",
-  completed:   "text-blue-400 border-blue-800/40 bg-blue-950/30",
-  cancelled:   "text-red-400 border-red-800/40 bg-red-950/30",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  not_started: "Not Started",
-  ongoing:     "Ongoing",
-  completed:   "Completed",
-  cancelled:   "Cancelled",
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  admin:   "text-amber-400 border-amber-700/40 bg-amber-950/30",
-  officer: "text-violet-400 border-violet-700/40 bg-violet-950/30",
-  member:  "text-neutral-400 border-neutral-700 bg-neutral-800/50",
-};
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatCard({ icon: Icon, label, value, color }: {
-  icon: React.ElementType; label: string; value: number | null; color: string;
+function Pill({ text, colorClass }: { text: string; colorClass: string }) {
+  return (
+    <span className={`inline-flex shrink-0 items-center border-2 px-2 py-0.5 text-sm leading-tight ${colorClass}`}>
+      {text}
+    </span>
+  );
+}
+
+const STAT_BORDERS = [
+  "border-[#2c8f8f] shadow-[6px_6px_0_#2c8f8f]",
+  "border-[#3aaa6e] shadow-[6px_6px_0_#3aaa6e]",
+  "border-[#b89a0a] shadow-[6px_6px_0_#b89a0a]",
+  "border-[#b32a0e] shadow-[6px_6px_0_#b32a0e]",
+  "border-[#2c8f8f] shadow-[6px_6px_0_#2c8f8f]",
+];
+
+function StatCard({ icon: Icon, label, value, tone }: {
+  icon: React.ElementType; label: string; value: number | null; tone: number;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-      <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${color}`}>
-        <Icon size={18} />
+    <div className={`border-4 bg-black p-5 ${STAT_BORDERS[tone % STAT_BORDERS.length]}`}>
+      <div className="flex items-center justify-between text-lg text-[#fff7a1]/70">
+        <p>{label}</p>
+        <Icon size={18} aria-hidden="true" />
       </div>
-      <div>
-        <p className="text-2xl font-bold tabular-nums text-neutral-100">
-          {value === null ? "—" : value.toLocaleString()}
-        </p>
-        <p className="mt-0.5 text-xs text-neutral-500">{label}</p>
-      </div>
+      <p className={`${hd} mt-3 text-6xl tabular-nums`}>
+        {value === null ? "—" : value.toLocaleString()}
+      </p>
     </div>
   );
 }
@@ -101,37 +167,94 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
     return () => clearTimeout(t);
   }, [onDismiss]);
   return (
-    <div className={`fixed bottom-6 right-6 z-[99999] flex items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium shadow-2xl ${type === "success" ? "border-[#00e482]/30 bg-neutral-900 text-[#00e482]" : "border-red-800/40 bg-neutral-900 text-red-400"}`}>
-      {type === "success" ? <Check size={15} /> : <AlertTriangle size={15} />}
+    <div
+      role="status"
+      className={`${pixel.className} fixed bottom-6 right-6 z-[99999] flex items-center gap-3 border-4 border-[#fff7a1] bg-black px-4 py-3 text-lg text-[#fff7a1] ${
+        type === "success" ? "shadow-[6px_6px_0_#3aaa6e]" : "shadow-[6px_6px_0_#b32a0e]"
+      }`}
+    >
+      {type === "success" ? <Check size={16} /> : <AlertTriangle size={16} />}
       {message}
-      <button type="button" onClick={onDismiss} className="ml-1 opacity-60 hover:opacity-100"><X size={13} /></button>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss" className={`ml-1 opacity-70 hover:opacity-100 ${focus}`}>
+        <X size={14} />
+      </button>
     </div>
-  );
-}
-
-function Badge({ text, colorClass }: { text: string; colorClass: string }) {
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${colorClass}`}>
-      {text}
-    </span>
   );
 }
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
-    <div className="mb-5">
-      <h2 className="text-lg font-bold tracking-tight text-neutral-100">{title}</h2>
-      {sub && <p className="mt-0.5 text-sm text-neutral-500">{sub}</p>}
+    <div>
+      <h2 className={`${hd} text-5xl sm:text-6xl`}>{title}</h2>
+      {sub && <p className="mt-2 text-xl text-[#fff7a1]/70">{sub}</p>}
     </div>
   );
 }
 
-function inputCls(err?: boolean) {
-  return [
-    "w-full rounded-lg border bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100",
-    "placeholder:text-neutral-600 focus:outline-none focus:ring-2 transition-colors",
-    err ? "border-red-700 focus:ring-red-600/30" : "border-neutral-700 focus:ring-[#00e482]/20",
-  ].join(" ");
+function RefreshButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+  return (
+    <button type="button" onClick={onClick} disabled={loading} className={BTN_SECONDARY}>
+      <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
+    </button>
+  );
+}
+
+function SearchInput({ value, onChange, placeholder, className = "" }: {
+  value: string; onChange: (v: string) => void; placeholder: string; className?: string;
+}) {
+  return (
+    <div className={`relative ${className}`}>
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#fff7a1]/50" aria-hidden="true" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className={`${inputCls()} pl-9`}
+      />
+    </div>
+  );
+}
+
+function RoleToggles({ roles, participantId, callerParticipantId, onToggle, size = "sm" }: {
+  roles: string[];
+  participantId: string;
+  callerParticipantId?: string;
+  onToggle: (participantId: string, role: string, has: boolean) => void;
+  size?: "sm" | "md";
+}) {
+  const pad = size === "md" ? "px-3 py-1 text-base" : "px-2 py-0.5 text-sm";
+  return (
+    <div className="flex flex-wrap gap-2">
+      {(["admin", "officer", "member"] as const).map((role) => {
+        const has = roles.includes(role);
+        const isSelf = participantId === callerParticipantId && role === "admin";
+        return (
+          <button
+            key={role}
+            type="button"
+            disabled={isSelf}
+            onClick={() => onToggle(participantId, role, has)}
+            title={isSelf ? "You can't revoke your own admin role" : has ? `Revoke ${role}` : `Grant ${role}`}
+            className={[
+              "border-2 transition-colors disabled:pointer-events-none disabled:opacity-40",
+              focus, pad,
+              has
+                ? `${ROLE_COLORS[role]} hover:border-[#b32a0e] hover:bg-[#b32a0e] hover:text-[#fff7a1]`
+                : "border-[#fff7a1]/40 text-[#fff7a1]/80 hover:bg-[#fff7a1] hover:text-black",
+            ].join(" ")}
+          >
+            {has ? `Remove ${role}` : `Add ${role}`}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Spinner() {
+  return <Loader2 size={22} className="mx-auto animate-spin text-[#fff7a1]/60" />;
 }
 
 // ─── Tab: Overview ────────────────────────────────────────────────────────────
@@ -151,34 +274,294 @@ function OverviewTab() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3">
         <SectionHeader title="Overview" sub="Platform-wide counts at a glance." />
-        <button type="button" onClick={load} disabled={loading} className="flex items-center gap-1.5 rounded-lg border border-neutral-800 px-3 py-1.5 text-xs text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300 disabled:opacity-40">
-          <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
-        </button>
+        <RefreshButton onClick={load} loading={loading} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatCard icon={Users}         label="Participants"   value={stats?.participantCount  ?? null} color="bg-neutral-800 text-neutral-400" />
-        <StatCard icon={BadgeCheck}    label="Members"        value={stats?.memberCount       ?? null} color="bg-[#00e482]/10 text-[#00e482]" />
-        <StatCard icon={ShieldCheck}   label="Accounts"       value={stats?.accountCount      ?? null} color="bg-blue-950/50 text-blue-400" />
-        <StatCard icon={CalendarDays}  label="Events"         value={stats?.eventCount        ?? null} color="bg-violet-950/50 text-violet-400" />
-        <StatCard icon={Megaphone}     label="Registrations"  value={stats?.registrationCount ?? null} color="bg-amber-950/50 text-amber-400" />
+      <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard tone={0} icon={Users}        label="Participants"  value={stats?.participantCount  ?? null} />
+        <StatCard tone={1} icon={BadgeCheck}   label="Members"       value={stats?.memberCount       ?? null} />
+        <StatCard tone={2} icon={ShieldCheck}  label="Accounts"      value={stats?.accountCount      ?? null} />
+        <StatCard tone={3} icon={CalendarDays} label="Events"        value={stats?.eventCount        ?? null} />
+        <StatCard tone={4} icon={Megaphone}    label="Registrations" value={stats?.registrationCount ?? null} />
       </div>
     </div>
   );
 }
 
-// ─── Tab: Members ─────────────────────────────────────────────────────────────
+// ─── Tab: Members (participants + profiles + roster + student data + events) ──
+
+type Row = Record<string, unknown>;
+
+interface PersonRow {
+  participantId: string;
+  displayName: string;
+  suppliedName: string;
+  email: string | null;
+  status: string;
+  userId: string | null;
+  memberId: string | null;
+  roles: string[];
+  profile: Row | null;
+  student: {
+    student_number: string; first_name: string | null; middle_name: string | null; last_name: string | null;
+    year_level: string | null; program: string | null; section: string | null; email: string | null;
+  } | null;
+  events: { registered: number; attended: number; notAttended: number };
+}
+
+interface PersonDetail {
+  participant: Row;
+  roles: { role: string; granted_at: string }[];
+  profile: Row | null;
+  roster: Row | null;
+  student: Row | null;
+  registrations: {
+    event_id: string; name: string; location: string | null; starts_at: string | null; ends_at: string | null;
+    event_status: EventRow["status"] | null; status: string; affiliation: string | null; note: string | null;
+    registered_at: string | null;
+  }[];
+}
+
+const PEOPLE_FILTERS: { id: string; label: string }[] = [
+  { id: "all",        label: "Everyone" },
+  { id: "members",    label: "Members" },
+  { id: "accounts",   label: "With account" },
+  { id: "no_account", label: "No account" },
+  { id: "guests",     label: "Not members" },
+];
+
+const REG_COLORS: Record<string, { text: string; cls: string }> = {
+  registered:   { text: "Registered", cls: "border-[#2c8f8f] text-[#2c8f8f]" },
+  attended:     { text: "Attended",   cls: "border-[#3aaa6e] bg-[#3aaa6e] text-black" },
+  not_attended: { text: "Absent",     cls: "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]" },
+};
+
+function fullName(s: PersonRow["student"]) {
+  if (!s) return "";
+  return [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ");
+}
+
+function fmtDateTime(date: string | null) {
+  if (!date) return "—";
+  return new Date(date).toLocaleString("en-PH", {
+    year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
+}
+
+function labelOf(key: string) {
+  return key.replace(/_/g, " ");
+}
+
+function showValue(v: unknown): React.ReactNode {
+  if (v === null || v === undefined || v === "") return <span className="text-[#fff7a1]/35">—</span>;
+  if (typeof v === "boolean") return v ? "Yes" : "No";
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
+/** One database table, shown as its real columns. */
+function TableCard({ table, note, row, children }: {
+  table: string; note?: string; row?: Row | null; children?: React.ReactNode;
+}) {
+  return (
+    <section className="border-4 border-[#2c8f8f]">
+      <header className="flex items-baseline justify-between gap-3 border-b-4 border-[#2c8f8f] px-4 py-2">
+        <h4 className={`${hd} text-3xl`}>{table}</h4>
+        {note && <span className="text-sm text-[#fff7a1]/55">{note}</span>}
+      </header>
+      {row === null ? (
+        <p className="px-4 py-3 text-base text-[#fff7a1]/55">No row — nothing linked in this table.</p>
+      ) : row ? (
+        <dl className="grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-1.5 px-4 py-3 text-base">
+          {Object.entries(row).map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-[#fff7a1]/55">{labelOf(k)}</dt>
+              <dd className="min-w-0 break-words">{showValue(v)}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {children}
+    </section>
+  );
+}
+
+function SchemaLegend() {
+  const links: [string, string][] = [
+    ["participants.user_id", "profiles.profile_id (= auth account)"],
+    ["participants.member_roster_id", "member_roster.member_id"],
+    ["member_roster.student_number", "student_data.student_number"],
+    ["participant_roles.participant_id", "participants.participant_id"],
+    ["event_registrations (event_id, participant_id)", "events · participants"],
+  ];
+  return (
+    <div className="mt-6 border-4 border-[#fff7a1]/25 p-4">
+      <p className="text-lg">
+        A <span className="text-[#2c8f8f]">participant</span> is anyone who can attend events — members and guests alike.
+        Members are linked to a roster entry and their student record; people with a login also have a profile.
+      </p>
+      <ul className="mt-3 space-y-1 text-base text-[#fff7a1]/70">
+        {links.map(([a, b]) => (
+          <li key={a}>
+            <span className="text-[#fff7a1]">{a}</span> <span className="text-[#2c8f8f]">→</span> {b}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, setToast }: {
+  participantId: string;
+  callerParticipantId: string;
+  onClose: () => void;
+  onChanged: () => void;
+  setToast: (t: ToastState) => void;
+}) {
+  const [detail, setDetail] = useState<PersonDetail | null>(null);
+  const [error, setError]   = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/people/${participantId}`);
+      const d = await res.json().catch(() => ({} as Record<string, unknown>));
+      if (!res.ok) { setError((d.error as string) ?? `Could not load (HTTP ${res.status}).`); return; }
+      setDetail(d as unknown as PersonDetail);
+      setError(null);
+    } catch { setError("Network error."); }
+  }, [participantId]);
+
+  useEffect(() => { setDetail(null); load(); }, [load]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  async function toggleRole(pid: string, role: string, has: boolean) {
+    const res = await fetch("/api/admin/roles", {
+      method: has ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participant_id: pid, role }),
+    });
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
+    if (!res.ok) { setToast({ message: (data.error as string) ?? "Failed to update role", type: "error" }); return; }
+    setToast({ message: `Role ${has ? "revoked" : "granted"}: ${role}`, type: "success" });
+    load();
+    onChanged();
+  }
+
+  const p = detail?.participant;
+  const roleNames = detail?.roles.map((r) => r.role) ?? [];
+  const avatar = detail?.profile && typeof detail.profile.avatar_url === "string" ? detail.profile.avatar_url : null;
+
+  return (
+    <div className="fixed inset-0 z-[9998] flex justify-end" role="dialog" aria-modal="true" aria-label="Person details">
+      <button type="button" aria-label="Close details" onClick={onClose} className="absolute inset-0 cursor-default bg-black/70" />
+      <div className={`${pixel.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l-4 border-[#2c8f8f] bg-black text-[#fff7a1]`}>
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-[#2c8f8f] bg-black px-5 py-4">
+          <div className="flex min-w-0 items-center gap-4">
+            {avatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="" className="h-14 w-14 shrink-0 border-4 border-[#fff7a1] object-cover" />
+            )}
+            <div className="min-w-0">
+              <h3 className={`${hd} truncate text-5xl`}>{p ? String(p.display_name) : "Loading…"}</h3>
+              {p && <p className="truncate text-base text-[#fff7a1]/60">{String(p.supplied_name)}</p>}
+            </div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" autoFocus className={`border-4 border-[#fff7a1]/60 p-1.5 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-6 px-5 py-6">
+          {error && <p role="alert" className="border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">{error}</p>}
+          {!detail && !error && <div className="py-10"><Spinner /></div>}
+
+          {detail && p && (
+            <>
+              <TableCard table="participants" note="who they are" row={p} />
+
+              <TableCard table="profiles" note={detail.participant.user_id ? "app account settings" : "no login yet"} row={detail.profile ?? null} />
+
+              <TableCard table="member_roster" note="membership" row={detail.roster} />
+
+              <TableCard table="student_data" note="student record" row={detail.student} />
+
+              <TableCard table="participant_roles" note="permissions">
+                <div className="px-4 py-3">
+                  <div className="mb-3 flex flex-wrap gap-1.5">
+                    {detail.roles.length === 0
+                      ? <span className="text-base text-[#fff7a1]/55">No roles.</span>
+                      : detail.roles.map((r) => (
+                          <span key={r.role} className="flex items-center gap-2">
+                            <Pill text={r.role} colorClass={ROLE_COLORS[r.role] ?? ROLE_COLORS.member} />
+                            <span className="text-sm text-[#fff7a1]/45">since {fmt(r.granted_at)}</span>
+                          </span>
+                        ))}
+                  </div>
+                  {detail.participant.user_id ? (
+                    <RoleToggles
+                      roles={roleNames}
+                      participantId={String(p.participant_id)}
+                      callerParticipantId={callerParticipantId}
+                      onToggle={toggleRole}
+                      size="md"
+                    />
+                  ) : (
+                    <p className="text-sm text-[#fff7a1]/55">Roles can be changed once they have an account.</p>
+                  )}
+                </div>
+              </TableCard>
+
+              <TableCard table="event_registrations" note={`${detail.registrations.length} event${detail.registrations.length !== 1 ? "s" : ""}`}>
+                {detail.registrations.length === 0 ? (
+                  <p className="px-4 py-3 text-base text-[#fff7a1]/55">Not registered for any event.</p>
+                ) : (
+                  <ul>
+                    {detail.registrations.map((r) => (
+                      <li key={r.event_id} className="flex flex-col gap-2 border-b-2 border-[#fff7a1]/15 px-4 py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-lg">{r.name}</p>
+                          <p className="text-sm text-[#fff7a1]/55">
+                            {fmtDateTime(r.starts_at)}{r.location ? ` · ${r.location}` : ""}
+                          </p>
+                          {r.affiliation && <p className="text-sm text-[#fff7a1]/55">Affiliation: {r.affiliation}</p>}
+                          {r.note && <p className="text-sm text-[#fff7a1]/55">Note: {r.note}</p>}
+                        </div>
+                        <div className="flex shrink-0 flex-wrap gap-1.5">
+                          <Pill text={(REG_COLORS[r.status] ?? REG_COLORS.registered).text} colorClass={(REG_COLORS[r.status] ?? REG_COLORS.registered).cls} />
+                          {r.event_status && <Pill text={STATUS_LABELS[r.event_status] ?? r.event_status} colorClass={STATUS_COLORS[r.event_status] ?? ""} />}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </TableCard>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
-  const [members, setMembers]     = useState<MemberRow[]>([]);
-  const [total, setTotal]         = useState(0);
-  const [page, setPage]           = useState(1);
+  const [people, setPeople]         = useState<PersonRow[]>([]);
+  const [total, setTotal]           = useState(0);
+  const [page, setPage]             = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch]       = useState("");
+  const [filter, setFilter]         = useState("all");
+  const [search, setSearch]         = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [loading, setLoading]     = useState(true);
-  const [toast, setToast]         = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [loadError, setLoadError]   = useState<string | null>(null);
+  const [openId, setOpenId]         = useState<string | null>(null);
+  const [showSchema, setShowSchema] = useState(false);
+  const [toast, setToast]           = useState<ToastState>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleSearch(v: string) {
@@ -189,127 +572,130 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page) });
-    if (debouncedSearch) params.set("q", debouncedSearch);
-    const res = await fetch(`/api/admin/members?${params}`);
-    if (res.ok) {
-      const d = await res.json();
-      setMembers(d.members);
-      setTotal(d.total);
-      setTotalPages(d.totalPages);
-    }
-    setLoading(false);
-  }, [page, debouncedSearch]);
+    setLoadError(null);
+    try {
+      const params = new URLSearchParams({ page: String(page), filter });
+      if (debouncedSearch) params.set("q", debouncedSearch);
+      const res = await fetch(`/api/admin/people?${params}`);
+      const d = await res.json().catch(() => ({} as Record<string, unknown>));
+      if (!res.ok) { setLoadError((d.error as string) ?? `Could not load people (HTTP ${res.status}).`); return; }
+      setPeople(d.people as PersonRow[]);
+      setTotal(d.total as number);
+      setTotalPages(d.totalPages as number);
+    } catch { setLoadError("Network error while loading people."); }
+    finally { setLoading(false); }
+  }, [page, filter, debouncedSearch]);
 
   useEffect(() => { load(); }, [load]);
-
-  async function toggleRole(participantId: string, role: string, hasRole: boolean) {
-    const method = hasRole ? "DELETE" : "POST";
-    const res = await fetch("/api/admin/roles", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participant_id: participantId, role }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setToast({ message: data.error ?? "Failed to update role", type: "error" });
-      return;
-    }
-    setToast({ message: `Role ${hasRole ? "revoked" : "granted"}: ${role}`, type: "success" });
-    load();
-  }
 
   return (
     <div>
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SectionHeader title="Members & Participants" sub={`${total.toLocaleString()} total`} />
-        <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search name, email, ID…"
-            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 py-2 pl-8 pr-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#00e482]/20"
-          />
-        </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <SectionHeader title="Members" sub={`${total.toLocaleString()} participant${total !== 1 ? "s" : ""}`} />
+        <SearchInput value={search} onChange={handleSearch} placeholder="Name, username, ID, email…" className="w-full sm:w-72" />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-800">
-        <table className="w-full min-w-[700px] text-sm">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        {PEOPLE_FILTERS.map((f) => {
+          const active = filter === f.id;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => { setFilter(f.id); setPage(1); }}
+              className={`border-4 px-4 py-1 text-base transition-colors ${focus} ${
+                active
+                  ? "border-black bg-[#fff7a1] text-black shadow-[3px_3px_0_#2c8f8f]"
+                  : "border-[#2c8f8f] hover:bg-[#2c8f8f] hover:text-black"
+              }`}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+        <button type="button" onClick={() => setShowSchema((v) => !v)} aria-expanded={showSchema} className={`${BTN_SECONDARY} ml-auto !py-1`}>
+          {showSchema ? "Hide" : "How the tables link"}
+        </button>
+      </div>
+
+      {showSchema && <SchemaLegend />}
+
+      {loadError && (
+        <p role="alert" className="mt-6 inline-block border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">{loadError}</p>
+      )}
+
+      <div className={`${BOX} mt-6 overflow-x-auto`}>
+        <table className="w-full min-w-[860px] text-lg">
           <thead>
-            <tr className="border-b border-neutral-800 bg-neutral-900/60">
-              {["Participant", "Member ID", "Account", "Status", "Roles", "Actions"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-neutral-600">{h}</th>
+            <tr className="border-b-4 border-[#2c8f8f]">
+              {["Person", "Membership", "Account", "Roles", "Events", ""].map((h, i) => (
+                <th key={i} scope="col" className={TH}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && (
-              <tr><td colSpan={6} className="py-12 text-center text-neutral-600"><Loader2 size={20} className="mx-auto animate-spin" /></td></tr>
+            {loading && <tr><td colSpan={6} className="py-12"><Spinner /></td></tr>}
+            {!loading && people.length === 0 && (
+              <tr><td colSpan={6} className="py-12 text-center text-[#fff7a1]/60">No results.</td></tr>
             )}
-            {!loading && members.length === 0 && (
-              <tr><td colSpan={6} className="py-12 text-center text-sm text-neutral-600">No results</td></tr>
-            )}
-            {!loading && members.map((m) => {
-              const roles = m.participant_roles.map((r) => r.role);
-              const handle = m.profiles?.username ?? m.display_name;
+            {!loading && people.map((m) => {
+              const username = typeof m.profile?.username === "string" ? m.profile.username : null;
+              const setupDone = m.profile?.initial_setup_completed;
+              const real = fullName(m.student);
               return (
-                <tr key={m.participant_id} className="border-b border-neutral-800/60 transition-colors hover:bg-neutral-800/30">
+                <tr key={m.participantId} className="border-b-2 border-[#fff7a1]/15 last:border-0 transition-colors hover:bg-[#fff7a1]/5">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-neutral-100 truncate max-w-[160px]">{handle}</p>
-                    <p className="text-[11px] text-neutral-600 truncate max-w-[160px]">{m.email ?? m.supplied_name}</p>
+                    <p className="max-w-[210px] truncate">{m.displayName}</p>
+                    <p className="max-w-[210px] truncate text-sm text-[#fff7a1]/55">
+                      {username ? `@${username} · ` : ""}{m.email ?? m.suppliedName}
+                    </p>
                   </td>
                   <td className="px-4 py-3">
-                    {m.member_roster_id
-                      ? <span className="font-mono text-[11px] text-neutral-300">{m.member_roster_id}</span>
-                      : <span className="text-[11px] text-neutral-700">—</span>}
+                    {m.memberId ? (
+                      <>
+                        <p className="text-base">{m.memberId}</p>
+                        <p className="max-w-[220px] truncate text-sm text-[#fff7a1]/55">
+                          {[real, m.student?.program, m.student?.year_level && `Y${m.student.year_level}`, m.student?.section]
+                            .filter(Boolean).join(" · ") || m.student?.student_number}
+                        </p>
+                      </>
+                    ) : (
+                      <span className="text-base text-[#fff7a1]/45">Not a member</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-base">
+                    {m.userId ? (
+                      <span className={`flex items-center gap-1.5 ${setupDone === false ? "text-[#b89a0a]" : "text-[#3aaa6e]"}`}>
+                        <Check size={14} />{setupDone === false ? "Setup pending" : "Linked"}
+                      </span>
+                    ) : (
+                      <span className="text-[#fff7a1]/50">No account</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
-                    {m.user_id
-                      ? <span className="flex items-center gap-1 text-[11px] text-[#00e482]"><Check size={11} />Linked</span>
-                      : <span className="flex items-center gap-1 text-[11px] text-neutral-600"><CircleMinus size={11} />No account</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge
-                      text={m.status}
-                      colorClass={m.status === "active" ? "text-[#00e482] border-[#00e482]/30 bg-[#00e482]/10" : "text-red-400 border-red-800/40 bg-red-950/30"}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {roles.length === 0
-                        ? <span className="text-[11px] text-neutral-700">—</span>
-                        : roles.map((r) => <Badge key={r} text={r} colorClass={ROLE_COLORS[r] ?? ""} />)}
+                    <div className="flex flex-wrap gap-1.5">
+                      {m.roles.length === 0
+                        ? <span className="text-[#fff7a1]/35">—</span>
+                        : m.roles.map((r) => <Pill key={r} text={r} colorClass={ROLE_COLORS[r] ?? ROLE_COLORS.member} />)}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    {m.user_id && (
-                      <div className="flex flex-wrap gap-1">
-                        {(["admin", "officer", "member"] as const).map((role) => {
-                          const has = roles.includes(role);
-                          const isSelf = m.participant_id === callerParticipantId && role === "admin";
-                          return (
-                            <button
-                              key={role}
-                              type="button"
-                              disabled={isSelf}
-                              onClick={() => toggleRole(m.participant_id, role, has)}
-                              title={isSelf ? "Cannot revoke own admin role" : has ? `Revoke ${role}` : `Grant ${role}`}
-                              className={[
-                                "rounded px-2 py-0.5 text-[10px] font-semibold transition-colors disabled:opacity-30",
-                                has
-                                  ? "border border-red-800/40 bg-red-950/30 text-red-400 hover:bg-red-900/40"
-                                  : "border border-neutral-700 bg-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-200",
-                              ].join(" ")}
-                            >
-                              {has ? `− ${role}` : `+ ${role}`}
-                            </button>
-                          );
-                        })}
-                      </div>
+                  <td className="px-4 py-3 text-base">
+                    {m.events.registered === 0 ? (
+                      <span className="text-[#fff7a1]/35">—</span>
+                    ) : (
+                      <>
+                        <p>{m.events.registered} registered</p>
+                        <p className="text-sm text-[#3aaa6e]">{m.events.attended} attended</p>
+                      </>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button type="button" onClick={() => setOpenId(m.participantId)} className={`${BTN_SECONDARY} !py-0.5`}>
+                      Details
+                    </button>
                   </td>
                 </tr>
               );
@@ -319,19 +705,27 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-neutral-500">
-          <span>Page {page} of {totalPages}</span>
-          <div className="flex gap-1">
-            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-              className="flex items-center gap-1 rounded-md border border-neutral-800 px-3 py-1.5 text-xs transition-colors hover:border-neutral-700 disabled:opacity-30">
-              <ChevronLeft size={12} /> Prev
+        <div className="mt-6 flex items-center justify-between text-lg">
+          <span className="text-[#fff7a1]/70">Page {page} of {totalPages}</span>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className={BTN_SECONDARY}>
+              <ChevronLeft size={14} /> Prev
             </button>
-            <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-              className="flex items-center gap-1 rounded-md border border-neutral-800 px-3 py-1.5 text-xs transition-colors hover:border-neutral-700 disabled:opacity-30">
-              Next <ChevronRight size={12} />
+            <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className={BTN_SECONDARY}>
+              Next <ChevronRight size={14} />
             </button>
           </div>
         </div>
+      )}
+
+      {openId && (
+        <PersonDrawer
+          participantId={openId}
+          callerParticipantId={callerParticipantId}
+          onClose={() => setOpenId(null)}
+          onChanged={load}
+          setToast={setToast}
+        />
       )}
     </div>
   );
@@ -340,9 +734,9 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
 // ─── Tab: Events ──────────────────────────────────────────────────────────────
 
 function EventsTab() {
-  const [events, setEvents]   = useState<EventRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast]     = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [events, setEvents]         = useState<EventRow[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [toast, setToast]           = useState<ToastState>(null);
   const [showCreate, setShowCreate] = useState(false);
 
   const load = useCallback(async () => {
@@ -369,63 +763,67 @@ function EventsTab() {
   return (
     <div>
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
-      <div className="mb-5 flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader title="Events" sub={`${events.length} event${events.length !== 1 ? "s" : ""}`} />
-        <div className="flex gap-2">
-          <button type="button" onClick={load} disabled={loading} className="flex items-center gap-1.5 rounded-lg border border-neutral-800 px-3 py-1.5 text-xs text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300 disabled:opacity-40">
-            <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
-          </button>
-          <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 rounded-lg bg-[#00e482] px-3 py-1.5 text-xs font-semibold text-[#161d27] transition-opacity hover:opacity-90">
-            <Plus size={13} /> New Event
+        <div className="flex flex-wrap gap-3">
+          <RefreshButton onClick={load} loading={loading} />
+          <button type="button" onClick={() => setShowCreate(true)} className={BTN_PRIMARY}>
+            <Plus size={14} /> New event
           </button>
         </div>
       </div>
 
       {showCreate && (
-        <CreateEventForm onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); load(); }} setToast={setToast} />
+        <CreateEventForm
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); load(); }}
+          setToast={setToast}
+        />
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-800">
-        <table className="w-full min-w-[600px] text-sm">
+      <div className={`${BOX} mt-8 overflow-x-auto`}>
+        <table className="w-full min-w-[680px] text-lg">
           <thead>
-            <tr className="border-b border-neutral-800 bg-neutral-900/60">
-              {["Event", "Date", "Registrations", "Status", "Change Status"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-neutral-600">{h}</th>
+            <tr className="border-b-4 border-[#2c8f8f]">
+              {["Event", "Date", "Registrations", "Status", "Change status"].map((h) => (
+                <th key={h} scope="col" className={TH}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={5} className="py-12 text-center text-neutral-600"><Loader2 size={20} className="mx-auto animate-spin" /></td></tr>
+              <tr><td colSpan={5} className="py-12"><Spinner /></td></tr>
             )}
             {!loading && events.length === 0 && (
-              <tr><td colSpan={5} className="py-12 text-center text-sm text-neutral-600">No events yet</td></tr>
+              <tr><td colSpan={5} className="py-12 text-center text-[#fff7a1]/60">No events yet.</td></tr>
             )}
             {!loading && events.map((e) => (
-              <tr key={e.event_id} className="border-b border-neutral-800/60 transition-colors hover:bg-neutral-800/30">
+              <tr key={e.event_id} className="border-b-2 border-[#fff7a1]/15 last:border-0 transition-colors hover:bg-[#fff7a1]/5">
                 <td className="px-4 py-3">
-                  <p className="font-medium text-neutral-100 max-w-[200px] truncate">{e.name}</p>
-                  {e.location && <p className="text-[11px] text-neutral-600 truncate max-w-[200px]">{e.location}</p>}
+                  <p className="max-w-[230px] truncate">{e.name}</p>
+                  {e.location && <p className="max-w-[230px] truncate text-sm text-[#fff7a1]/55">{e.location}</p>}
                 </td>
-                <td className="px-4 py-3 text-[11px] text-neutral-400 whitespace-nowrap">
-                  {fmt(e.starts_at)}<br />
-                  <span className="text-neutral-600">→ {fmt(e.ends_at)}</span>
+                <td className="whitespace-nowrap px-4 py-3 text-base text-[#fff7a1]/80">
+                  {fmt(e.starts_at)}
+                  <br />
+                  <span className="text-[#fff7a1]/50">to {fmt(e.ends_at)}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex flex-col gap-0.5 text-[11px]">
-                    <span className="text-neutral-300">{e.registrations.registered} registered</span>
-                    <span className="text-[#00e482]">{e.registrations.attended} attended</span>
-                    <span className="text-neutral-600">{e.registrations.not_attended} absent</span>
+                  <div className="flex flex-col text-base">
+                    <span>{e.registrations.registered} registered</span>
+                    <span className="text-[#3aaa6e]">{e.registrations.attended} attended</span>
+                    <span className="text-[#fff7a1]/50">{e.registrations.not_attended} absent</span>
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge text={STATUS_LABELS[e.status]} colorClass={STATUS_COLORS[e.status]} />
+                  <Pill text={STATUS_LABELS[e.status]} colorClass={STATUS_COLORS[e.status]} />
                 </td>
                 <td className="px-4 py-3">
                   <select
                     value={e.status}
                     onChange={(ev) => updateStatus(e.event_id, ev.target.value)}
-                    className="rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1.5 text-[11px] text-neutral-300 focus:outline-none focus:ring-1 focus:ring-[#00e482]/30"
+                    aria-label={`Change status for ${e.name}`}
+                    className={`border-4 border-[#2c8f8f] bg-black px-2 py-1 text-base text-[#fff7a1] ${focus}`}
                   >
                     {Object.entries(STATUS_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -438,6 +836,20 @@ function EventsTab() {
         </table>
       </div>
     </div>
+  );
+}
+
+function Field({ label, error, hint, className = "", children }: {
+  label: string; error?: string; hint?: string; className?: string; children: React.ReactNode;
+}) {
+  return (
+    <label className={`flex flex-col gap-1.5 ${className}`}>
+      <span className="text-lg">{label}</span>
+      {children}
+      {error
+        ? <span className="text-base text-[#e26a56]" role="alert">{error}</span>
+        : hint && <span className="text-base text-[#fff7a1]/55">{hint}</span>}
+    </label>
   );
 }
 
@@ -480,40 +892,37 @@ function CreateEventForm({ onClose, onCreated, setToast }: {
     onCreated();
   }
 
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
   return (
-    <div className="mb-6 rounded-xl border border-neutral-700 bg-neutral-900 p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-neutral-100">New Event</h3>
-        <button type="button" onClick={onClose} className="rounded-md p-1 text-neutral-600 hover:text-neutral-300"><X size={14} /></button>
+    <div className="mt-8 border-4 border-[#fff7a1] p-6 shadow-[8px_8px_0_#2c8f8f]">
+      <div className="mb-5 flex items-center justify-between">
+        <h3 className={`${hd} text-4xl`}>New event</h3>
+        <button type="button" onClick={onClose} aria-label="Close form" className={`border-2 border-[#fff7a1]/60 p-1 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}>
+          <X size={16} />
+        </button>
       </div>
-      <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2 flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-neutral-400">Event name *</label>
-          <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. AWS Cloud Day" className={inputCls(!!errors.name)} />
-          {errors.name && <p className="text-xs text-red-400">{errors.name}</p>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-neutral-400">Location</label>
-          <input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="e.g. AVR, PnC Main Campus" className={inputCls()} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-neutral-400">Description</label>
-          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Short description" className={inputCls()} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-neutral-400">Starts at *</label>
-          <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))} className={inputCls(!!errors.starts_at)} />
-          {errors.starts_at && <p className="text-xs text-red-400">{errors.starts_at}</p>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-neutral-400">Ends at *</label>
-          <input type="datetime-local" value={form.ends_at} onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))} className={inputCls(!!errors.ends_at)} />
-          {errors.ends_at && <p className="text-xs text-red-400">{errors.ends_at}</p>}
-        </div>
-        <div className="sm:col-span-2 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-neutral-800 px-4 py-2 text-sm text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300">Cancel</button>
-          <button type="submit" disabled={saving} className="flex items-center gap-2 rounded-lg bg-[#161d27] px-4 py-2 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90 disabled:opacity-50">
-            {saving && <Loader2 size={13} className="animate-spin" />} Create Event
+      <form onSubmit={handleSubmit} noValidate className="grid gap-5 sm:grid-cols-2">
+        <Field label="Event name *" error={errors.name} className="sm:col-span-2">
+          <input value={form.name} onChange={set("name")} placeholder="e.g. AWS Cloud Day" className={inputCls(!!errors.name)} />
+        </Field>
+        <Field label="Location">
+          <input value={form.location} onChange={set("location")} placeholder="e.g. AVR, PnC Main Campus" className={inputCls()} />
+        </Field>
+        <Field label="Description">
+          <input value={form.description} onChange={set("description")} placeholder="Short description" className={inputCls()} />
+        </Field>
+        <Field label="Starts at *" error={errors.starts_at}>
+          <input type="datetime-local" value={form.starts_at} onChange={set("starts_at")} className={inputCls(!!errors.starts_at)} />
+        </Field>
+        <Field label="Ends at *" error={errors.ends_at}>
+          <input type="datetime-local" value={form.ends_at} onChange={set("ends_at")} className={inputCls(!!errors.ends_at)} />
+        </Field>
+        <div className="flex flex-wrap justify-end gap-3 sm:col-span-2">
+          <button type="button" onClick={onClose} className={`${BTN_SECONDARY} !px-6 !py-2 !text-lg`}>Cancel</button>
+          <button type="submit" disabled={saving} className={`${BTN_SUBMIT} !px-6 !py-2`}>
+            {saving && <Loader2 size={16} className="animate-spin" />} Create event
           </button>
         </div>
       </form>
@@ -523,7 +932,410 @@ function CreateEventForm({ onClose, onCreated, setToast }: {
 
 // ─── Tab: Provision ───────────────────────────────────────────────────────────
 
+interface PendingMember {
+  memberId: string;
+  studentNumber: string;
+  name: string;
+  email: string | null;
+}
+
+interface ResultRow {
+  memberId: string;
+  name: string;
+  email: string;
+  temporaryPassword: string;
+  mail: "sent" | "failed" | "off";
+  mailReason?: string;
+}
+
+interface BatchOutcome {
+  rows: ResultRow[];
+  errors: { memberId: string; name: string; reason: string }[];
+  mailRequested: boolean;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CHUNK = 20; // members per request — keeps each call well inside the server time limit
+
+function csvCell(v: string) {
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
 function ProvisionTab() {
+  const [pending, setPending]       = useState<PendingMember[]>([]);
+  const [accountCount, setAccountCount] = useState(0);
+  const [mailConfigured, setMailConfigured] = useState(false);
+  const [loading, setLoading]       = useState(true);
+  const [loadError, setLoadError]   = useState<string | null>(null);
+  const [search, setSearch]         = useState("");
+  const [selected, setSelected]     = useState<Set<string>>(new Set());
+  const [emails, setEmails]         = useState<Record<string, string>>({});
+  const [sendEmail, setSendEmail]   = useState(true);
+  const [running, setRunning]       = useState(false);
+  const [progress, setProgress]     = useState<{ done: number; total: number } | null>(null);
+  const [outcome, setOutcome]       = useState<BatchOutcome | null>(null);
+  const [toast, setToast]           = useState<ToastState>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/admin/provision/pending");
+      const d = await res.json().catch(() => ({} as Record<string, unknown>));
+      if (!res.ok) {
+        setLoadError((d.error as string) ?? `Could not load members (HTTP ${res.status}).`);
+        return;
+      }
+      setPending(d.members as PendingMember[]);
+      setAccountCount((d.accountCount as number) ?? 0);
+      const configured = !!d.mailConfigured;
+      setMailConfigured(configured);
+      if (!configured) setSendEmail(false);
+    } catch {
+      setLoadError("Network error while loading members.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const emailFor = (p: PendingMember) => (emails[p.memberId] ?? p.email ?? "").trim();
+
+  const q = search.trim().toLowerCase();
+  const visible = pending.filter(
+    (p) =>
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      p.memberId.toLowerCase().includes(q) ||
+      emailFor(p).toLowerCase().includes(q)
+  );
+  const selectable = visible.filter((p) => EMAIL_RE.test(emailFor(p)));
+  const allSelected = selectable.length > 0 && selectable.every((p) => selected.has(p.memberId));
+  const chosen = pending.filter((p) => selected.has(p.memberId) && EMAIL_RE.test(emailFor(p)));
+
+  function toggleOne(id: string) {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (allSelected) selectable.forEach((p) => next.delete(p.memberId));
+      else selectable.forEach((p) => next.add(p.memberId));
+      return next;
+    });
+  }
+
+  async function run() {
+    if (chosen.length === 0 || running) return;
+    setRunning(true);
+    setOutcome(null);
+
+    const rows: ResultRow[] = [];
+    const errors: BatchOutcome["errors"] = [];
+    const nameOf = new Map(chosen.map((p) => [p.memberId, p.name]));
+
+    for (let i = 0; i < chosen.length; i += CHUNK) {
+      const chunk = chosen.slice(i, i + CHUNK);
+      setProgress({ done: i, total: chosen.length });
+      const failChunk = (reason: string) =>
+        chunk.forEach((p) => errors.push({ memberId: p.memberId, name: p.name, reason }));
+
+      try {
+        const res = await fetch("/api/admin/provision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            members: chunk.map((p) => ({ memberId: p.memberId, email: emailFor(p).toLowerCase(), name: p.name })),
+            sendEmail,
+          }),
+        });
+        const d = await res.json().catch(() => ({} as Record<string, any>));
+        if (!res.ok) { failChunk(d.error ?? `Request failed (HTTP ${res.status}).`); continue; }
+
+        const sent = new Set<string>(d.mail?.sent ?? []);
+        const failed = new Map<string, string>(
+          (d.mail?.failed ?? []).map((f: { memberId: string; reason: string }) => [f.memberId, f.reason])
+        );
+        for (const c of d.credentials ?? []) {
+          rows.push({
+            memberId: c.memberId,
+            name: nameOf.get(c.memberId) ?? "",
+            email: c.email,
+            temporaryPassword: c.temporaryPassword,
+            mail: !sendEmail ? "off" : sent.has(c.memberId) ? "sent" : "failed",
+            mailReason: failed.get(c.memberId),
+          });
+        }
+        for (const er of d.errors ?? []) {
+          errors.push({ memberId: er.memberId, name: nameOf.get(er.memberId) ?? "", reason: er.reason });
+        }
+      } catch {
+        failChunk("Network error.");
+      }
+    }
+
+    setProgress(null);
+    setOutcome({ rows, errors, mailRequested: sendEmail });
+    setSelected(new Set());
+    setRunning(false);
+    setToast({
+      message: `${rows.length} account${rows.length !== 1 ? "s" : ""} created${errors.length ? `, ${errors.length} failed` : ""}`,
+      type: errors.length && rows.length === 0 ? "error" : "success",
+    });
+    load();
+  }
+
+  function copyAll() {
+    if (!outcome) return;
+    const text = outcome.rows
+      .map((r) => [r.memberId, r.name, r.email, r.temporaryPassword].join("\t"))
+      .join("\n");
+    navigator.clipboard.writeText(text).then(
+      () => setToast({ message: "Copied to clipboard", type: "success" }),
+      () => setToast({ message: "Couldn't copy — use Download CSV", type: "error" })
+    );
+  }
+
+  function downloadCsv() {
+    if (!outcome) return;
+    const lines = [
+      ["member_id", "name", "email", "temporary_password", "email_status"].join(","),
+      ...outcome.rows.map((r) =>
+        [r.memberId, r.name, r.email, r.temporaryPassword, r.mail].map(csvCell).join(",")
+      ),
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `provisioned-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const MAIL_PILL: Record<ResultRow["mail"], { text: string; cls: string }> = {
+    sent:   { text: "Emailed",     cls: "border-[#3aaa6e] bg-[#3aaa6e] text-black" },
+    failed: { text: "Not emailed", cls: "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]" },
+    off:    { text: "Show only",   cls: "border-[#fff7a1]/50 text-[#fff7a1]/70" },
+  };
+
+  return (
+    <div>
+      {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
+
+      <div className="flex items-start justify-between gap-3">
+        <SectionHeader
+          title="Provision"
+          sub={
+            loading
+              ? "Loading members…"
+              : `${pending.length} member${pending.length !== 1 ? "s" : ""} without an account · ${accountCount} with one`
+          }
+        />
+        <RefreshButton onClick={load} loading={loading} />
+      </div>
+
+      {loadError && (
+        <p role="alert" className="mt-8 inline-block border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">
+          {loadError}
+        </p>
+      )}
+
+      {!loadError && (
+        <>
+          {/* Controls */}
+          <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <SearchInput value={search} onChange={setSearch} placeholder="Search name, ID, email…" className="w-full lg:w-80" />
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className={`flex items-center gap-2 text-lg ${mailConfigured ? "" : "opacity-50"}`}>
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  disabled={!mailConfigured}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  className="h-5 w-5 accent-[#2c8f8f]"
+                />
+                Email temporary passwords
+              </label>
+              <button type="button" onClick={run} disabled={chosen.length === 0 || running} className={BTN_SUBMIT}>
+                {running && <Loader2 size={16} className="animate-spin" />}
+                {running && progress
+                  ? `Working… ${Math.min(progress.done + CHUNK, progress.total)}/${progress.total}`
+                  : `Provision ${chosen.length} selected`}
+              </button>
+            </div>
+          </div>
+
+          {!mailConfigured && !loading && (
+            <p className="mt-3 text-base text-[#fff7a1]/60">
+              Email isn&apos;t set up on the server yet (needs RESEND_API_KEY and MAIL_FROM), so passwords will only be shown here after provisioning.
+            </p>
+          )}
+
+          {/* Pending members */}
+          <div className={`${BOX} mt-6 max-h-[30rem] overflow-auto`}>
+            <table className="w-full min-w-[640px] text-lg">
+              <thead className="sticky top-0 z-10 bg-black">
+                <tr className="border-b-4 border-[#2c8f8f]">
+                  <th scope="col" className="w-12 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      disabled={selectable.length === 0}
+                      aria-label="Select all visible members that have an email"
+                      className="h-5 w-5 accent-[#2c8f8f]"
+                    />
+                  </th>
+                  <th scope="col" className={TH}>Member</th>
+                  <th scope="col" className={TH}>Member ID</th>
+                  <th scope="col" className={TH}>Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && <tr><td colSpan={4} className="py-12"><Spinner /></td></tr>}
+                {!loading && visible.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-[#fff7a1]/60">
+                      {pending.length === 0 ? "Everyone on the roster already has an account." : "No matches."}
+                    </td>
+                  </tr>
+                )}
+                {!loading && visible.map((p) => {
+                  const em = emailFor(p);
+                  const valid = EMAIL_RE.test(em);
+                  return (
+                    <tr key={p.memberId} className="border-b-2 border-[#fff7a1]/15 last:border-0 hover:bg-[#fff7a1]/5">
+                      <td className="px-4 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(p.memberId)}
+                          disabled={!valid}
+                          onChange={() => toggleOne(p.memberId)}
+                          aria-label={`Select ${p.name}`}
+                          className="h-5 w-5 accent-[#2c8f8f] disabled:opacity-30"
+                        />
+                      </td>
+                      <td className="px-4 py-2"><p className="max-w-[240px] truncate">{p.name}</p></td>
+                      <td className="px-4 py-2 text-base text-[#fff7a1]/80">{p.memberId}</td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="email"
+                          value={emails[p.memberId] ?? p.email ?? ""}
+                          onChange={(e) => setEmails((m) => ({ ...m, [p.memberId]: e.target.value }))}
+                          placeholder="Add an email to select"
+                          aria-label={`Email for ${p.name}`}
+                          className={`w-full min-w-[220px] border-2 bg-black px-2 py-1 text-base text-[#fff7a1] placeholder:text-[#fff7a1]/35 focus:outline-none ${
+                            em === ""
+                              ? "border-[#e26a56]/60 focus:border-[#e26a56]"
+                              : valid
+                                ? "border-[#fff7a1]/30 focus:border-[#2c8f8f]"
+                                : "border-[#b32a0e] focus:border-[#e26a56]"
+                          }`}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-base text-[#fff7a1]/55">
+            {chosen.length} selected · members need a valid email before they can be selected. Each account must set a permanent password on first sign-in.
+          </p>
+        </>
+      )}
+
+      {/* Result of the last batch */}
+      {outcome && (
+        <div className="mt-10 border-4 border-[#fff7a1] p-6 shadow-[8px_8px_0_#3aaa6e]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className={`${hd} text-4xl`}>Batch result</h3>
+              <p className="mt-2 text-lg text-[#fff7a1]/70">
+                {outcome.rows.length} created · {outcome.errors.length} failed
+                {outcome.mailRequested && ` · ${outcome.rows.filter((r) => r.mail === "sent").length} emailed`}
+              </p>
+            </div>
+            {outcome.rows.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                <button type="button" onClick={copyAll} className={BTN_SECONDARY}>Copy all</button>
+                <button type="button" onClick={downloadCsv} className={BTN_PRIMARY}>Download CSV</button>
+              </div>
+            )}
+          </div>
+
+          {outcome.rows.length > 0 && (
+            <>
+              <p className="mt-4 text-base text-[#e26a56]">
+                Temporary passwords are shown only now. Copy or download them before leaving this page.
+              </p>
+              <div className={`${BOX} mt-4 overflow-x-auto`}>
+                <table className="w-full min-w-[640px] text-base">
+                  <thead>
+                    <tr className="border-b-4 border-[#2c8f8f]">
+                      {["Member", "Email", "Temporary password", "Email"].map((h) => (
+                        <th key={h} scope="col" className={TH}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {outcome.rows.map((r) => (
+                      <tr key={r.memberId} className="border-b-2 border-[#fff7a1]/15 last:border-0">
+                        <td className="px-4 py-2">
+                          <p className="max-w-[200px] truncate">{r.name || r.memberId}</p>
+                          <p className="text-sm text-[#fff7a1]/55">{r.memberId}</p>
+                        </td>
+                        <td className="px-4 py-2">{r.email}</td>
+                        <td className="select-all px-4 py-2 text-lg">{r.temporaryPassword}</td>
+                        <td className="px-4 py-2">
+                          <Pill text={MAIL_PILL[r.mail].text} colorClass={MAIL_PILL[r.mail].cls} />
+                          {r.mail === "failed" && r.mailReason && (
+                            <p className="mt-1 max-w-[220px] text-sm text-[#e26a56]">{r.mailReason}</p>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {outcome.errors.length > 0 && (
+            <div className="mt-6 border-4 border-[#b32a0e] p-4" role="alert">
+              <p className="flex items-center gap-2 text-lg"><AlertTriangle size={18} /> Couldn&apos;t provision</p>
+              <ul className="mt-2 space-y-1 text-base">
+                {outcome.errors.map((er) => (
+                  <li key={er.memberId}>
+                    <span className="text-[#fff7a1]">{er.name ? `${er.name} (${er.memberId})` : er.memberId}</span>
+                    <span className="text-[#fff7a1]/60"> — {er.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* One-off: for a member not in the list above */}
+      <div className="mt-16 border-t-4 border-[#fff7a1]/20 pt-10">
+        <ManualProvision onDone={load} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Single-ID provisioning (members not in the pending list) ──────────────────
+
+function ManualProvision({ onDone }: { onDone: () => void }) {
   const [memberId, setMemberId] = useState("");
   const [email, setEmail]       = useState("");
   const [saving, setSaving]     = useState(false);
@@ -539,40 +1351,46 @@ function ProvisionTab() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
     setSaving(true);
-    const res = await fetch("/api/admin/provision", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_SECRET ?? ""}` },
-      body: JSON.stringify({ memberId: memberId.trim(), email: email.trim().toLowerCase() }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (!res.ok || !data.success) {
-      setResult({ success: false, error: data.error ?? "Provisioning failed." });
-      return;
+    try {
+      const res = await fetch("/api/admin/provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: memberId.trim(), email: email.trim().toLowerCase() }),
+      });
+      // A crashed route returns HTML, not JSON — don't let that leave the form stuck.
+      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      if (!res.ok || !data.success) {
+        setResult({
+          success: false,
+          error: (data.error as string) ?? `Provisioning failed (HTTP ${res.status}). Check the server log.`,
+        });
+        return;
+      }
+      setResult({ success: true, temporaryPassword: data.result.temporaryPassword, authUserId: data.result.authUserId });
+      setMemberId(""); setEmail("");
+      onDone();
+    } catch {
+      setResult({ success: false, error: "Network error. Please try again." });
+    } finally {
+      setSaving(false);
     }
-    setResult({ success: true, temporaryPassword: data.result.temporaryPassword, authUserId: data.result.authUserId });
-    setMemberId(""); setEmail("");
   }
 
   return (
-    <div className="max-w-md">
-      <SectionHeader title="Provision Account" sub="Create a login account for an existing SBG member." />
+    <div className="max-w-xl">
+      <h3 className={`${hd} text-4xl`}>Provision by member ID</h3>
+      <p className="mt-2 text-xl text-[#fff7a1]/70">For a single member who isn&apos;t in the list above.</p>
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-neutral-300">Member ID *</label>
+      <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-5">
+        <Field label="Member ID *" error={errors.memberId} hint="Must already exist in the member roster.">
           <input
             value={memberId}
             onChange={(e) => { setMemberId(e.target.value.toUpperCase()); setErrors((err) => ({ ...err, memberId: "" })); }}
             placeholder="SBG-UC-260001"
             className={inputCls(!!errors.memberId)}
           />
-          {errors.memberId
-            ? <p className="text-xs text-red-400">{errors.memberId}</p>
-            : <p className="text-xs text-neutral-600">Must already exist in the member roster.</p>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-neutral-300">Email address *</label>
+        </Field>
+        <Field label="Email address *" error={errors.email}>
           <input
             type="email"
             value={email}
@@ -580,40 +1398,39 @@ function ProvisionTab() {
             placeholder="member@example.com"
             className={inputCls(!!errors.email)}
           />
-          {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
-        </div>
+        </Field>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#161d27] px-4 py-3 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {saving && <Loader2 size={14} className="animate-spin" />}
-          Provision Account
+        <button type="submit" disabled={saving} className={BTN_SUBMIT}>
+          {saving && <Loader2 size={16} className="animate-spin" />}
+          Provision account
         </button>
       </form>
 
       {result && (
-        <div className={`mt-5 rounded-xl border p-5 ${result.success ? "border-[#00e482]/20 bg-[#00e482]/5" : "border-red-800/40 bg-red-950/20"}`}>
+        <div
+          className={`mt-8 border-4 p-5 ${
+            result.success
+              ? "border-[#3aaa6e] shadow-[6px_6px_0_#3aaa6e]"
+              : "border-[#b32a0e] bg-[#b32a0e]"
+          }`}
+        >
           {result.success ? (
             <>
-              <div className="flex items-center gap-2 mb-3">
-                <Check size={15} className="text-[#00e482]" />
-                <p className="text-sm font-semibold text-[#00e482]">Account provisioned</p>
+              <div className="mb-3 flex items-center gap-2 text-[#3aaa6e]">
+                <Check size={18} />
+                <p className="text-xl">Account provisioned</p>
               </div>
-              <p className="text-xs text-neutral-400 mb-2">Share these credentials securely:</p>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5">
-                  <span className="text-xs text-neutral-500">Temporary password</span>
-                  <span className="font-mono text-sm text-neutral-100 select-all">{result.temporaryPassword}</span>
-                </div>
+              <p className="mb-2 text-base text-[#fff7a1]/70">Share these credentials securely:</p>
+              <div className="flex items-center justify-between gap-3 border-4 border-[#fff7a1]/40 px-4 py-2.5">
+                <span className="text-base text-[#fff7a1]/60">Temporary password</span>
+                <span className="select-all text-lg">{result.temporaryPassword}</span>
               </div>
-              <p className="mt-3 text-xs text-neutral-600">The member must change their password on first login.</p>
+              <p className="mt-3 text-base text-[#fff7a1]/55">The member must change their password on first login.</p>
             </>
           ) : (
-            <div className="flex items-start gap-2">
-              <AlertTriangle size={15} className="mt-0.5 shrink-0 text-red-400" />
-              <p className="text-sm text-red-400">{result.error}</p>
+            <div className="flex items-start gap-2.5" role="alert">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <p className="text-lg">{result.error}</p>
             </div>
           )}
         </div>
@@ -624,11 +1441,11 @@ function ProvisionTab() {
 
 // ─── Tab: Roles ───────────────────────────────────────────────────────────────
 
-function RolesTab() {
-  const [search, setSearch] = useState("");
+function RolesTab({ callerParticipantId }: { callerParticipantId: string }) {
+  const [search, setSearch]   = useState("");
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast]     = useState<ToastState>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleSearch(v: string) {
@@ -652,7 +1469,6 @@ function RolesTab() {
     const data = await res.json();
     if (!res.ok) { setToast({ message: data.error ?? "Failed", type: "error" }); return; }
     setToast({ message: `${hasRole ? "Revoked" : "Granted"}: ${role}`, type: "success" });
-    // Refresh the row
     const updated = await fetch(`/api/admin/members?q=${encodeURIComponent(search)}&page=1`);
     if (updated.ok) { const d = await updated.json(); setMembers(d.members.filter((m: MemberRow) => !!m.user_id)); }
   }
@@ -660,60 +1476,43 @@ function RolesTab() {
   return (
     <div>
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
-      <SectionHeader title="Role Management" sub="Search for an account and grant or revoke roles." />
+      <SectionHeader title="Roles" sub="Search for an account, then grant or revoke roles." />
 
-      <div className="relative mb-5 max-w-sm">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search by name, username, or email…"
-          className="w-full rounded-lg border border-neutral-800 bg-neutral-900 py-2.5 pl-8 pr-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#00e482]/20"
-        />
-      </div>
+      <SearchInput
+        value={search}
+        onChange={handleSearch}
+        placeholder="Search by name, username, or email…"
+        className="mt-8 max-w-md"
+      />
 
-      {loading && <div className="py-8 text-center text-neutral-600"><Loader2 size={18} className="mx-auto animate-spin" /></div>}
+      {loading && <div className="py-8"><Spinner /></div>}
 
       {!loading && search && members.length === 0 && (
-        <p className="text-sm text-neutral-600">No accounts found.</p>
+        <p className="mt-6 text-lg text-[#fff7a1]/60">No accounts found.</p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <ul className="mt-6 space-y-5">
         {members.map((m) => {
           const roles = m.participant_roles.map((r) => r.role);
           const handle = m.profiles?.username ?? m.display_name;
           return (
-            <div key={m.participant_id} className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <li key={m.participant_id} className={`${BOX} flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between`}>
               <div className="min-w-0">
-                <p className="font-medium text-neutral-100">{handle}</p>
-                <p className="text-xs text-neutral-600">{m.email ?? m.supplied_name}</p>
-                {m.member_roster_id && <p className="font-mono text-[10px] text-neutral-700">{m.member_roster_id}</p>}
+                <p className="truncate text-xl">{handle}</p>
+                <p className="truncate text-base text-[#fff7a1]/55">{m.email ?? m.supplied_name}</p>
+                {m.member_roster_id && <p className="mt-0.5 text-sm text-[#fff7a1]/45">{m.member_roster_id}</p>}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {(["admin", "officer", "member"] as const).map((role) => {
-                  const has = roles.includes(role);
-                  return (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => toggleRole(m.participant_id, role, has)}
-                      className={[
-                        "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
-                        has
-                          ? ROLE_COLORS[role] + " hover:bg-red-950/50"
-                          : "border-neutral-700 bg-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-200",
-                      ].join(" ")}
-                    >
-                      {has ? `✓ ${role}` : `+ ${role}`}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              <RoleToggles
+                roles={roles}
+                participantId={m.participant_id}
+                callerParticipantId={callerParticipantId}
+                onToggle={toggleRole}
+                size="md"
+              />
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -732,42 +1531,57 @@ export function AdminDashboard({ callerParticipantId }: { callerParticipantId: s
   const [tab, setTab] = useState<Tab>("overview");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      {/* Page header */}
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#00e482]/20 bg-[#00e482]/8 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#00e482]">
-          <ShieldCheck size={12} /> Admin
-        </div>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-neutral-100">Dashboard</h1>
-        <p className="mt-1 text-sm text-neutral-500">Manage members, events, accounts, and roles.</p>
-      </div>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+      <PixelClouds />
+      <SidePixels side="left" />
+      <SidePixels side="right" />
 
-      {/* Tab bar */}
-      <div className="mb-8 flex gap-1 overflow-x-auto border-b border-neutral-800 pb-px">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={[
-              "flex shrink-0 items-center gap-2 rounded-t-md px-4 py-2.5 text-sm font-medium transition-colors",
-              tab === id
-                ? "border-b-2 border-[#00e482] text-[#00e482]"
-                : "text-neutral-500 hover:text-neutral-300",
-            ].join(" ")}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
-      </div>
+      <div className="relative z-10">
+        {/* Header */}
+        <section className={`${wrap} pb-10 pt-10 sm:pb-12 sm:pt-14`}>
+          <p className="text-xl">AWSSBG-UC</p>
+          <h1 className={`${hd} mt-3 text-[clamp(5rem,13vw,10rem)]`}>Admin</h1>
+          <p className="mt-6 max-w-2xl text-2xl leading-snug">
+            Manage members, events, accounts, and roles.
+          </p>
 
-      {/* Tab content */}
-      {tab === "overview"  && <OverviewTab />}
-      {tab === "members"   && <MembersTab callerParticipantId={callerParticipantId} />}
-      {tab === "events"    && <EventsTab />}
-      {tab === "provision" && <ProvisionTab />}
-      {tab === "roles"     && <RolesTab />}
+          {/* Tabs — same shape as the Terms / Privacy switcher */}
+          <div role="tablist" aria-label="Admin sections" className="mt-10 flex w-full flex-wrap gap-4">
+            {TABS.map(({ id, label, icon: Icon }) => {
+              const active = tab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setTab(id)}
+                  className={`flex items-center gap-2 border-4 px-5 py-2 text-lg transition-transform ${focus} ${
+                    active
+                      ? "border-black bg-[#fff7a1] text-black shadow-[4px_4px_0_#2c8f8f]"
+                      : "border-[#2c8f8f] text-[#fff7a1] hover:bg-[#2c8f8f] hover:text-black"
+                  }`}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <Stripes className="h-4" />
+
+        <section role="tabpanel" className={`${wrap} py-12 sm:py-16`}>
+          {tab === "overview"  && <OverviewTab />}
+          {tab === "members"   && <MembersTab callerParticipantId={callerParticipantId} />}
+          {tab === "events"    && <EventsTab />}
+          {tab === "provision" && <ProvisionTab />}
+          {tab === "roles"     && <RolesTab callerParticipantId={callerParticipantId} />}
+        </section>
+
+        <Stripes className="h-4" />
+      </div>
     </div>
   );
 }
