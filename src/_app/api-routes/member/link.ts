@@ -15,7 +15,7 @@ function requireString(value: unknown): string | null {
 }
 
 export async function handleMemberLink(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return json({ success: false, error: "You must be signed in." }, 401);
 
