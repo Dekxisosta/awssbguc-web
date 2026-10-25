@@ -26,29 +26,50 @@ A participant may exist without an account (`user_id = null`) — this is the st
 
 ---
 
-## 1. Normal Registration (Self-Service)
+## 1. Normal Registration (Self-Service Wizard)
 
-The member creates their own account through the website.
+The member creates their own account through a multi-step form at `/signup`, modelled on a Google Form: required fields are marked, optional sections can be skipped, and **nothing is created until the final submit**.
 
 ### Who this is for
 
 Anyone who wants to register and has not already been provisioned.
 
-### Flow
+### Steps
 
-1. Member goes to `/signup`.
-2. Fills in:
-   - Full name
-   - Email address
-   - Password
-3. Submits the form.
-4. The server:
-   - Validates the inputs.
-   - Creates the Supabase Auth account with the chosen password.
-   - Creates a `profiles` row with `initial_setup_completed = true`.
-   - Creates a `participants` row with `user_id` set to the new `auth.users.id`.
-     `member_roster_id` is `null` until an admin links a membership.
-5. Member can sign in immediately at `/login`.
+| Step | Fields | Required? |
+|---|---|---|
+| 1. Account | Full name, email, password, confirm password | Yes |
+| 2. Profile | Photo, username, Discord ID, GitHub username, skills, bio | No |
+| 3. Membership | Student number, first / middle / last name, year level, program, section | No (all-or-nothing) |
+| 4. Review | Summary with Edit links, Terms / Privacy agreement | Agreement required |
+
+Answers are held in browser memory only (including the password). Refreshing the page loses them; the browser warns before that happens.
+
+### Uniqueness flagging
+
+Values that must be unique are checked as the user moves through the form, via `POST /api/auth/check-availability` (backed by the `check_registration_availability()` SQL function). This only reads; it creates nothing.
+
+| Field | Unique against |
+|---|---|
+| Email | `auth.users` and `participants.email` (case-insensitive) |
+| Username | `profiles.username` (case-insensitive) |
+| Discord ID | `profiles.discord_id` |
+| GitHub username | `profiles.github_username` (case-insensitive) |
+| Student number | `member_roster.student_number` |
+
+A taken value is flagged on blur and blocks **Next** until it is changed (or, for optional fields, cleared). If the check cannot run (network error, rate limit) the user may continue; the final submit re-checks.
+
+### Final submit: `POST /api/auth/register`
+
+Body: `{ email, fullName, password, profile?, membership? }`. The server re-validates everything and re-checks uniqueness, then:
+
+1. Creates the Supabase Auth user.
+2. Creates the `profiles` row (`initial_setup_completed = true`, plus any profile details). A chosen username sets `username_changed_at` (uses up the one-time change); otherwise a username is auto-generated.
+3. Creates the `participants` row (`user_id` = the new `auth.users.id`).
+4. Steps 1-3 are the **account**. If any of them fails, the auth user is deleted and nothing is left behind.
+5. If membership fields were supplied, calls `register_member_self_reported()` and links the result to the participant. **This is what makes the person a member.** A failure here does not undo the account; it is returned as `membership: { status: "failed", ... }` and the user can retry from `/member`.
+
+The browser then signs the user in and, if a photo was chosen, uploads it to `/api/profile/avatar` (it needs a signed-in user). A failed upload is reported but does not affect the account.
 
 ### Result
 
@@ -56,14 +77,14 @@ Anyone who wants to register and has not already been provisioned.
 |---|---|---|
 | `auth.users` | `id` | new UUID |
 | `participants` | `user_id` | = `auth.users.id` |
-| `participants` | `member_roster_id` | `null` (linked by admin later) |
+| `participants` | `member_roster_id` | `null` unless membership fields were filled in |
 | `profiles` | `profile_id` | = `auth.users.id` |
 | `profiles` | `initial_setup_completed` | `true` |
 
 ### Notes
 
+- Creating an account does not make someone a member. Supplying the membership fields does.
 - The member chooses their own permanent password. No temporary password is involved.
-- Membership linking (connecting `participants.member_roster_id` to a `member_roster` row) is a separate admin action performed after identity verification.
 
 ---
 
