@@ -27,7 +27,7 @@ function inputClass(hasError: boolean): string {
     : `${base} border-neutral-700 focus:ring-neutral-500`;
 }
 
-export function MemberLinkForm() {
+export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [studentNumber, setStudentNumber] = useState("");
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
@@ -69,7 +69,11 @@ export function MemberLinkForm() {
 
       if (data.success) {
         setState({ status: "success", memberId: data.memberId });
-        window.location.reload();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          window.location.reload();
+        }
       } else {
         setState({ status: "error", message: data.error, field: data.field });
       }

@@ -5,7 +5,7 @@ import { SetupPage, setupMetadata } from "@/src/_pages/setup";
 export const metadata = setupMetadata;
 
 export default async function SetupRoute() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 

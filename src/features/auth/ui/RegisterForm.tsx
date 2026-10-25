@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/src/shared/supabase/client";
 import type { RegisterInput, RegisterResponse } from "@/src/shared/types/auth";
 
 type FieldErrors = Partial<Record<keyof RegisterInput | "confirmPassword" | "terms", string>>;
@@ -295,6 +296,16 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: Reg
       });
       const data: RegisterResponse = await res.json();
       if (data.success) {
+        // Auto sign-in immediately after registration
+        const supabase = createClient();
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        });
+        if (signInError) {
+          // Registration succeeded but auto sign-in failed — still move forward
+          console.warn("[RegisterForm] auto sign-in failed:", signInError.message);
+        }
         if (onSuccess) {
           onSuccess();
         } else {
@@ -359,7 +370,7 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: Reg
         {hasGlobalError && (
           <div
             role="alert"
-            className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="flex items-start gap-2.5 rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-3 text-sm text-red-400"
           >
             <AlertIcon />
             <span>{state.message}</span>
@@ -494,13 +505,13 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: Reg
             />
             <label
               htmlFor="terms"
-              className="cursor-pointer select-none text-xs leading-relaxed text-neutral-600"
+              className="cursor-pointer select-none text-xs leading-relaxed text-neutral-500"
             >
               I agree to the{" "}
               <button
                 type="button"
                 onClick={() => setShowTerms(true)}
-                className="font-medium text-neutral-800 underline underline-offset-2 hover:text-[#0f1923] focus:outline-none"
+                className="font-medium text-neutral-400 underline underline-offset-2 hover:text-neutral-200 focus:outline-none"
               >
                 Terms of Service
               </button>{" "}
@@ -508,7 +519,7 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: Reg
               <button
                 type="button"
                 onClick={() => setShowPrivacy(true)}
-                className="font-medium text-neutral-800 underline underline-offset-2 hover:text-[#0f1923] focus:outline-none"
+                className="font-medium text-neutral-400 underline underline-offset-2 hover:text-neutral-200 focus:outline-none"
               >
                 Privacy Policy
               </button>
@@ -562,7 +573,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-neutral-700">
+      <label htmlFor={id} className="text-sm font-medium text-neutral-300">
         {label}
         {required && <span className="ml-0.5 text-red-500" aria-hidden="true">*</span>}
       </label>

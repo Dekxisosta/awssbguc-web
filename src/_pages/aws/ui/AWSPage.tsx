@@ -1,38 +1,90 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import Link from "next/link";
+import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { motion, useReducedMotion } from "framer-motion";
+import { SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0 },
-};
+/**
+ * /aws in the pixel-art style of the home page:
+ *  black ground, butter-yellow type, Jersey 10 headlines, Pixelify Sans text,
+ *  the stripe "tunnel" as dividers, thick square borders and hard offset shadows.
+ */
 
-const stagger = (delayChildren = 0.05) => ({
-  hidden: {},
-  show: { transition: { staggerChildren: delayChildren } },
-});
+const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
+const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
-const viewport = { once: true, margin: "-60px" };
+const STRIPES: [string, number][] = [
+  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
+  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
+];
+const STRIPE_BG = (() => {
+  let at = 0;
+  const stops = STRIPES.map(([c, w]) => {
+    const s = `${c} ${at}% ${at + w}%`;
+    at += w;
+    return s;
+  });
+  return `linear-gradient(90deg, ${stops.join(", ")})`;
+})();
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const btnDark = `inline-block border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
+
+function Stripes({ className = "h-4" }: { className?: string }) {
+  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+}
+
+function Section({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
+  return (
+    <>
+      <Stripes />
+      <section className={`${wrap} py-14 sm:py-20`}>
+        <h2 className={`${hd} text-6xl sm:text-8xl`}>{title}</h2>
+        {intro && <p className="mt-5 max-w-xl text-lg leading-relaxed">{intro}</p>}
+        <div className="mt-10">{children}</div>
+      </section>
+    </>
+  );
+}
+
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+const MAJOR_SPONSOR = { name: "TutorialsDojo", logo: "/images/logos/tutorials-dojo.png", href: "https://tutorialsdojo.com/" };
+const BROUGHT_BY = { name: "BayanHealth", logo: "/images/logos/bayanhealth.png", href: "https://bayanhealth.com/" };
+
+const COMMUNITY_PARTNERS = [
+  { name: "DEVCON Laguna Chapter", logo: "/images/logos/devcon-laguna.png", circle: false },
+  { name: "Association of Computer Science Students - UC", logo: "/images/logos/acss-uc.png", circle: false },
+  { name: "Society of Information Technology Students - UC", logo: "/images/logos/sits-uc.png", circle: false },
+  { name: "Junior Mechatronics and Robotics Society of the Philippines - UC Chapter", logo: "/images/logos/jmrsp-uc.png", circle: false },
+  { name: "Junior Institute of Electronics Engineers of the Philippines - UC", logo: "/images/logos/jieep-uc.png", circle: false },
+  { name: "Association of Computer Engineering Students - UC", logo: "/images/logos/aces-uc.png", circle: false },
+  { name: "AWS Learning Club - Polar", logo: "/images/logos/awslc-polar.png", circle: true },
+  { name: "AWS Student Builder Group - Aeris", logo: "/images/logos/awssbg-aeris.png", circle: true },
+  { name: "AWS Student User Group Philippines", logo: "/images/logos/awsug-ph.png", circle: true },
+];
 
 const FREE_RESOURCES = [
   {
     label: "Builder Labs",
     image: "/images/hero/builder_labs.png",
     href: "https://builder.aws.com/start?trk=9f01212c-9819-4534-ad0a-4c5e491af39a&sc_channel=el",
-    desc: "Guided, hands-on labs in a live AWS environment. No setup, no cost — just build.",
+    desc: "Guided, hands-on labs in a live AWS environment. No setup, no cost. Just build.",
     items: ["Real AWS console access", "Step-by-step guidance", "No credit card required"],
-    tag: "Hands-on Labs",
+    tag: "Hands-on labs",
   },
   {
     label: "Builder Center",
     image: "/images/hero/builder_center.jpg",
     href: "https://builder.aws.com/start?trk=9f01212c-9819-4534-ad0a-4c5e491af39a&sc_channel=el",
-    desc: "Your personal AWS learning hub — tracks, challenges, and curated content in one place.",
+    desc: "Your personal AWS learning hub: tracks, challenges, and curated content in one place.",
     items: ["Personalized learning paths", "Challenges & quests", "Community-driven content"],
-    tag: "Learning Hub",
+    tag: "Learning hub",
   },
   {
     label: "Workshops",
@@ -46,9 +98,9 @@ const FREE_RESOURCES = [
     label: "Project Hub",
     image: "/images/hero/projects.jpg",
     href: "https://aws.amazon.com/getting-started/hands-on/",
-    desc: "End-to-end project tutorials — build a website, an API, a chatbot, and more.",
+    desc: "End-to-end project tutorials: build a website, an API, a chatbot, and more.",
     items: ["Host a static website", "Deploy a REST API", "Build a serverless app"],
-    tag: "Guided Projects",
+    tag: "Guided projects",
   },
   {
     label: "Skill Builder",
@@ -62,9 +114,9 @@ const FREE_RESOURCES = [
     label: "AWS Free Tier",
     image: "/images/hero/free_tier.jpg",
     href: "https://aws.amazon.com/free/",
-    desc: "Try 100+ AWS products for free — with limits designed for learning and experimenting.",
+    desc: "Try 100+ AWS products for free, with limits designed for learning and experimenting.",
     items: ["Always-free services", "12-month free usage", "No upfront commitment"],
-    tag: "Free Tier",
+    tag: "Free tier",
   },
   {
     label: "Certifications",
@@ -78,7 +130,7 @@ const FREE_RESOURCES = [
     label: "Documentation",
     image: "/images/hero/documentation.jpg",
     href: "https://docs.aws.amazon.com/",
-    desc: "The authoritative reference for every AWS service — guides, API docs, and tutorials.",
+    desc: "The authoritative reference for every AWS service: guides, API docs, and tutorials.",
     items: ["All 200+ services covered", "Code examples included", "Updated continuously"],
     tag: "Reference",
   },
@@ -86,203 +138,235 @@ const FREE_RESOURCES = [
     label: "Kiro",
     image: "/images/hero/kiro.jpg",
     href: "https://kiro.dev/",
-    desc: "An AI-powered IDE built on VS Code that writes code alongside you — built with AWS.",
+    desc: "An AI-powered IDE built on VS Code that writes code alongside you, built with AWS.",
     items: ["AI agent coding", "Spec-driven development", "Free to get started"],
     tag: "AI IDE",
   },
 ];
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
+// Each card cycles through the stripe palette.
+const TONES = [
+  { border: "border-[#2c8f8f]", shadow: "shadow-[6px_6px_0_#2c8f8f] hover:shadow-[3px_3px_0_#2c8f8f]", bg: "bg-[#2c8f8f]", text: "text-black" },
+  { border: "border-[#b89a0a]", shadow: "shadow-[6px_6px_0_#b89a0a] hover:shadow-[3px_3px_0_#b89a0a]", bg: "bg-[#b89a0a]", text: "text-black" },
+  { border: "border-[#b32a0e]", shadow: "shadow-[6px_6px_0_#b32a0e] hover:shadow-[3px_3px_0_#b32a0e]", bg: "bg-[#b32a0e]", text: "text-[#fff7a1]" },
+  { border: "border-[#3aaa6e]", shadow: "shadow-[6px_6px_0_#3aaa6e] hover:shadow-[3px_3px_0_#3aaa6e]", bg: "bg-[#3aaa6e]", text: "text-black" },
+];
 
-function ResourceCard({
-  label,
-  image,
-  href,
-  desc,
-  items,
-  tag,
-}: (typeof FREE_RESOURCES)[number]) {
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
+function Hero() {
   return (
-    <motion.a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      variants={fadeUp}
-      whileHover={{ y: -4, transition: { type: "spring", stiffness: 300, damping: 20 } }}
-      className="group flex flex-col rounded-xl border border-neutral-800 bg-neutral-900/60 overflow-hidden transition-colors hover:border-[#00e482]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e482]"
-    >
-      {/* image */}
-      <div className="relative h-44 w-full shrink-0 overflow-hidden">
-        <Image
-          src={image}
-          alt={label}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          onError={(e) => {
-            // graceful fallback if image is missing
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent" />
-        {/* tag badge */}
-        <span className="absolute bottom-3 left-4 rounded-full bg-neutral-900/70 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-400 backdrop-blur-sm border border-neutral-700">
-          {tag}
-        </span>
-      </div>
-
-      {/* body */}
-      <div className="flex flex-1 flex-col px-6 py-5">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#00e482]">
-            {label}
+    <section className={`${wrap} pb-14 pt-10 sm:pt-14`}>
+      <div className="grid items-center gap-10 lg:grid-cols-[1fr_auto]">
+        <div>
+          <p className="text-xl">100% free, no credit card</p>
+          <h1 className={`${hd} mt-3 text-[clamp(5rem,13vw,10rem)]`}>
+            Build real
+            <br />
+            things.
+          </h1>
+          <p className="mt-6 max-w-xl text-xl leading-snug">
+            AWS gives students hands-on labs, guided workshops, and project starters that run in real cloud
+            environments, all at zero cost. Pick one below and start building today.
           </p>
-          {/* arrow icon — appears on hover */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mt-0.5 shrink-0 text-[#00e482] opacity-0 transition-opacity group-hover:opacity-100"
-            aria-hidden="true"
-          >
-            <path d="M7 7h10v10" />
-            <path d="M7 17 17 7" />
-          </svg>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <a href="#resources" className={btnDark}>
+              Browse resources
+            </a>
+            <Link
+              href="/events"
+              className={`inline-block border-4 border-[#fff7a1] px-6 py-3 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+            >
+              See upcoming events
+            </Link>
+          </div>
         </div>
 
-        <p className="mt-3 text-sm leading-relaxed text-neutral-400">{desc}</p>
+        {/* Butter card with the headline numbers, echoing the home hero card. */}
+        <div className="relative mx-auto w-full max-w-[340px] bg-[#fff7a1] p-6 text-center text-black shadow-[8px_8px_0_#2c8f8f]">
+          <dl className="grid grid-cols-2 gap-4">
+            {[
+              { v: "9", l: "free resources" },
+              { v: "600+", l: "free courses" },
+              { v: "100+", l: "free tier products" },
+              { v: "$0", l: "to get started" },
+            ].map((s) => (
+              <div key={s.l}>
+                <dd className={`${hd} text-5xl tabular-nums`}>{s.v}</dd>
+                <dt className="mt-1 text-xs leading-tight">{s.l}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Resource card ───────────────────────────────────────────────────────────
+
+function ResourceCard({ r, tone, index }: { r: (typeof FREE_RESOURCES)[number]; tone: (typeof TONES)[number]; index: number }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.li
+      initial={reduce ? false : { opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.3, delay: (index % 3) * 0.06 }}
+      className="flex"
+    >
+      <a
+        href={r.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`group flex w-full flex-col border-4 ${tone.border} bg-black p-4 transition-all hover:translate-x-[3px] hover:translate-y-[3px] ${tone.shadow} ${focus}`}
+      >
+        <div className={`relative border-4 ${tone.border} bg-black`}>
+          <PixelPhoto src={r.image} width={64} height={36} />
+          <span className={`absolute bottom-0 left-0 px-2 py-0.5 text-xs uppercase ${tone.bg} ${tone.text}`}>{r.tag}</span>
+        </div>
+
+        <div className="mt-5 flex items-start justify-between gap-3">
+          <h3 className={`${hd} text-4xl`}>{r.label}</h3>
+          <span aria-hidden="true" className="mt-1 text-xl opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            ↗
+          </span>
+        </div>
+        <p className="mt-2 leading-snug text-[#fff7a1]/80">{r.desc}</p>
 
         <ul className="mt-4 space-y-2">
-          {items.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm text-neutral-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mt-0.5 shrink-0 text-[#00e482]"
-                aria-hidden="true"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
+          {r.items.map((item) => (
+            <li key={item} className="flex items-start gap-3 text-sm">
+              <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 ${tone.bg}`} />
               {item}
             </li>
           ))}
         </ul>
 
-        <p className="mt-5 text-xs font-semibold text-[#00e482] opacity-0 transition-opacity group-hover:opacity-100">
-          Explore →
-        </p>
-      </div>
-    </motion.a>
+        <p className="mt-auto pt-5 text-sm underline underline-offset-4">Explore</p>
+      </a>
+    </motion.li>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+function Resources() {
+  return (
+    <div id="resources" className="scroll-mt-4">
+      <Section title="Free AWS resources" intro="Everything here is provided by Amazon Web Services and free to use. Each card opens in a new tab.">
+        <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {FREE_RESOURCES.map((r, i) => (
+            <ResourceCard key={r.label} r={r} tone={TONES[i % TONES.length]} index={i} />
+          ))}
+        </ul>
+      </Section>
+    </div>
+  );
+}
+
+// ─── Sponsors & partners ─────────────────────────────────────────────────────
+
+function SponsorTile({ name, logo, href, label, accent }: { name: string; logo: string; href: string; label: string; accent: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <span className="text-sm uppercase">{label}</span>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={name}
+        className={`group flex h-28 w-64 items-center justify-center border-4 bg-[#fff7a1] p-4 text-black transition-transform hover:translate-x-[2px] hover:translate-y-[2px] ${focus}`}
+        style={{ borderColor: accent, boxShadow: `6px 6px 0 ${accent}` }}
+      >
+        {failed ? (
+          <span className={`${hd} text-3xl`}>{name}</span>
+        ) : (
+          <span className="relative block h-full w-full">
+            <Image src={logo} alt={name} fill sizes="240px" className="object-contain" onError={() => setFailed(true)} />
+          </span>
+        )}
+      </a>
+    </div>
+  );
+}
+
+function PartnerTile({ name, logo, circle }: { name: string; logo: string; circle: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null; // missing logo file: drop the tile instead of a broken image
+  return (
+    <span
+      title={name}
+      className="relative block h-24 w-24 border-4 border-[#2c8f8f] bg-[#fff7a1] p-2 shadow-[4px_4px_0_#2c8f8f]"
+    >
+      <span className={`relative block h-full w-full overflow-hidden ${circle ? "rounded-full" : ""}`}>
+        <Image src={logo} alt={name} fill sizes="80px" className="object-contain" onError={() => setFailed(true)} />
+      </span>
+    </span>
+  );
+}
+
+function Partners() {
+  return (
+    <Section title="Sponsors & partners" intro="The people and communities that make these free events and resources possible.">
+      <div className="flex flex-wrap gap-10">
+        <SponsorTile {...MAJOR_SPONSOR} label="Major sponsor" accent="#b89a0a" />
+        <SponsorTile {...BROUGHT_BY} label="Brought to you by" accent="#3aaa6e" />
+      </div>
+      <p className={`${hd} mt-14 text-4xl`}>Community partners</p>
+      <div className="mt-6 flex flex-wrap gap-6">
+        {COMMUNITY_PARTNERS.map((p) => (
+          <PartnerTile key={p.name} {...p} />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── Closing CTA ─────────────────────────────────────────────────────────────
+
+function Cta() {
+  return (
+    <>
+      <Stripes />
+      <section className="bg-[#fff7a1] text-black">
+        <div className={`${wrap} py-16 text-center sm:py-24`}>
+          <h2 className={`${hd} text-[clamp(4rem,9vw,8rem)]`}>
+            Learn it together.
+          </h2>
+          <p className="mx-auto mt-6 max-w-lg text-xl leading-snug">
+            Join AWSSBG-UC to get help, teammates, and events that turn these resources into real projects.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link href="/signup" className={`${btnDark} px-10 py-4 text-xl`}>
+              Join now, it&apos;s free
+            </Link>
+            <Link href="/events" className={`inline-block border-4 border-black px-8 py-3.5 text-xl transition-colors hover:bg-black hover:text-[#fff7a1] ${focus}`}>
+              See events
+            </Link>
+          </div>
+          <p className="mx-auto mt-12 max-w-xl text-xs leading-snug opacity-70">
+            All resources are provided by Amazon Web Services. No affiliation or sponsorship implied.
+          </p>
+        </div>
+      </section>
+      <Stripes />
+    </>
+  );
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export function AWSPage() {
   return (
-    <div className="relative min-h-screen bg-neutral-900 overflow-hidden">
-      {/* Background accents */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-32 top-0 h-96 w-96 rounded-full bg-[#00e482]/5 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-32 top-1/2 h-80 w-80 rounded-full bg-[#FF9900]/4 blur-3xl"
-      />
-
-      {/* Faint watermark */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 overflow-hidden select-none"
-        aria-hidden="true"
-      >
-        <svg
-          viewBox="0 0 600 160"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-[480px] opacity-[0.03] -rotate-12"
-        >
-          <text
-            x="0"
-            y="75%"
-            fontFamily="ui-sans-serif, system-ui, sans-serif"
-            fontWeight="900"
-            fontSize="160"
-            letterSpacing="-6"
-            fill="#00e482"
-          >
-            FREE
-          </text>
-        </svg>
-      </div>
-
-      <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20">
-        {/* Header */}
-        <motion.div
-          variants={stagger(0.08)}
-          initial="hidden"
-          animate="show"
-          className="mb-12"
-        >
-          <motion.p
-            variants={fadeUp}
-            className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#00e482]"
-          >
-            100% Free
-          </motion.p>
-          <motion.h1
-            variants={fadeUp}
-            className="text-4xl font-extrabold tracking-tight text-neutral-100 sm:text-5xl"
-          >
-            Build real things.{" "}
-            <span className="text-[#00e482]">No credit card.</span>
-          </motion.h1>
-          <motion.p
-            variants={fadeUp}
-            className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-400"
-          >
-            AWS provides hands-on labs, guided workshops, and project starters
-            that run in real cloud environments — all at zero cost. Pick a
-            resource below and start building today.
-          </motion.p>
-        </motion.div>
-
-        {/* Cards grid */}
-        <motion.div
-          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-          variants={stagger(0.07)}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewport}
-        >
-          {FREE_RESOURCES.map((resource) => (
-            <ResourceCard key={resource.label} {...resource} />
-          ))}
-        </motion.div>
-
-        {/* Footer note */}
-        <motion.p
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewport}
-          className="mt-12 text-center text-xs text-neutral-600"
-        >
-          All resources are provided by Amazon Web Services. No affiliation or
-          sponsorship implied.
-        </motion.p>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+      <PixelClouds />
+      <SidePixels side="left" />
+      <SidePixels side="right" />
+      <div className="relative z-10">
+        <Hero />
+        <Resources />
+        <Partners />
+        <Cta />
       </div>
     </div>
   );

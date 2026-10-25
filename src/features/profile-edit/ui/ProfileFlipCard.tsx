@@ -29,6 +29,8 @@ export interface ProfileFlipCardProps {
   bio: string | null;
   /** Self-reported skill tags */
   skills: string[] | null;
+  /** ISO timestamp of one-time username change; null means never changed */
+  usernameChangedAt: string | null;
   /** DOM id of the div to portal card content into */
   cardSlotId: string;
   /** DOM id of the div to portal pill content into */
@@ -91,6 +93,7 @@ export function ProfileCard({
   directoryVisible: initialDirectoryVisible,
   bio: initialBio,
   skills: initialSkills,
+  usernameChangedAt,
   cardSlotId,
   pillSlotId,
   qrSlotId,
@@ -174,6 +177,12 @@ export function ProfileCard({
   async function saveEmail(value: string): Promise<string | null> {
     const err = await patchProfile({ email: value });
     if (!err) setEmail(value);
+    return err;
+  }
+
+  async function saveUsername(value: string): Promise<string | null> {
+    const err = await patchProfile({ username: value });
+    if (!err) setUsername(value);
     return err;
   }
 
@@ -626,23 +635,37 @@ export function ProfileCard({
                   </dd>
                 </div>
 
-                {/* Username — read-only */}
+                {/* Username */}
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Username
+                    {!usernameChangedAt && (
+                      <span className="ml-2 text-[10px] font-normal text-[#00e482] uppercase tracking-wider">one-time</span>
+                    )}
                   </dt>
-                  {username ? (
+                  {!usernameChangedAt ? (
+                    <dd className="mt-1">
+                      <EditableField
+                        id="username"
+                        label=""
+                        value={username}
+                        placeholder="e.g. cloudbuilder"
+                        hint="6–24 characters. Start with a letter; letters, numbers, and _ only. You can only set this once."
+                        onSave={saveUsername}
+                      />
+                    </dd>
+                  ) : username ? (
                     <>
                       <dd className="mt-1 font-mono text-sm text-neutral-300">{username}</dd>
                       <p className="mt-1.5 text-xs text-neutral-500">
-                        Username cannot be changed directly. To request a change, email{" "}
+                        Username cannot be changed again. To request a change, email{" "}
                         <a
                           href={`mailto:${SUPPORT_EMAIL}?subject=Username%20Change%20Request&body=Current%20username%3A%20${encodeURIComponent(username ?? "")}%0ARequested%20username%3A%20`}
                           className="text-[#00e482] underline-offset-2 hover:underline"
                         >
                           {SUPPORT_EMAIL}
-                        </a>{" "}
-                        with your reason.
+                        </a>
+                        .
                       </p>
                     </>
                   ) : (

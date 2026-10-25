@@ -745,8 +745,10 @@ const ALL_SEARCH_ITEMS = [
   // AWS
   { href: "/aws",         label: "Free Resources",group: "AWS" },
   // Auth / account
-  { href: "/profile",     label: "Profile",       group: "Account" },
-  { href: "/member",      label: "Membership",    group: "Account" },
+  { href: "/profile",        label: "Profile",        group: "Account" },
+  { href: "/profile-setup",  label: "Profile Setup",  group: "Account" },
+  { href: "/member",         label: "Membership",     group: "Account" },
+  { href: "/admin",          label: "Admin Dashboard", group: "Account" },
 ];
 
 function SearchPalette({ onClose }: { onClose: () => void }) {
@@ -995,6 +997,15 @@ const PROFILE_NAV: NavItem[] = [
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect width="20" height="14" x="2" y="5" rx="2" /><path d="M2 10h20" />
+      </svg>
+    ),
+  },
+  {
+    href: "/admin",
+    label: "Admin",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
   },
