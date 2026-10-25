@@ -17,7 +17,7 @@ export default function TermsPage() {
           Builder Group – University of Cabuyao (&quot;AWSSBG-UC,&quot; &quot;we,&quot; &quot;us&quot;)
           website and membership platform (the &quot;Platform&quot;). By creating an account, registering
           for an event, or otherwise using the Platform, you agree to be bound by these Terms and by our{" "}
-          <a href="/privacy" className="font-medium text-[#00e482] hover:underline">
+          <a href="/privacy" className="underline underline-offset-4 hover:bg-[#fff7a1] hover:text-black">
             Privacy Policy
           </a>
           .
@@ -36,14 +36,14 @@ export default function TermsPage() {
 
       <LegalSection title="3. Use of the Platform">
         <p>You agree to use the Platform only for its intended purposes, which include:</p>
-        <ul className="list-disc space-y-1.5 pl-5">
+        <ul className="list-disc space-y-2 pl-6 marker:text-[#b89a0a]">
           <li>Registering for and checking in to workshops, bootcamps, and other AWSSBG-UC events.</li>
           <li>Viewing and managing your member profile, avatar, and event history.</li>
           <li>Accessing organizational documents such as the Constitution and By-Laws.</li>
           <li>Engaging with published blog content and community announcements.</li>
         </ul>
         <p>You agree not to:</p>
-        <ul className="list-disc space-y-1.5 pl-5">
+        <ul className="list-disc space-y-2 pl-6 marker:text-[#b89a0a]">
           <li>Attempt to gain unauthorized access to accounts, event QR codes, or administrative features.</li>
           <li>Upload or transmit content that is unlawful, harassing, or infringes another person&apos;s rights.</li>
           <li>Misrepresent your affiliation with AWSSBG-UC, AWS, or the University of Cabuyao.</li>
@@ -101,7 +101,7 @@ export default function TermsPage() {
       <LegalSection title="9. Contact">
         <p>
           Questions about these Terms can be sent to{" "}
-          <a href={MAILTO} className="font-medium text-[#00e482] hover:underline">
+          <a href={MAILTO} className="underline underline-offset-4 hover:bg-[#fff7a1] hover:text-black">
             {SOCIALS.email}
           </a>
           .

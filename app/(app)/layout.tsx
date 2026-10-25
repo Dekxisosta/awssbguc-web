@@ -3,13 +3,14 @@ import { createAdminClient } from "@/src/shared/supabase/admin";
 import { DashboardShell } from "@/src/widgets/dashboard-shell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   let displayName = "Guest";
   let username: string | null = null;
   let avatarUrl: string | null = null;
   let memberId: string | null = null;
+  let isAdmin = false;
 
   if (user) {
     // Use admin client to bypass RLS — consistent with the profile page.
@@ -25,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         .single(),
       admin
         .from("participants")
-        .select("member_roster_id, display_name")
+        .select("participant_id, member_roster_id, display_name")
         .eq("user_id", user.id)
         .maybeSingle(),
     ]);
@@ -35,11 +36,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
     username = profile?.username ?? null;
     avatarUrl = profile?.avatar_url ?? null;
     memberId = participant?.member_roster_id ?? null;
+
+    // Same rule as the /admin gate in proxy.ts: a participant_roles row with role = 'admin'.
+    if (participant) {
+      const { data: roleRow } = await admin
+        .from("participant_roles")
+        .select("role")
+        .eq("participant_id", participant.participant_id)
+        .eq("role", "admin")
+        .maybeSingle();
+      isAdmin = roleRow !== null;
+    }
   }
 
   return (
     <DashboardShell
       isAuthenticated={!!user}
+      isAdmin={isAdmin}
       displayName={displayName}
       username={username}
       avatarUrl={avatarUrl}

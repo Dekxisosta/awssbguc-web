@@ -1,4 +1,13 @@
+import { Pixelify_Sans, Jersey_10 } from "next/font/google";
 import { ConstitutionSidebar } from "@/src/widgets/constitution-sidebar";
+import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
+
+// Same fonts as the home page. (The shared class strings live in a client module, so they are rebuilt here
+// instead of imported: a server component can't read non-component exports from a "use client" file.)
+const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
+const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
 
 export const metadata = {
   title: "Constitution & By-Laws — AWSSBG-UC",
@@ -6,28 +15,48 @@ export const metadata = {
 
 export default function ConstitutionPage() {
   return (
-    <div className="mx-auto max-w-5xl px-6 py-14">
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <PixelClouds />
+    <SidePixels side="left" />
+    <SidePixels side="right" />
+    <div className="relative z-10">
+    <div className={`${wrap} pb-14 pt-10 sm:pt-14`}>
       {/* Page header */}
-      <h1 className="text-3xl font-extrabold tracking-tight text-neutral-50">Constitution and By-Laws</h1>
-      <p className="mt-2 text-sm text-neutral-400">
+      <p className="text-xl">AWSSBG-UC</p>
+      <h1 className={`${hd} mt-3 text-[clamp(4.5rem,11vw,9rem)]`}>
+        Constitution
+        <br />
+        and By-Laws
+      </h1>
+      <p className="mt-6 max-w-2xl text-xl leading-snug">
         AWS Student Builder Group – University of Cabuyao (Pamantasan ng Cabuyao)
-        &nbsp;·&nbsp; Adopted: November 26, 2023 &nbsp;·&nbsp; Last Amended: August 15, 2026
       </p>
+      <dl className="mt-6 flex flex-wrap gap-4">
+        <div className="border-4 border-[#2c8f8f] px-3 py-1">
+          <dt className="inline text-[#fff7a1]/70">Adopted: </dt>
+          <dd className="inline">November 26, 2023</dd>
+        </div>
+        <div className="border-4 border-[#b89a0a] px-3 py-1">
+          <dt className="inline text-[#fff7a1]/70">Last amended: </dt>
+          <dd className="inline">August 15, 2026</dd>
+        </div>
+      </dl>
+      <Stripes className="mt-10 h-4" />
 
       {/* Two-column layout: sidebar + content */}
-      <div className="mt-6 flex gap-8">
+      <div className="mt-10 flex gap-8">
         <ConstitutionSidebar />
 
         {/* Main content */}
         <div className="min-w-0 flex-1">
-      <div className="space-y-14 text-base text-neutral-200">
+      <div className="space-y-16 text-lg">
 
         {/* ── Preamble ── */}
         <section aria-labelledby="preamble">
-          <h2 id="preamble" className="mb-4 text-xs font-bold uppercase tracking-widest text-[#00e482]">
+          <h2 id="preamble" className={`${hd} mb-4 scroll-mt-24 text-5xl sm:text-7xl`}>
             Preamble
           </h2>
-          <div className="space-y-4 text-base leading-relaxed text-neutral-300">
+          <div className="space-y-4 text-lg leading-relaxed text-[#fff7a1]/85">
             <p>
               We, the members of the AWS Student Builder Group at the University of Cabuyao, unite to
               promote learning, innovation, and collaboration in the realm of cloud computing, artificial
@@ -341,7 +370,7 @@ export default function ConstitutionPage() {
           <ArticleHeading id="article-iv">Article IV. Organizational Structure</ArticleHeading>
 
           <SectionBlock id="article-iv-s1" title="Section 1. Hierarchy and Composition">
-            <p className="mb-3 text-neutral-300">
+            <p className="mb-3 text-[#fff7a1]/85">
               The governance and operational execution of AWS SBG UC shall be structured across four
               (4) distinct tiers:
             </p>
@@ -859,7 +888,7 @@ export default function ConstitutionPage() {
           </SectionBlock>
 
           <SectionBlock id="article-viii-s3" title="Section 3. Duties and Responsibilities of the Adviser">
-            <p className="mb-3 text-neutral-300">
+            <p className="mb-3 text-[#fff7a1]/85">
               In adherence to institutional standards and the official Adviser&apos;s Agreement Form,
               the Faculty Adviser shall:
             </p>
@@ -1034,45 +1063,47 @@ export default function ConstitutionPage() {
       </div>{/* end flex gap-8 */}
 
       {/* ── Closing white section ── */}
-      <div className="mt-16 border border-neutral-200 bg-white px-8 py-10">
+      <div className="mt-16 border-4 border-black bg-[#fff7a1] px-6 py-8 text-black shadow-[8px_8px_0_#b89a0a] sm:px-8 sm:py-10">
         <div className="grid gap-10 sm:grid-cols-3">
 
           {/* Ratification */}
           <div>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#FF9900]">Ratification</p>
-            <p className="text-sm font-semibold text-neutral-900">Adopted November 26, 2023</p>
-            <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+            <p className="mb-2 text-sm uppercase tracking-wider text-[#b32a0e]">Ratification</p>
+            <p className={`${hd} text-3xl`}>Adopted November 26, 2023</p>
+            <p className="mt-2 leading-snug text-black/75">
               Ratified by the founding membership of AWS SBG UC at the University of Cabuyao, Pamantasan ng Cabuyao, Laguna.
             </p>
           </div>
 
           {/* Last amended */}
           <div>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#FF9900]">Last Amended</p>
-            <p className="text-sm font-semibold text-neutral-900">August 15, 2026</p>
-            <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+            <p className="mb-2 text-sm uppercase tracking-wider text-[#b32a0e]">Last Amended</p>
+            <p className={`${hd} text-3xl`}>August 15, 2026</p>
+            <p className="mt-2 leading-snug text-black/75">
               Amendments reviewed and approved by the Executive Board in accordance with Article IX of this Constitution.
             </p>
           </div>
 
           {/* Recognition */}
           <div>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#FF9900]">Recognition</p>
-            <p className="text-sm font-semibold text-neutral-900">Chartered under SASD & SOAO</p>
-            <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+            <p className="mb-2 text-sm uppercase tracking-wider text-[#b32a0e]">Recognition</p>
+            <p className={`${hd} text-3xl`}>Chartered under SASD &amp; SOAO</p>
+            <p className="mt-2 leading-snug text-black/75">
               Recognized by the University of Cabuyao Student Affairs and Services Department and the Student Organization Accreditation Office.
             </p>
           </div>
 
         </div>
 
-        <div className="mt-8 border-t border-neutral-100 pt-6 text-center">
-          <p className="text-xs text-neutral-400">
+        <div className="mt-8 border-t-4 border-black pt-6 text-center">
+          <p className="text-black/70">
             AWS Student Builder Group — University of Cabuyao &nbsp;·&nbsp; All rights reserved.
           </p>
         </div>
       </div>
 
+    </div>
+    </div>
     </div>
   );
 }
@@ -1083,7 +1114,7 @@ function ArticleHeading({ id, children }: { id: string; children: React.ReactNod
   return (
     <h2
       id={id}
-      className="scroll-mt-24 border-b border-neutral-200 pb-2 text-base font-bold uppercase tracking-wide text-neutral-900"
+      className={`${hd} scroll-mt-24 border-b-4 border-[#2c8f8f] pb-3 text-5xl sm:text-7xl`}
     >
       {children}
     </h2>
@@ -1092,8 +1123,8 @@ function ArticleHeading({ id, children }: { id: string; children: React.ReactNod
 
 function SectionBlock({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <div id={id} className="mt-7 scroll-mt-24">
-      <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-[#00e482]">{title}</h3>
+    <div id={id} className="mt-10 scroll-mt-24">
+      <h3 className={`${hd} mb-3 text-3xl text-[#3aaa6e] sm:text-4xl`}>{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
   );
@@ -1102,8 +1133,8 @@ function SectionBlock({ id, title, children }: { id?: string; title: string; chi
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-2 text-base font-semibold text-neutral-100">{title}</p>
-      <div className="space-y-3 pl-4 border-l-2 border-[#FF9900]/40">
+      <p className={`${hd} mb-2 text-2xl`}>{title}</p>
+      <div className="space-y-3 border-l-4 border-[#b89a0a] pl-4">
         {children}
       </div>
     </div>
@@ -1113,10 +1144,10 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 function OfficerBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-3">
-      <p className="mb-2 text-sm font-semibold text-neutral-200">
+      <p className="mb-2 text-lg font-bold">
         {title}
       </p>
-      <ul className="space-y-1.5 list-none pl-0 text-base text-neutral-300">
+      <ul className="space-y-1.5 list-none pl-0 leading-relaxed text-[#fff7a1]/85">
         {children}
       </ul>
     </div>
@@ -1131,9 +1162,9 @@ function Item({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex gap-3 text-neutral-300">
+    <div className="flex gap-3 leading-relaxed text-[#fff7a1]/85">
       {number && (
-        <span className="shrink-0 font-bold text-[#FF9900] tabular-nums">
+        <span className="shrink-0 font-bold text-[#f9a825] tabular-nums">
           {number}.
         </span>
       )}
@@ -1143,7 +1174,7 @@ function Item({
 }
 
 function SubList({ children }: { children: React.ReactNode }) {
-  return <div className="mt-2 space-y-2 pl-4 border-l-2 border-neutral-700">{children}</div>;
+  return <div className="mt-2 space-y-2 border-l-4 border-[#2c8f8f]/60 pl-4">{children}</div>;
 }
 
 function SubItem({
@@ -1154,13 +1185,13 @@ function SubItem({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex gap-3 text-neutral-300">
+    <div className="flex gap-3 leading-relaxed text-[#fff7a1]/85">
       {number && (
-        <span className="shrink-0 text-sm font-bold text-[#FF9900] tabular-nums">
+        <span className="shrink-0 text-base font-bold text-[#b89a0a] tabular-nums">
           {number}.
         </span>
       )}
-      <div className="flex-1 text-base text-neutral-300">{children}</div>
+      <div className="flex-1 text-[#fff7a1]/85">{children}</div>
     </div>
   );
 }
