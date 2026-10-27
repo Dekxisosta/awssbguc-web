@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { colors, withAlpha } from "@/tailwind.tokens";
 
 const CELL = 20; // px per cell
 const MAX_CONTENT_WIDTH = 1280; // matches max-w-7xl
 
 const COLORS = [
-  "rgba(168,85,247,0.55)",  // purple
-  "rgba(0,228,130,0.45)",   // brand green
-  "rgba(99,102,241,0.50)",  // indigo
-  "rgba(168,85,247,0.30)",  // purple dim
+  withAlpha(colors.neon.purple, 0.55),
+  withAlpha(colors.brand.green, 0.45),
+  withAlpha(colors.neon.indigo, 0.5),
+  withAlpha(colors.neon.purple, 0.3), // purple dim
 ];
 
 // How many seconds a full fade-in → fade-out cycle takes
@@ -73,7 +74,7 @@ function runGrid(canvas: HTMLCanvasElement): () => void {
     }
 
     // Grid lines
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.strokeStyle = colors.gridline;
     ctx.lineWidth = 0.5;
     for (let c = 0; c <= cols; c++) {
       ctx.beginPath();

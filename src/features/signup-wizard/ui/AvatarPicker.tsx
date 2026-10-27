@@ -27,13 +27,13 @@ export function AvatarPicker({
   }, [file]);
 
   return (
-    <div className="flex flex-col items-center gap-2 border-4 border-black bg-black p-4 text-[#fff7a1]">
+    <div className="flex flex-col items-center gap-2 border-4 border-black bg-black p-4 text-pix-butter">
       <button
         type="button"
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
         aria-label={file ? "Change profile photo" : "Choose a profile photo"}
-        className={`flex h-24 w-24 items-center justify-center overflow-hidden border-4 border-[#fff7a1] bg-[#fff7a1]/10 text-sm ${focusRing}`}
+        className={`flex h-24 w-24 items-center justify-center overflow-hidden border-4 border-pix-butter bg-pix-butter/10 text-sm ${focusRing}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : "Add photo"}
@@ -49,7 +49,7 @@ export function AvatarPicker({
           e.target.value = "";
         }}
       />
-      <div className="flex items-center gap-3 text-sm text-[#fff7a1]/70">
+      <div className="flex items-center gap-3 text-sm text-pix-butter/70">
         <span>JPEG, PNG, GIF or WebP, up to 2 MB.</span>
         {file && (
           <button type="button" disabled={disabled} onClick={() => onChange(null)} className={`underline ${focusRing}`}>
@@ -57,7 +57,7 @@ export function AvatarPicker({
           </button>
         )}
       </div>
-      {error && <p role="alert" className={`${errTxt} text-[#ff9b85]`}>{error}</p>}
+      {error && <p role="alert" className={`${errTxt} text-pix-blush`}>{error}</p>}
     </div>
   );
 }

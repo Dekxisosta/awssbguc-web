@@ -13,8 +13,8 @@ import type { MemberEventSummary, PublicMemberDetail } from "@/src/entities/memb
 const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 export interface MemberDetailPageProps {
   member: PublicMemberDetail;
@@ -62,7 +62,7 @@ function EventRowCard({ event }: { event: MemberEventSummary }) {
             {event.name}
           </Link>
         </h3>
-        <p className="mt-1 text-base text-[#fff7a1]/70">
+        <p className="mt-1 text-base text-pix-butter/70">
           {fmtShortDate(event.starts_at, tz)} · {fmtTime(event.starts_at, tz)}
           {event.location ? ` · ${event.location}` : ""}
         </p>
@@ -80,7 +80,7 @@ function EventGroup({ title, id, events }: { title: string; id: string; events: 
   return (
     <div>
       <h3 id={id} className="text-xl">
-        {title} <span className="text-[#fff7a1]/60">({events.length})</span>
+        {title} <span className="text-pix-butter/60">({events.length})</span>
       </h3>
       <ul aria-labelledby={id} className="mt-4 space-y-5">
         {events.map((e) => (
@@ -100,7 +100,7 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
   const hasEvents = upcoming.length + past.length > 0;
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />
@@ -114,12 +114,12 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
 
           <div className="mt-10 grid gap-10 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-12">
             {member.avatar_url ? (
-              <div className="h-44 w-44 border-4 border-[#fff7a1] shadow-[8px_8px_0_#2c8f8f] sm:h-52 sm:w-52">
+              <div className="h-44 w-44 border-4 border-pix-butter shadow-pixel-teal-8 sm:h-52 sm:w-52">
                 <PixelPhoto src={member.avatar_url} width={48} height={48} />
               </div>
             ) : (
               <span
-                className={`${hd} flex h-44 w-44 items-center justify-center border-4 border-[#fff7a1] bg-[#fff7a1] text-8xl text-black shadow-[8px_8px_0_#2c8f8f] sm:h-52 sm:w-52`}
+                className={`${hd} flex h-44 w-44 items-center justify-center border-4 border-pix-butter bg-pix-butter text-8xl text-black shadow-pixel-teal-8 sm:h-52 sm:w-52`}
                 aria-hidden="true"
               >
                 {name.slice(0, 1).toUpperCase()}
@@ -130,14 +130,14 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
               <h1 className={`${hd} break-words text-[clamp(3.5rem,9vw,7.5rem)]`}>{name}</h1>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                {member.username && <p className="text-xl text-[#fff7a1]/80">@{member.username}</p>}
-                {isMemberId && <span className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-sm">{member.member_id}</span>}
+                {member.username && <p className="text-xl text-pix-butter/80">@{member.username}</p>}
+                {isMemberId && <span className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">{member.member_id}</span>}
               </div>
 
               {member.bio ? (
                 <p className="mt-6 max-w-xl whitespace-pre-line text-xl leading-snug">{member.bio}</p>
               ) : (
-                <p className="mt-6 text-lg italic text-[#fff7a1]/50">No bio added.</p>
+                <p className="mt-6 text-lg italic text-pix-butter/50">No bio added.</p>
               )}
 
               {member.github_username && (
@@ -145,7 +145,7 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
                   href={`https://github.com/${encodeURIComponent(member.github_username)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`mt-6 inline-flex items-center gap-2 border-4 border-[#fff7a1] px-4 py-2 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+                  className={`mt-6 inline-flex items-center gap-2 border-4 border-pix-butter px-4 py-2 text-lg transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
                 >
                   <GitHubIcon />
                   {member.github_username} on GitHub
@@ -166,7 +166,7 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
               </h2>
               <ul className="mt-6 flex flex-wrap gap-3">
                 {skills.map((skill) => (
-                  <li key={skill} className="border-4 border-[#b89a0a] px-3 py-1 text-lg">
+                  <li key={skill} className="border-4 border-pix-mustard px-3 py-1 text-lg">
                     {skill}
                   </li>
                 ))}
@@ -188,14 +188,14 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
               <EventGroup id="past-events" title="Past events" events={past} />
             </div>
           ) : (
-            <div className="mt-8 max-w-xl border-4 border-dashed border-[#2c8f8f]/60 px-6 py-10">
+            <div className="mt-8 max-w-xl border-4 border-dashed border-pix-teal/60 px-6 py-10">
               <p className={`${hd} text-4xl`}>No events yet</p>
-              <p className="mt-3 text-lg leading-snug text-[#fff7a1]/70">
+              <p className="mt-3 text-lg leading-snug text-pix-butter/70">
                 Events {name} registers for will show up here.
               </p>
               <Link
                 href="/events"
-                className={`mt-6 inline-block border-4 border-[#fff7a1] px-5 py-2 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+                className={`mt-6 inline-block border-4 border-pix-butter px-5 py-2 text-lg transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
               >
                 Browse events
               </Link>

@@ -14,6 +14,7 @@ import {
   SidePixels,
   PixelClouds,
 } from "@/src/widgets/home-client";
+import { colors } from "@/tailwind.tokens";
 
 /**
  * About page in the same pixel-art direction as the home page (see HomeClient):
@@ -25,9 +26,9 @@ import {
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const IDENTITY = [
-  { label: "Type", value: "Academic student org", color: "#2c8f8f" },
-  { label: "Domain", value: "Cloud · AI · Software", color: "#b89a0a" },
-  { label: "Structure", value: "Startup-style governance", color: "#3aaa6e" },
+  { label: "Type", value: "Academic student org", color: colors.pix.teal },
+  { label: "Domain", value: "Cloud · AI · Software", color: colors.pix.mustard },
+  { label: "Structure", value: "Startup-style governance", color: colors.pix.green },
 ];
 
 const PILLARS = [
@@ -35,25 +36,25 @@ const PILLARS = [
     title: "Education & skill-building",
     body: "Workshops, bootcamps, certification prep, and hackathons centred on cloud computing, AI, and software development. Built for students, run by students.",
     icon: "/images/additional/wrench2.png",
-    color: "#2c8f8f",
+    color: colors.pix.teal,
   },
   {
     title: "Community & civic outreach",
     body: "Digital literacy drives and ethical-AI awareness sessions reaching LGUs, schools, and underserved communities around Cabuyao and beyond.",
     icon: "/images/additional/community.png",
-    color: "#b89a0a",
+    color: colors.pix.mustard,
   },
   {
     title: "Student governance",
     body: "A four-tier leadership structure with C-suite titles, KPI reviews, and dual-signatory financial controls.",
     icon: "/images/additional/key2.png",
-    color: "#b32a0e",
+    color: colors.pix.rust,
   },
   {
     title: "Institutional recognition",
     body: "Chartered under the University of Cabuyao's Student Affairs and Services Department (SASD), supervised by a Faculty Adviser and the Student Organization Accreditation Office (SOAO).",
     icon: "/images/additional/trophy2.png",
-    color: "#3aaa6e",
+    color: colors.pix.green,
   },
 ];
 
@@ -68,25 +69,25 @@ const ORG_TIERS = [
       "Chief Relations Officer",
       "Chief Technology Officer",
     ],
-    color: "#b32a0e",
+    color: colors.pix.rust,
     indent: "",
   },
   {
     tier: "Directors",
     roles: ["Directorate layer overseeing each executive portfolio"],
-    color: "#b89a0a",
+    color: colors.pix.mustard,
     indent: "lg:ml-[6%]",
   },
   {
     tier: "Leads",
     roles: ["Team leads managing programme and project execution"],
-    color: "#3aaa6e",
+    color: colors.pix.green,
     indent: "lg:ml-[12%]",
   },
   {
     tier: "Technical Working Group",
     roles: ["Specialist contributors and project implementers"],
-    color: "#2c8f8f",
+    color: colors.pix.teal,
     indent: "lg:ml-[18%]",
   },
 ];
@@ -96,19 +97,19 @@ const AFFILIATIONS = [
     tag: "Global",
     name: "AWS Builder Center",
     desc: "Globally recognised chapter under Amazon Web Services' student community network.",
-    color: "#2c8f8f",
+    color: colors.pix.teal,
   },
   {
     tag: "National",
     name: "AWS Student User Group Philippines",
     desc: "National coordination body for AWS student chapters across the Philippines.",
-    color: "#b89a0a",
+    color: colors.pix.mustard,
   },
   {
     tag: "Professional",
     name: "AWS User Group Philippines (AWSUGPH)",
     desc: "Professional community tie-in connecting student members to industry practitioners.",
-    color: "#3aaa6e",
+    color: colors.pix.green,
   },
 ];
 
@@ -186,7 +187,7 @@ function Hero() {
             className="border-4 bg-black p-5"
             style={{ borderColor: c.color, boxShadow: `6px 6px 0 ${c.color}` }}
           >
-            <dt className="text-sm uppercase tracking-wider text-[#fff7a1]/70">{c.label}</dt>
+            <dt className="text-sm uppercase tracking-wider text-pix-butter/70">{c.label}</dt>
             <dd className={`${hd} mt-2 text-4xl`}>{c.value}</dd>
           </div>
         ))}
@@ -248,7 +249,7 @@ function Structure() {
                   {t.roles.length > 1 ? (
                     <ul className="mt-3 flex flex-wrap gap-2">
                       {t.roles.map((r) => (
-                        <li key={r} className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-sm">
+                        <li key={r} className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">
                           {r}
                         </li>
                       ))}
@@ -279,10 +280,10 @@ function Affiliations() {
           <li key={a.name}>
             <Reveal delay={i * 0.06} className="h-full">
               <div
-                className="h-full border-4 bg-[#fff7a1] p-5 text-black"
+                className="h-full border-4 bg-pix-butter p-5 text-black"
                 style={{ borderColor: a.color, boxShadow: `6px 6px 0 ${a.color}` }}
               >
-                <span className="inline-block bg-black px-2 py-0.5 text-sm uppercase tracking-wider text-[#fff7a1]">
+                <span className="inline-block bg-black px-2 py-0.5 text-sm uppercase tracking-wider text-pix-butter">
                   {a.tag}
                 </span>
                 <h3 className={`${hd} mt-4 text-3xl`}>{a.name}</h3>
@@ -303,19 +304,19 @@ function Mission() {
   return (
     <>
       <Stripes className="h-4" />
-      <section className="bg-[#fff7a1] text-black">
+      <section className="bg-pix-butter text-black">
         <div className={`${wrap} py-16 sm:py-24`}>
           <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto] lg:gap-8">
             <div>
               <p className="text-xl">Mission &amp; vision</p>
               <h2 className={`${hd} mt-3 text-[clamp(4.5rem,10vw,9rem)]`}>What we stand for</h2>
 
-              <blockquote className="mt-10 max-w-2xl border-4 border-black bg-black p-6 text-[#fff7a1] shadow-[6px_6px_0_#b32a0e] sm:p-8">
+              <blockquote className="mt-10 max-w-2xl border-4 border-black bg-black p-6 text-pix-butter shadow-pixel-rust-6 sm:p-8">
                 <p className="text-xl leading-snug sm:text-2xl">
                   &ldquo;To cultivate a generation of cloud-literate, socially responsible tech leaders from the University of
                   Cabuyao, empowered by AWS technologies and a community-first mindset.&rdquo;
                 </p>
-                <footer className="mt-4 text-[#2cf57f]">AWSSBG-UC, Mission &amp; Vision</footer>
+                <footer className="mt-4 text-rain-mint">AWSSBG-UC, Mission &amp; Vision</footer>
               </blockquote>
 
               <div className="mt-10 flex flex-wrap gap-4">
@@ -324,7 +325,7 @@ function Mission() {
                 </Link>
                 <Link
                   href="/events"
-                  className={`inline-block border-4 border-black px-8 py-3.5 text-xl transition-colors hover:bg-black hover:text-[#fff7a1] ${focus}`}
+                  className={`inline-block border-4 border-black px-8 py-3.5 text-xl transition-colors hover:bg-black hover:text-pix-butter ${focus}`}
                 >
                   See upcoming events
                 </Link>
@@ -361,7 +362,7 @@ function Mission() {
 
 export default function AboutClient() {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

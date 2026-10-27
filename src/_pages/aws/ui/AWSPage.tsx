@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Pixelify_Sans, Jersey_10 } from "next/font/google";
 import { motion, useReducedMotion } from "framer-motion";
 import { SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
+import { colors } from "@/tailwind.tokens";
 
 /**
  * /aws in the pixel-art style of the home page:
@@ -17,26 +18,12 @@ const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
-const STRIPES: [string, number][] = [
-  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
-  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
-];
-const STRIPE_BG = (() => {
-  let at = 0;
-  const stops = STRIPES.map(([c, w]) => {
-    const s = `${c} ${at}% ${at + w}%`;
-    at += w;
-    return s;
-  });
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
-})();
-
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
-const btnDark = `inline-block border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
+const btnDark = `inline-block border-4 border-black bg-black px-6 py-3 text-lg text-pix-butter shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
 
 function Stripes({ className = "h-4" }: { className?: string }) {
-  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+  return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
 }
 
 function Section({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
@@ -146,10 +133,10 @@ const FREE_RESOURCES = [
 
 // Each card cycles through the stripe palette.
 const TONES = [
-  { border: "border-[#2c8f8f]", shadow: "shadow-[6px_6px_0_#2c8f8f] hover:shadow-[3px_3px_0_#2c8f8f]", bg: "bg-[#2c8f8f]", text: "text-black" },
-  { border: "border-[#b89a0a]", shadow: "shadow-[6px_6px_0_#b89a0a] hover:shadow-[3px_3px_0_#b89a0a]", bg: "bg-[#b89a0a]", text: "text-black" },
-  { border: "border-[#b32a0e]", shadow: "shadow-[6px_6px_0_#b32a0e] hover:shadow-[3px_3px_0_#b32a0e]", bg: "bg-[#b32a0e]", text: "text-[#fff7a1]" },
-  { border: "border-[#3aaa6e]", shadow: "shadow-[6px_6px_0_#3aaa6e] hover:shadow-[3px_3px_0_#3aaa6e]", bg: "bg-[#3aaa6e]", text: "text-black" },
+  { border: "border-pix-teal", shadow: "shadow-pixel-teal-6 hover:shadow-pixel-teal-3", bg: "bg-pix-teal", text: "text-black" },
+  { border: "border-pix-mustard", shadow: "shadow-pixel-mustard-6 hover:shadow-pixel-mustard-3", bg: "bg-pix-mustard", text: "text-black" },
+  { border: "border-pix-rust", shadow: "shadow-pixel-rust-6 hover:shadow-pixel-rust-3", bg: "bg-pix-rust", text: "text-pix-butter" },
+  { border: "border-pix-green", shadow: "shadow-pixel-green-6 hover:shadow-pixel-green-3", bg: "bg-pix-green", text: "text-black" },
 ];
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
@@ -175,7 +162,7 @@ function Hero() {
             </a>
             <Link
               href="/events"
-              className={`inline-block border-4 border-[#fff7a1] px-6 py-3 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+              className={`inline-block border-4 border-pix-butter px-6 py-3 text-lg transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
             >
               See upcoming events
             </Link>
@@ -183,7 +170,7 @@ function Hero() {
         </div>
 
         {/* Butter card with the headline numbers, echoing the home hero card. */}
-        <div className="relative mx-auto w-full max-w-[340px] bg-[#fff7a1] p-6 text-center text-black shadow-[8px_8px_0_#2c8f8f]">
+        <div className="relative mx-auto w-full max-w-[340px] bg-pix-butter p-6 text-center text-black shadow-pixel-teal-8">
           <dl className="grid grid-cols-2 gap-4">
             {[
               { v: "9", l: "free resources" },
@@ -232,7 +219,7 @@ function ResourceCard({ r, tone, index }: { r: (typeof FREE_RESOURCES)[number]; 
             ↗
           </span>
         </div>
-        <p className="mt-2 leading-snug text-[#fff7a1]/80">{r.desc}</p>
+        <p className="mt-2 leading-snug text-pix-butter/80">{r.desc}</p>
 
         <ul className="mt-4 space-y-2">
           {r.items.map((item) => (
@@ -275,7 +262,7 @@ function SponsorTile({ name, logo, href, label, accent }: { name: string; logo: 
         target="_blank"
         rel="noopener noreferrer"
         title={name}
-        className={`group flex h-28 w-64 items-center justify-center border-4 bg-[#fff7a1] p-4 text-black transition-transform hover:translate-x-[2px] hover:translate-y-[2px] ${focus}`}
+        className={`group flex h-28 w-64 items-center justify-center border-4 bg-pix-butter p-4 text-black transition-transform hover:translate-x-[2px] hover:translate-y-[2px] ${focus}`}
         style={{ borderColor: accent, boxShadow: `6px 6px 0 ${accent}` }}
       >
         {failed ? (
@@ -296,7 +283,7 @@ function PartnerTile({ name, logo, circle }: { name: string; logo: string; circl
   return (
     <span
       title={name}
-      className="relative block h-24 w-24 border-4 border-[#2c8f8f] bg-[#fff7a1] p-2 shadow-[4px_4px_0_#2c8f8f]"
+      className="relative block h-24 w-24 border-4 border-pix-teal bg-pix-butter p-2 shadow-pixel-teal-4"
     >
       <span className={`relative block h-full w-full overflow-hidden ${circle ? "rounded-full" : ""}`}>
         <Image src={logo} alt={name} fill sizes="80px" className="object-contain" onError={() => setFailed(true)} />
@@ -309,8 +296,8 @@ function Partners() {
   return (
     <Section title="Sponsors & partners" intro="The people and communities that make these free events and resources possible.">
       <div className="flex flex-wrap gap-10">
-        <SponsorTile {...MAJOR_SPONSOR} label="Major sponsor" accent="#b89a0a" />
-        <SponsorTile {...BROUGHT_BY} label="Brought to you by" accent="#3aaa6e" />
+        <SponsorTile {...MAJOR_SPONSOR} label="Major sponsor" accent={colors.pix.mustard} />
+        <SponsorTile {...BROUGHT_BY} label="Brought to you by" accent={colors.pix.green} />
       </div>
       <p className={`${hd} mt-14 text-4xl`}>Community partners</p>
       <div className="mt-6 flex flex-wrap gap-6">
@@ -328,7 +315,7 @@ function Cta() {
   return (
     <>
       <Stripes />
-      <section className="bg-[#fff7a1] text-black">
+      <section className="bg-pix-butter text-black">
         <div className={`${wrap} py-16 text-center sm:py-24`}>
           <h2 className={`${hd} text-[clamp(4rem,9vw,8rem)]`}>
             Learn it together.
@@ -340,7 +327,7 @@ function Cta() {
             <Link href="/signup" className={`${btnDark} px-10 py-4 text-xl`}>
               Join now, it&apos;s free
             </Link>
-            <Link href="/events" className={`inline-block border-4 border-black px-8 py-3.5 text-xl transition-colors hover:bg-black hover:text-[#fff7a1] ${focus}`}>
+            <Link href="/events" className={`inline-block border-4 border-black px-8 py-3.5 text-xl transition-colors hover:bg-black hover:text-pix-butter ${focus}`}>
               See events
             </Link>
           </div>
@@ -358,7 +345,7 @@ function Cta() {
 
 export function AWSPage() {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

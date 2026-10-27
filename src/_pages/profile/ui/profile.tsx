@@ -18,7 +18,7 @@ const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" })
 // Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 
 export interface ProfilePageProps {
   fullName: string;
@@ -45,7 +45,7 @@ export interface ProfilePageProps {
 
 export function ProfilePage(props: ProfilePageProps) {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

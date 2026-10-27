@@ -94,7 +94,7 @@ export function ProfileSetupPage({
           <div className="flex flex-col gap-2.5">
             <Link
               href="/member"
-              className="flex items-center justify-center gap-2 rounded-lg bg-[#161d27] px-4 py-3 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90"
+              className="flex items-center justify-center gap-2 rounded-lg bg-brand-dark px-4 py-3 text-sm font-semibold text-brand-green transition-opacity hover:opacity-90"
             >
               Register membership
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
@@ -126,7 +126,7 @@ export function ProfileSetupPage({
 
         {/* Step indicator context */}
         <div className="mb-6 flex items-center justify-center gap-2 text-xs text-neutral-600">
-          <span className="text-[#00e482]">✓ Account</span>
+          <span className="text-brand-green">✓ Account</span>
           <span>→</span>
           <span className="font-semibold text-neutral-300">Profile</span>
           <span>→</span>
@@ -150,7 +150,7 @@ export function ProfileSetupPage({
             <div className="flex flex-col gap-1.5">
               <label htmlFor="username" className="text-sm font-medium text-neutral-300">
                 Username
-                <span className="ml-2 text-[10px] font-normal text-[#00e482] uppercase tracking-wider">one-time</span>
+                <span className="ml-2 text-[10px] font-normal text-brand-green uppercase tracking-wider">one-time</span>
               </label>
               <input
                 id="username"
@@ -216,7 +216,7 @@ export function ProfileSetupPage({
             <button
               type="submit"
               disabled={saveState === "saving"}
-              className="flex items-center justify-center gap-2 rounded-lg bg-[#161d27] px-4 py-3 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-lg bg-brand-dark px-4 py-3 text-sm font-semibold text-brand-green transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {saveState === "saving" ? "Saving…" : "Save and continue"}
               {saveState !== "saving" && (
@@ -242,6 +242,6 @@ function inputClass(hasError: boolean): string {
     "placeholder:text-neutral-600 focus:outline-none focus:ring-2 transition-colors",
     hasError
       ? "border-red-700 focus:ring-red-600/30"
-      : "border-neutral-700 focus:ring-[#00e482]/20 focus:border-[#00e482]/30",
+      : "border-neutral-700 focus:ring-brand-green/20 focus:border-brand-green/30",
   ].join(" ");
 }

@@ -23,7 +23,7 @@ interface DoneInfo {
   avatarFailed: boolean;
 }
 
-const secondaryBtn = `border-4 border-black px-4 py-3 text-lg transition-colors hover:bg-black hover:text-[#fff7a1] disabled:opacity-50 ${focusRing}`;
+const secondaryBtn = `border-4 border-black px-4 py-3 text-lg transition-colors hover:bg-black hover:text-pix-butter disabled:opacity-50 ${focusRing}`;
 
 export function SignupWizard({ onStepChange }: { onStepChange?: (step: WizardStep) => void }) {
   const [step, setStep] = useState<WizardStep>("account");
@@ -249,7 +249,7 @@ function DoneCard({ info }: { info: DoneInfo }) {
   const { membership, signedIn, avatarFailed } = info;
   return (
     <div className="flex flex-col gap-4">
-      <div className="border-4 border-black bg-[#3aaa6e] px-6 py-6 text-center text-black shadow-[6px_6px_0_#000]">
+      <div className="border-4 border-black bg-pix-green px-6 py-6 text-center text-black shadow-pixel-ink-6">
         <p className="text-2xl">Account created</p>
         {!signedIn && <p className="mt-2 text-base">Please sign in with your new credentials.</p>}
       </div>
@@ -272,7 +272,7 @@ function DoneCard({ info }: { info: DoneInfo }) {
         </div>
       )}
       {avatarFailed && (
-        <p role="alert" className="text-center text-base text-[#b32a0e]">
+        <p role="alert" className="text-center text-base text-pix-rust">
           Your profile photo couldn&apos;t be uploaded. You can add it from your profile.
         </p>
       )}

@@ -6,59 +6,44 @@
  * so they work from both server and client modules.
  */
 
-const STRIPES: [string, number][] = [
-  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
-  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
-];
-
-export const STRIPE_BG = (() => {
-  let at = 0;
-  const stops = STRIPES.map(([c, w]) => {
-    const s = `${c} ${at}% ${at + w}%`;
-    at += w;
-    return s;
-  });
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
-})();
-
 /** Rectangle with one-pixel-step cut corners (echoes the stepped edges of the home page's stripe tunnel). */
 export const NOTCH =
   "polygon(0 6px, 6px 6px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 6px), 0 calc(100% - 6px))";
 
 export function Stripes({ className = "h-4" }: { className?: string }) {
-  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+  return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
 }
 
-export const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+export const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 
 export const focus =
-  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 // ── Buttons ──────────────────────────────────────────────────────────────────
 
 /** Black button with a rust shadow: for use on the butter badge. */
 export const btnDark =
-  `inline-flex items-center justify-center gap-2 border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] ` +
-  `shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
+  `inline-flex items-center justify-center gap-2 border-4 border-black bg-black px-6 py-3 text-lg text-pix-butter ` +
+  `shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
 
 /** Outlined butter button: for use on the black ground. */
 export const btnOutline =
-  `inline-flex items-center justify-center gap-2 border-4 border-[#fff7a1] px-6 py-3 text-lg ` +
-  `transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`;
+  `inline-flex items-center justify-center gap-2 border-4 border-pix-butter px-6 py-3 text-lg ` +
+  `transition-colors hover:bg-pix-butter hover:text-black ${focus}`;
 
 /** Small outlined button on the butter badge. */
 export const pillOnButter =
-  `inline-flex items-center gap-1.5 border-4 border-black px-3 py-1 text-base transition-colors hover:bg-black hover:text-[#fff7a1] ${focus}`;
+  `inline-flex items-center gap-1.5 border-4 border-black px-3 py-1 text-base transition-colors hover:bg-black hover:text-pix-butter ${focus}`;
 
 // Compact buttons used inside the edit modal (black ground).
 const btnSm = `inline-flex items-center justify-center border-4 px-4 py-1.5 text-base transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${focus}`;
-export const btnSmSolid = `${btnSm} border-[#fff7a1] bg-[#fff7a1] text-black hover:bg-transparent hover:text-[#fff7a1]`;
-export const btnSmGhost = `${btnSm} border-[#fff7a1] text-[#fff7a1] hover:bg-[#fff7a1] hover:text-black`;
-export const btnSmDanger = `${btnSm} border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1] hover:bg-transparent`;
-export const btnSmDangerGhost = `${btnSm} border-[#b32a0e] text-[#e26a56] hover:bg-[#b32a0e] hover:text-[#fff7a1]`;
+export const btnSmSolid = `${btnSm} border-pix-butter bg-pix-butter text-black hover:bg-transparent hover:text-pix-butter`;
+export const btnSmGhost = `${btnSm} border-pix-butter text-pix-butter hover:bg-pix-butter hover:text-black`;
+export const btnSmDanger = `${btnSm} border-pix-rust bg-pix-rust text-pix-butter hover:bg-transparent`;
+export const btnSmDangerGhost = `${btnSm} border-pix-rust text-pix-coral hover:bg-pix-rust hover:text-pix-butter`;
 
 /** Inline text link: underline, inverts on hover. */
-export const linkCls = `underline underline-offset-4 hover:bg-[#fff7a1] hover:text-black ${focus}`;
+export const linkCls = `underline underline-offset-4 hover:bg-pix-butter hover:text-black ${focus}`;
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 

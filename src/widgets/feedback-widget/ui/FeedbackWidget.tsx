@@ -121,7 +121,7 @@ export function FeedbackWidget() {
                     className={[
                       "flex h-9 w-9 items-center justify-center rounded-lg text-lg transition-all",
                       reaction === emoji
-                        ? "bg-[#00e482]/15 ring-2 ring-[#00e482] scale-110"
+                        ? "bg-brand-green/15 ring-2 ring-brand-green scale-110"
                         : "bg-neutral-800 hover:bg-neutral-700",
                     ].join(" ")}
                   >
@@ -138,7 +138,7 @@ export function FeedbackWidget() {
                 rows={3}
                 maxLength={500}
                 placeholder="Tell us what's on your mind…"
-                className="w-full resize-none rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#00e482]/60"
+                className="w-full resize-none rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-brand-green/60"
               />
               <p className="mt-1 text-right text-[10px] text-neutral-400">{message.length}/500</p>
 
@@ -146,7 +146,7 @@ export function FeedbackWidget() {
               <button
                 type="submit"
                 disabled={!reaction && !message.trim()}
-                className="mt-2 w-full rounded-lg bg-[#00e482] py-2 text-sm font-semibold text-[#161d27] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-2 w-full rounded-lg bg-brand-green py-2 text-sm font-semibold text-brand-dark transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Send feedback
               </button>
@@ -173,7 +173,7 @@ export function FeedbackWidget() {
             <button
               type="button"
               onClick={reset}
-              className="mt-4 text-xs text-[#00e482] hover:underline"
+              className="mt-4 text-xs text-brand-green hover:underline"
             >
               Close
             </button>
@@ -190,7 +190,7 @@ export function FeedbackWidget() {
         aria-expanded={step === "open"}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="relative flex items-center justify-center overflow-hidden rounded-full bg-[#00e482] p-4 text-[#0f1923] shadow-lg transition-shadow hover:shadow-xl"
+        className="relative flex items-center justify-center overflow-hidden rounded-full bg-brand-green p-4 text-brand-ink shadow-lg transition-shadow hover:shadow-xl"
       >
         {ripples.map(({ id, x, y }) => (
           <span

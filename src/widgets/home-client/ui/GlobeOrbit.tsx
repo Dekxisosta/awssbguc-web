@@ -11,6 +11,7 @@ import {
   animate,
   type AnimationPlaybackControls,
 } from "framer-motion";
+import { colors } from "@/tailwind.tokens";
 
 const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 
@@ -168,7 +169,7 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         whileHover={{ zIndex: 30 }}
-        className={`${pixel.className} cursor-[inherit] select-none whitespace-nowrap bg-[#3aaa6e] px-5 py-3 text-sm leading-none text-black transition-colors hover:bg-[#b89a0a]`}
+        className={`${pixel.className} cursor-[inherit] select-none whitespace-nowrap bg-pix-green px-5 py-3 text-sm leading-none text-black transition-colors hover:bg-pix-mustard`}
       >
         {tag.label}
       </motion.span>
@@ -182,7 +183,7 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-            className={`${pixel.className} pointer-events-none fixed w-56 border-4 border-black bg-[#fff7a1] px-3 py-2 shadow-[4px_4px_0_#b89a0a]`}
+            className={`${pixel.className} pointer-events-none fixed w-56 border-4 border-black bg-pix-butter px-3 py-2 shadow-pixel-mustard-4`}
             style={{
               zIndex: 9999,
               left: pillRect.left + pillRect.width / 2 - 112,
@@ -236,7 +237,7 @@ export function GlobeOrbit() {
       svg!.setAttribute("width",  String(cRect.width));
       svg!.setAttribute("height", String(cRect.height));
 
-      const stroke = "#000000";
+      const stroke = colors.pix.ink;
 
       const existing = svg!.querySelectorAll("line");
       CONNECTIONS.forEach(([i, j], idx) => {

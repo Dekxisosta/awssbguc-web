@@ -44,7 +44,7 @@ interface AvatarUploadProps {
 }
 
 const PX_FOCUS =
-  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 const STYLES = {
   default: {
@@ -64,20 +64,20 @@ const STYLES = {
     apply: "rounded-md bg-white px-4 py-2 text-xs font-semibold text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40",
   },
   pixel: {
-    preview: `group relative h-28 w-28 shrink-0 overflow-hidden border-4 border-[#fff7a1] bg-black transition-opacity hover:opacity-80 disabled:pointer-events-none disabled:opacity-50 ${PX_FOCUS}`,
-    initials: "flex h-full w-full items-center justify-center text-5xl text-[#fff7a1]",
+    preview: `group relative h-28 w-28 shrink-0 overflow-hidden border-4 border-pix-butter bg-black transition-opacity hover:opacity-80 disabled:pointer-events-none disabled:opacity-50 ${PX_FOCUS}`,
+    initials: "flex h-full w-full items-center justify-center text-5xl text-pix-butter",
     hoverOverlay: "absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100",
     busyOverlay: "absolute inset-0 flex items-center justify-center bg-black/70",
-    change: `border-4 border-[#fff7a1] px-4 py-1.5 text-base text-[#fff7a1] transition-colors hover:bg-[#fff7a1] hover:text-black disabled:cursor-not-allowed disabled:opacity-50 ${PX_FOCUS}`,
-    remove: `px-3 py-1.5 text-base text-[#fff7a1]/70 underline underline-offset-4 transition-colors hover:text-[#e26a56] ${PX_FOCUS}`,
-    error: "flex w-full max-w-xs items-start gap-2 border-4 border-[#b32a0e] bg-[#b32a0e] px-3 py-2 text-sm text-[#fff7a1]",
-    errorDismiss: "shrink-0 text-[#fff7a1] hover:underline",
-    cropPanel: "flex w-full max-w-lg flex-col gap-4 border-4 border-[#fff7a1] bg-black p-5 text-[#fff7a1] shadow-[8px_8px_0_#2c8f8f]",
+    change: `border-4 border-pix-butter px-4 py-1.5 text-base text-pix-butter transition-colors hover:bg-pix-butter hover:text-black disabled:cursor-not-allowed disabled:opacity-50 ${PX_FOCUS}`,
+    remove: `px-3 py-1.5 text-base text-pix-butter/70 underline underline-offset-4 transition-colors hover:text-pix-coral ${PX_FOCUS}`,
+    error: "flex w-full max-w-xs items-start gap-2 border-4 border-pix-rust bg-pix-rust px-3 py-2 text-sm text-pix-butter",
+    errorDismiss: "shrink-0 text-pix-butter hover:underline",
+    cropPanel: "flex w-full max-w-lg flex-col gap-4 border-4 border-pix-butter bg-black p-5 text-pix-butter shadow-pixel-teal-8",
     cropTitle: "text-xl",
-    cropHelp: "text-sm text-[#fff7a1]/70",
-    cropArea: "max-h-[60vh] overflow-auto border-4 border-[#2c8f8f] bg-black",
-    cancel: `border-4 border-[#fff7a1] px-4 py-2 text-base text-[#fff7a1] transition-colors hover:bg-[#fff7a1] hover:text-black ${PX_FOCUS}`,
-    apply: `border-4 border-[#fff7a1] bg-[#fff7a1] px-4 py-2 text-base text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:opacity-40 disabled:shadow-none ${PX_FOCUS}`,
+    cropHelp: "text-sm text-pix-butter/70",
+    cropArea: "max-h-[60vh] overflow-auto border-4 border-pix-teal bg-black",
+    cancel: `border-4 border-pix-butter px-4 py-2 text-base text-pix-butter transition-colors hover:bg-pix-butter hover:text-black ${PX_FOCUS}`,
+    apply: `border-4 border-pix-butter bg-pix-butter px-4 py-2 text-base text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 disabled:opacity-40 disabled:shadow-none ${PX_FOCUS}`,
   },
 } as const;
 

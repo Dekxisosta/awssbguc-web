@@ -105,7 +105,7 @@ export function EditableField({
 
   return (
     <div>
-      <dt className="flex flex-wrap items-center gap-2 text-sm uppercase tracking-wide text-[#fff7a1]/70">
+      <dt className="flex flex-wrap items-center gap-2 text-sm uppercase tracking-wide text-pix-butter/70">
         {label}
         {badge}
         {!readOnly && !editing && (
@@ -113,13 +113,13 @@ export function EditableField({
             type="button"
             onClick={startEditing}
             aria-label={`Edit ${label}`}
-            className={`border-2 border-[#fff7a1]/40 p-1 text-[#fff7a1]/80 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+            className={`border-2 border-pix-butter/40 p-1 text-pix-butter/80 transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
           >
             <PencilIcon size={13} />
           </button>
         )}
         {saveState === "saved" && (
-          <span role="status" className="text-sm normal-case tracking-normal text-[#3aaa6e]">
+          <span role="status" className="text-sm normal-case tracking-normal text-pix-green">
             Saved
           </span>
         )}
@@ -147,10 +147,10 @@ export function EditableField({
               aria-invalid={saveState === "error"}
               aria-describedby={saveState === "error" ? inputErrorId : hint ? inputHintId : undefined}
               className={[
-                "w-full min-w-0 border-4 bg-black px-3 py-1.5 text-lg text-[#fff7a1] sm:flex-1",
-                "placeholder:text-[#fff7a1]/40 disabled:opacity-50",
+                "w-full min-w-0 border-4 bg-black px-3 py-1.5 text-lg text-pix-butter sm:flex-1",
+                "placeholder:text-pix-butter/40 disabled:opacity-50",
                 focus,
-                saveState === "error" ? "border-[#e26a56]" : "border-[#2c8f8f]",
+                saveState === "error" ? "border-pix-coral" : "border-pix-teal",
               ].join(" ")}
             />
             <div className="flex shrink-0 gap-2">
@@ -164,18 +164,18 @@ export function EditableField({
           </div>
 
           {saveState === "error" && errorMessage && (
-            <p id={inputErrorId} role="alert" className="mt-2 text-sm text-[#e26a56]">
+            <p id={inputErrorId} role="alert" className="mt-2 text-sm text-pix-coral">
               {errorMessage}
             </p>
           )}
           {saveState !== "error" && hint && (
-            <p id={inputHintId} className="mt-2 text-sm text-[#fff7a1]/60">
+            <p id={inputHintId} className="mt-2 text-sm text-pix-butter/60">
               {hint}
             </p>
           )}
         </dd>
       ) : (
-        <dd className={`mt-1 break-words text-lg ${value ? "text-[#fff7a1]" : "text-[#fff7a1]/50"}`}>{value || "—"}</dd>
+        <dd className={`mt-1 break-words text-lg ${value ? "text-pix-butter" : "text-pix-butter/50"}`}>{value || "—"}</dd>
       )}
     </div>
   );

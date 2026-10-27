@@ -4,8 +4,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --brand-green: #00e482;
-  --brand-dark: #161d27;
+  --brand-green: theme(colors.brand.green);
+  --brand-dark: theme(colors.brand.dark);
 }
 
 @layer utilities {
@@ -60,13 +60,13 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(200, 200, 200, 0.15);
+    background-color: theme(colors.scrollbar.DEFAULT);
     border-radius: 999px;
     transition: background-color 0.2s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(200, 200, 200, 0.3);
+    background-color: theme(colors.scrollbar.hover);
   }
 
   ::-webkit-scrollbar-corner {
@@ -76,7 +76,7 @@
   /* ── Scrollbar — Firefox ── */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(200, 200, 200, 0.15) transparent;
+    scrollbar-color: theme(colors.scrollbar.DEFAULT) transparent;
   }
 }
 
@@ -94,7 +94,7 @@
     background: conic-gradient(
       from var(--border-angle, 0deg),
       transparent 0deg,
-      #00e482 60deg,
+      theme(colors.brand.green) 60deg,
       transparent 120deg
     );
     animation: border-rotate 2.4s linear infinite;

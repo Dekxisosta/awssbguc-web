@@ -82,7 +82,7 @@ function ModalShell({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden border-4 border-black bg-[#fff7a1] text-black shadow-[8px_8px_0_#b89a0a]">
+      <div className="relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden border-4 border-black bg-pix-butter text-black shadow-pixel-mustard-8">
         <div className="flex shrink-0 items-center justify-between border-b-4 border-black px-6 py-4">
           <h2 id={id} className="text-2xl">
             {title}
@@ -91,7 +91,7 @@ function ModalShell({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className={`p-1 transition-colors hover:bg-black hover:text-[#fff7a1] ${focusRing}`}
+            className={`p-1 transition-colors hover:bg-black hover:text-pix-butter ${focusRing}`}
           >
             <XIcon />
           </button>
@@ -198,9 +198,9 @@ function MembershipNoticeModal({ onConfirm }: { onConfirm: () => void }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
       <div className="absolute inset-0 bg-black/80" aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md overflow-hidden border-4 border-black bg-[#fff7a1] text-black shadow-[8px_8px_0_#b89a0a]">
+      <div className="relative z-10 w-full max-w-md overflow-hidden border-4 border-black bg-pix-butter text-black shadow-pixel-mustard-8">
         <div className="flex justify-center pt-7">
-          <div className="flex h-12 w-12 items-center justify-center border-4 border-black bg-[#f9a825]">
+          <div className="flex h-12 w-12 items-center justify-center border-4 border-black bg-pix-amber">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-black" aria-hidden="true">
               <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
               <path d="M12 9v4" /><path d="M12 17h.01" />
@@ -334,8 +334,8 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: Reg
   /* ── Success state ── */
   if (state.status === "success") {
     return (
-      <div className="border-4 border-black bg-[#3aaa6e] px-6 py-8 text-center text-black shadow-[6px_6px_0_#000]">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center border-4 border-black bg-[#fff7a1]">
+      <div className="border-4 border-black bg-pix-green px-6 py-8 text-center text-black shadow-pixel-ink-6">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center border-4 border-black bg-pix-butter">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black" aria-hidden="true">
             <path d="M20 6 9 17l-5-5" />
           </svg>
@@ -344,7 +344,7 @@ export function RegisterForm({ onPasswordFocus, onPasswordBlur, onSuccess }: Reg
         <p className="mt-2 text-base">{state.message}</p>
         <a
           href="/login"
-          className={`mt-4 inline-block border-4 border-black bg-black px-6 py-2 text-lg text-[#fff7a1] ${focusRing}`}
+          className={`mt-4 inline-block border-4 border-black bg-black px-6 py-2 text-lg text-pix-butter ${focusRing}`}
         >
           Sign in
         </a>
@@ -576,7 +576,7 @@ export function Field({
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className={labelCls}>
         {label}
-        {required && <span className="ml-0.5 text-[#b32a0e]" aria-hidden="true">*</span>}
+        {required && <span className="ml-0.5 text-pix-rust" aria-hidden="true">*</span>}
       </label>
       {children}
       {error ? (

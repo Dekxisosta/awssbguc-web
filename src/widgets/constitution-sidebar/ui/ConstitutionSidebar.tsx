@@ -136,7 +136,7 @@ export function ConstitutionSidebar() {
       aria-label="Article shortcuts"
       className="sticky top-[calc(3.75rem+2rem)] hidden h-[calc(100vh-3.75rem-2rem)] w-60 shrink-0 overflow-y-auto pb-10 pr-2 pt-2 lg:block"
     >
-      <p className={`${hd} mb-3 border-b-4 border-[#2c8f8f] px-3 pb-2 text-3xl`}>
+      <p className={`${hd} mb-3 border-b-4 border-pix-teal px-3 pb-2 text-3xl`}>
         Articles
       </p>
       <ul className="space-y-0.5">
@@ -154,8 +154,8 @@ export function ConstitutionSidebar() {
                   className={[
                     `flex-1 py-1.5 pl-3 pr-1 text-left text-sm transition-colors ${focus}`,
                     articleActive
-                      ? "bg-[#2c8f8f] text-black"
-                      : "text-[#fff7a1] hover:bg-[#fff7a1] hover:text-black",
+                      ? "bg-pix-teal text-black"
+                      : "text-pix-butter hover:bg-pix-butter hover:text-black",
                   ].join(" ")}
                 >
                   {article.label}
@@ -168,8 +168,8 @@ export function ConstitutionSidebar() {
                     className={[
                       `flex h-7 w-7 shrink-0 items-center justify-center transition-colors ${focus}`,
                       articleActive
-                        ? "text-[#2c8f8f]"
-                        : "text-[#fff7a1]/70 hover:bg-[#fff7a1] hover:text-black",
+                        ? "text-pix-teal"
+                        : "text-pix-butter/70 hover:bg-pix-butter hover:text-black",
                     ].join(" ")}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={isOpen ? "rotate-180" : ""}>
@@ -180,7 +180,7 @@ export function ConstitutionSidebar() {
               </div>
 
               {hasSections && isOpen && (
-                <ul className="mb-2 ml-3 mt-1 border-l-4 border-[#2c8f8f]/60 pl-2">
+                <ul className="mb-2 ml-3 mt-1 border-l-4 border-pix-teal/60 pl-2">
                   {article.sections.map((sec) => {
                     const secActive = activeId === sec.id;
                     return (
@@ -191,8 +191,8 @@ export function ConstitutionSidebar() {
                           className={[
                             `w-full py-1 pl-2 pr-1 text-left text-xs transition-colors ${focus}`,
                             secActive
-                              ? "bg-[#b89a0a] text-black"
-                              : "text-[#fff7a1]/80 hover:bg-[#fff7a1] hover:text-black",
+                              ? "bg-pix-mustard text-black"
+                              : "text-pix-butter/80 hover:bg-pix-butter hover:text-black",
                           ].join(" ")}
                         >
                           {sec.label}

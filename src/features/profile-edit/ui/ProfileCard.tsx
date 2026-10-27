@@ -12,7 +12,6 @@ import {
   ExternalLinkIcon,
   NOTCH,
   PencilIcon,
-  STRIPE_BG,
   Stripes,
   btnDark,
   btnOutline,
@@ -87,13 +86,13 @@ function Tile({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-sm uppercase tracking-wide text-[#fff7a1]/60">{label}</dt>
+      <dt className="text-sm uppercase tracking-wide text-pix-butter/60">{label}</dt>
       <dd className="mt-1 break-words text-xl">{children}</dd>
     </div>
   );
 }
 
-const notSet = <span className="text-[#fff7a1]/50">Not set</span>;
+const notSet = <span className="text-pix-butter/50">Not set</span>;
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
@@ -163,15 +162,15 @@ export function ProfileCard({
           {/* ── The pass ─────────────────────────────────────────────── */}
           <div className="mx-auto flex w-full max-w-[400px] flex-col items-center">
             {/* Lanyard strap hanging from the stripe divider, and the clip that holds the badge. */}
-            <div aria-hidden="true" className="h-12 w-16 sm:h-16" style={{ background: STRIPE_BG }} />
+            <div aria-hidden="true" className="h-12 w-16 bg-stripes sm:h-16" />
             <div
               aria-hidden="true"
-              className="relative z-10 -mb-3 h-6 w-24 border-4 border-black bg-[#b89a0a] shadow-[3px_3px_0_#000]"
+              className="relative z-10 -mb-3 h-6 w-24 border-4 border-black bg-pix-mustard shadow-pixel-ink-3"
             />
 
             <article
               aria-label="Member pass"
-              className="relative w-full border-4 border-black bg-[#fff7a1] text-black shadow-[8px_8px_0_#2c8f8f]"
+              className="relative w-full border-4 border-black bg-pix-butter text-black shadow-pixel-teal-8"
             >
               <Stripes className="h-4" />
 
@@ -191,13 +190,13 @@ export function ProfileCard({
                     {profile.avatarUrl ? (
                       <PixelAvatar src={profile.avatarUrl} size={32} />
                     ) : (
-                      <span className={`${hd} flex h-full w-full items-center justify-center text-6xl text-[#fff7a1]`}>
+                      <span className={`${hd} flex h-full w-full items-center justify-center text-6xl text-pix-butter`}>
                         {initial}
                       </span>
                     )}
                     <span
                       aria-hidden="true"
-                      className="absolute -bottom-3 -right-3 border-4 border-black bg-[#2c8f8f] p-1 text-black transition-colors group-hover:bg-[#fff7a1]"
+                      className="absolute -bottom-3 -right-3 border-4 border-black bg-pix-teal p-1 text-black transition-colors group-hover:bg-pix-butter"
                     >
                       <PencilIcon size={14} />
                     </span>
@@ -213,13 +212,13 @@ export function ProfileCard({
                 <div className="mt-6">
                   {memberIdDisplay ? (
                     <span
-                      className={`${hd} inline-block bg-[#b32a0e] px-6 py-2 text-3xl text-[#fff7a1] sm:text-4xl`}
+                      className={`${hd} inline-block bg-pix-rust px-6 py-2 text-3xl text-pix-butter sm:text-4xl`}
                       style={{ clipPath: NOTCH }}
                     >
                       ID: {memberIdDisplay}
                     </span>
                   ) : (
-                    <span className="inline-block bg-[#b89a0a] px-6 py-2 text-lg text-black" style={{ clipPath: NOTCH }}>
+                    <span className="inline-block bg-pix-mustard px-6 py-2 text-lg text-black" style={{ clipPath: NOTCH }}>
                       No member ID yet
                     </span>
                   )}
@@ -250,7 +249,7 @@ export function ProfileCard({
                       onClick={() => qrValue && setQrOpen(true)}
                       disabled={!qrValue}
                       aria-label="View my check-in QR code"
-                      className={`shrink-0 border-4 border-black bg-white p-1.5 shadow-[4px_4px_0_#2c8f8f] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#2c8f8f] ${focus}`}
+                      className={`shrink-0 border-4 border-black bg-white p-1.5 shadow-pixel-teal-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-teal-2 ${focus}`}
                     >
                       {qrValue ? (
                         <QRCodeSVG value={qrValue} size={84} level="M" />
@@ -274,14 +273,14 @@ export function ProfileCard({
 
           {/* ── Detail tiles ─────────────────────────────────────────── */}
           <div className="flex min-w-0 flex-col gap-8 lg:pt-12">
-            <Tile id="tile-about" title="About me" border="border-[#2c8f8f]" headingClass={hd}>
+            <Tile id="tile-about" title="About me" border="border-pix-teal" headingClass={hd}>
               {hasPublicInfo ? (
                 <>
                   {profile.bio && <p className="break-words text-xl leading-snug">{profile.bio}</p>}
                   {profile.skills && profile.skills.length > 0 && (
                     <ul aria-label="Skills" className={`flex flex-wrap gap-2 ${profile.bio ? "mt-5" : ""}`}>
                       {profile.skills.map((skill) => (
-                        <li key={skill} className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-sm">
+                        <li key={skill} className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">
                           {skill}
                         </li>
                       ))}
@@ -290,7 +289,7 @@ export function ProfileCard({
                 </>
               ) : (
                 <>
-                  <p className="text-xl leading-snug text-[#fff7a1]/70">
+                  <p className="text-xl leading-snug text-pix-butter/70">
                     Nothing here yet. Add a short bio and your skills so other members know what you&apos;re into.
                   </p>
                   <button type="button" onClick={openEdit} className={`${btnOutline} mt-5`}>
@@ -300,7 +299,7 @@ export function ProfileCard({
               )}
             </Tile>
 
-            <Tile id="tile-details" title="Details" border="border-[#b89a0a]" headingClass={hd}>
+            <Tile id="tile-details" title="Details" border="border-pix-mustard" headingClass={hd}>
               <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
                 <Field label="Full name">{hasName ? profile.fullName : notSet}</Field>
                 <Field label="Display name">{profile.displayName ?? notSet}</Field>
@@ -333,7 +332,7 @@ export function ProfileCard({
                     memberId
                   ) : (
                     <>
-                      <span className="text-[#fff7a1]/50">Not linked yet</span>{" "}
+                      <span className="text-pix-butter/50">Not linked yet</span>{" "}
                       <Link href="/member" className={`text-base ${linkCls}`}>
                         Link membership
                       </Link>
@@ -343,11 +342,11 @@ export function ProfileCard({
               </dl>
             </Tile>
 
-            <Tile id="tile-community" title="Community" border="border-[#3aaa6e]" headingClass={hd}>
+            <Tile id="tile-community" title="Community" border="border-pix-green" headingClass={hd}>
               <div className="flex flex-wrap items-center gap-4">
                 <span
                   className={`border-4 px-3 py-1 text-lg ${
-                    profile.directoryVisible ? "border-[#3aaa6e] bg-[#3aaa6e] text-black" : "border-[#fff7a1]/60"
+                    profile.directoryVisible ? "border-pix-green bg-pix-green text-black" : "border-pix-butter/60"
                   }`}
                 >
                   {profile.directoryVisible ? "Public" : "Private"}

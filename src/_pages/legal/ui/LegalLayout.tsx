@@ -20,7 +20,7 @@ export function LegalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${pixel.className} relative isolate min-h-full bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate min-h-full bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />
@@ -33,8 +33,8 @@ export function LegalLayout({
           <p className="mt-6 text-lg leading-snug">
             AWS Student Builder Group – University of Cabuyao (Pamantasan ng Cabuyao)
           </p>
-          <p className="mt-3 inline-block border-4 border-[#b89a0a] px-3 py-1">
-            <span className="text-[#fff7a1]/70">Last updated: </span>
+          <p className="mt-3 inline-block border-4 border-pix-mustard px-3 py-1">
+            <span className="text-pix-butter/70">Last updated: </span>
             {updated}
           </p>
 
@@ -65,8 +65,8 @@ export function LegalSection({
 }) {
   return (
     <section>
-      <h2 className={`${hd} mb-4 border-b-4 border-[#2c8f8f] pb-3 text-4xl text-[#3aaa6e] sm:text-5xl`}>{title}</h2>
-      <div className="space-y-4 text-[#fff7a1]/85">{children}</div>
+      <h2 className={`${hd} mb-4 border-b-4 border-pix-teal pb-3 text-4xl text-pix-green sm:text-5xl`}>{title}</h2>
+      <div className="space-y-4 text-pix-butter/85">{children}</div>
     </section>
   );
 }
