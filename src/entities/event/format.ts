@@ -1,4 +1,5 @@
 import type { EventFormat, EventRow, EventStatus } from "./types";
+import { colors } from "@/tailwind.tokens";
 
 /**
  * Display helpers shared by the events list card and the event detail page.
@@ -14,10 +15,10 @@ export const STATUS_LABELS: Record<EventStatus, string> = {
 
 /** Border / shadow / badge color per status, from the stripe palette. */
 export const STATUS_COLORS: Record<EventStatus, string> = {
-  not_started: "#2c8f8f",
-  ongoing: "#3aaa6e",
-  completed: "#b89a0a",
-  cancelled: "#b32a0e",
+  not_started: colors.pix.teal,
+  ongoing: colors.pix.green,
+  completed: colors.pix.mustard,
+  cancelled: colors.pix.rust,
 };
 
 export const FORMAT_LABELS: Record<EventFormat, string> = {

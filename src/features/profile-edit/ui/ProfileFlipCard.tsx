@@ -6,6 +6,7 @@ import { AvatarUpload } from "@/src/features/avatar-upload";
 import { EditableField } from "./EditableField";
 import { QRCodeSVG } from "qrcode.react";
 import { SOCIALS } from "@/src/shared/config/socials";
+import { colors } from "@/tailwind.tokens";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -336,7 +337,7 @@ export function ProfileCard({
             />
             <span
               className="relative font-mono text-lg font-black tracking-wide sm:text-2xl"
-              style={{ color: "#cc0000", WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
+              style={{ color: colors.pix.crimson, WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
             >
               ID: {memberIdDisplay}
             </span>
@@ -352,7 +353,7 @@ export function ProfileCard({
             />
             <span
               className="relative font-mono text-base font-black sm:text-lg"
-              style={{ color: "#cc0000", WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
+              style={{ color: colors.pix.crimson, WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
             >
               No ID yet
             </span>
@@ -402,7 +403,7 @@ export function ProfileCard({
           type="button"
           onClick={() => setShowQR(true)}
           aria-label="View my QR code"
-          className="flex items-center justify-center rounded-xl border-4 border-[#00e482] bg-white p-1.5 shadow-lg transition-opacity hover:opacity-90"
+          className="flex items-center justify-center rounded-xl border-4 border-brand-green bg-white p-1.5 shadow-lg transition-opacity hover:opacity-90"
         >
           <QRCodeSVG value={qrValue} size={60} level="M" />
         </button>
@@ -476,7 +477,7 @@ export function ProfileCard({
               />
               <span
                 className="relative font-mono text-base font-black tracking-wide"
-                style={{ color: "#cc0000", WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
+                style={{ color: colors.pix.crimson, WebkitTextStroke: "2px white", paintOrder: "stroke fill" }}
               >
                 ID: {memberIdDisplay}
               </span>
@@ -496,7 +497,7 @@ export function ProfileCard({
                   href={`https://github.com/${githubUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 font-mono text-sm text-[#00e482] hover:underline"
+                  className="flex items-center gap-1 font-mono text-sm text-brand-green hover:underline"
                 >
                   {githubUsername} <ExternalLinkIcon />
                 </a>
@@ -519,7 +520,7 @@ export function ProfileCard({
                 type="button"
                 onClick={() => setShowQR(true)}
                 aria-label="View my QR code"
-                className="flex items-center justify-center rounded-xl border-4 border-[#00e482] bg-white p-1.5 shadow-lg transition-opacity hover:opacity-90"
+                className="flex items-center justify-center rounded-xl border-4 border-brand-green bg-white p-1.5 shadow-lg transition-opacity hover:opacity-90"
               >
                 <QRCodeSVG value={qrValue} size={56} level="M" />
               </button>
@@ -640,7 +641,7 @@ export function ProfileCard({
                   <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Username
                     {!usernameChangedAt && (
-                      <span className="ml-2 text-[10px] font-normal text-[#00e482] uppercase tracking-wider">one-time</span>
+                      <span className="ml-2 text-[10px] font-normal text-brand-green uppercase tracking-wider">one-time</span>
                     )}
                   </dt>
                   {!usernameChangedAt ? (
@@ -661,7 +662,7 @@ export function ProfileCard({
                         Username cannot be changed again. To request a change, email{" "}
                         <a
                           href={`mailto:${SUPPORT_EMAIL}?subject=Username%20Change%20Request&body=Current%20username%3A%20${encodeURIComponent(username ?? "")}%0ARequested%20username%3A%20`}
-                          className="text-[#00e482] underline-offset-2 hover:underline"
+                          className="text-brand-green underline-offset-2 hover:underline"
                         >
                           {SUPPORT_EMAIL}
                         </a>
@@ -726,8 +727,8 @@ export function ProfileCard({
                       aria-checked={directoryVisible}
                       onClick={async () => { await saveDirectoryVisible(!directoryVisible); }}
                       className={[
-                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00e482] focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
-                        directoryVisible ? "bg-[#00e482]" : "bg-neutral-700",
+                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
+                        directoryVisible ? "bg-brand-green" : "bg-neutral-700",
                       ].join(" ")}
                       aria-label="Show profile in public member directory"
                     >
@@ -802,7 +803,7 @@ export function ProfileCard({
                         To request a Member ID change, email{" "}
                         <a
                           href={`mailto:${SUPPORT_EMAIL}?subject=Member%20ID%20Change%20Request&body=Member%20ID%3A%20${encodeURIComponent(memberId)}%0ARequested%20change%3A%20`}
-                          className="text-[#00e482] underline-offset-2 hover:underline"
+                          className="text-brand-green underline-offset-2 hover:underline"
                         >
                           {SUPPORT_EMAIL}
                         </a>{" "}

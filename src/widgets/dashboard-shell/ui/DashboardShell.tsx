@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Pixelify_Sans, Jersey_10 } from "next/font/google";
 import { SideGrid } from "@/src/widgets/side-grid";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
+import { colors } from "@/tailwind.tokens";
 
 /**
  * Navbar + footer in the pixel-art direction of the home page:
@@ -25,32 +26,18 @@ const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" })
 const px = pixel.className;
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
-const STRIPES: [string, number][] = [
-  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
-  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
-];
-const STRIPE_BG = (() => {
-  let at = 0;
-  const stops = STRIPES.map(([c, w]) => {
-    const s = `${c} ${at}% ${at + w}%`;
-    at += w;
-    return s;
-  });
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
-})();
-
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 // Each nav item gets its own hover color from the stripe palette. `on` is the active/open state.
 const TONES = {
-  teal:   { on: "bg-[#2c8f8f] text-black",     off: "text-[#fff7a1] hover:bg-[#2c8f8f] hover:text-black" },
-  gold:   { on: "bg-[#b89a0a] text-black",     off: "text-[#fff7a1] hover:bg-[#b89a0a] hover:text-black" },
-  red:    { on: "bg-[#b32a0e] text-[#fff7a1]", off: "text-[#fff7a1] hover:bg-[#b32a0e]" },
-  green:  { on: "bg-[#3aaa6e] text-black",     off: "text-[#fff7a1] hover:bg-[#3aaa6e] hover:text-black" },
-  coral:  { on: "bg-[#e26a56] text-black",     off: "text-[#fff7a1] hover:bg-[#e26a56] hover:text-black" },
-  amber:  { on: "bg-[#f9a825] text-black",     off: "text-[#fff7a1] hover:bg-[#f9a825] hover:text-black" },
-  butter: { on: "bg-[#fff7a1] text-black",     off: "text-[#fff7a1] hover:bg-[#fff7a1] hover:text-black" },
+  teal:   { on: "bg-pix-teal text-black",     off: "text-pix-butter hover:bg-pix-teal hover:text-black" },
+  gold:   { on: "bg-pix-mustard text-black",     off: "text-pix-butter hover:bg-pix-mustard hover:text-black" },
+  red:    { on: "bg-pix-rust text-pix-butter", off: "text-pix-butter hover:bg-pix-rust" },
+  green:  { on: "bg-pix-green text-black",     off: "text-pix-butter hover:bg-pix-green hover:text-black" },
+  coral:  { on: "bg-pix-coral text-black",     off: "text-pix-butter hover:bg-pix-coral hover:text-black" },
+  amber:  { on: "bg-pix-amber text-black",     off: "text-pix-butter hover:bg-pix-amber hover:text-black" },
+  butter: { on: "bg-pix-butter text-black",     off: "text-pix-butter hover:bg-pix-butter hover:text-black" },
 } as const;
 type Tone = keyof typeof TONES;
 
@@ -64,11 +51,11 @@ const isActivePath = (pathname: string, href: string) =>
 
 // Rows inside dropdown panels.
 const rowBase = "flex items-center gap-3 px-4 py-2.5 text-base transition-colors";
-const rowOn = "bg-[#2c8f8f] text-black";
-const rowOff = "text-[#fff7a1] hover:bg-[#fff7a1] hover:text-black";
+const rowOn = "bg-pix-teal text-black";
+const rowOff = "text-pix-butter hover:bg-pix-butter hover:text-black";
 
 function Stripes({ className = "h-2" }: { className?: string }) {
-  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+  return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
 }
 
 interface NavItem {
@@ -316,7 +303,7 @@ function Dropdown({
   label,
   pathname,
   tone = "teal",
-  accent = "#2c8f8f",
+  accent = colors.pix.teal,
   width = "w-52",
   active = false,
   children,
@@ -349,7 +336,7 @@ function Dropdown({
           <>
             <div className="fixed inset-0" style={{ zIndex: 99998 }} onClick={() => setOpen(false)} />
             <div
-              className={`${px} fixed ${width} bg-black py-1 text-[#fff7a1]`}
+              className={`${px} fixed ${width} bg-black py-1 text-pix-butter`}
               style={{
                 zIndex: 99999,
                 top: rect.bottom + 8,
@@ -368,7 +355,7 @@ function Dropdown({
 
 function DiscoverDropdown({ pathname }: { pathname: string }) {
   return (
-    <Dropdown label="Discover" pathname={pathname} tone="coral" accent="#e26a56" active={DISCOVER_ITEMS.some((i) => pathname === i.href)}>
+    <Dropdown label="Discover" pathname={pathname} tone="coral" accent={colors.pix.coral} active={DISCOVER_ITEMS.some((i) => pathname === i.href)}>
       {(close) =>
         DISCOVER_ITEMS.map((item) => (
           <Link
@@ -388,17 +375,17 @@ function DiscoverDropdown({ pathname }: { pathname: string }) {
 
 function AwsDropdown({ pathname }: { pathname: string }) {
   return (
-    <Dropdown label="AWS" pathname={pathname} tone="amber" accent="#f9a825">
+    <Dropdown label="AWS" pathname={pathname} tone="amber" accent={colors.pix.amber}>
       {(close) => (
         <>
-          <p className={`${hd} px-4 pb-1 pt-2 text-2xl text-[#f9a825]`}>AWS Resources</p>
+          <p className={`${hd} px-4 pb-1 pt-2 text-2xl text-pix-amber`}>AWS Resources</p>
           {AWS_RESOURCE_ITEMS.map((item) =>
             item.internal ? (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={close}
-                className={`${rowBase} justify-between text-[#3aaa6e] hover:bg-[#3aaa6e] hover:text-black`}
+                className={`${rowBase} justify-between text-pix-green hover:bg-pix-green hover:text-black`}
               >
                 {item.label}
                 <InternalArrow />
@@ -410,7 +397,7 @@ function AwsDropdown({ pathname }: { pathname: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={close}
-                className={`${rowBase} justify-between text-[#fff7a1] hover:bg-[#f9a825] hover:text-black`}
+                className={`${rowBase} justify-between text-pix-butter hover:bg-pix-amber hover:text-black`}
               >
                 {item.label}
                 <ExternalArrow />
@@ -425,7 +412,7 @@ function AwsDropdown({ pathname }: { pathname: string }) {
 
 function ContactDropdown({ pathname }: { pathname: string }) {
   return (
-    <Dropdown label="Contact" pathname={pathname} tone="butter" accent="#fff7a1" width="w-48">
+    <Dropdown label="Contact" pathname={pathname} tone="butter" accent={colors.pix.butter} width="w-48">
       {(close) =>
         CONTACT_ITEMS.map((item) => (
           <a
@@ -491,7 +478,7 @@ function Collapsible({
 
 function Avatar({ avatarUrl, initials, className = "" }: { avatarUrl: string | null; initials: string; className?: string }) {
   return (
-    <div className={`shrink-0 overflow-hidden border-2 border-[#fff7a1] bg-[#fff7a1] text-black ${className}`}>
+    <div className={`shrink-0 overflow-hidden border-2 border-pix-butter bg-pix-butter text-black ${className}`}>
       {avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={avatarUrl} alt="" className="h-full w-full object-cover [image-rendering:pixelated]" />
@@ -572,7 +559,7 @@ function MobileMenu({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className={`${px} fixed left-0 right-0 overflow-y-auto bg-black text-[#fff7a1]`}
+            className={`${px} fixed left-0 right-0 overflow-y-auto bg-black text-pix-butter`}
             style={{ zIndex: 99999, top: headerHeight, maxHeight: `calc(100vh - ${headerHeight}px)` }}
             role="dialog"
             aria-modal="true"
@@ -632,7 +619,7 @@ function MobileMenu({
                         key={item.href}
                         href={item.href}
                         onClick={onClose}
-                        className={`${mobRow} justify-between !py-2 text-[#3aaa6e] hover:bg-[#3aaa6e] hover:text-black`}
+                        className={`${mobRow} justify-between !py-2 text-pix-green hover:bg-pix-green hover:text-black`}
                       >
                         {item.label}
                         <InternalArrow />
@@ -644,7 +631,7 @@ function MobileMenu({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={onClose}
-                        className={`${mobRow} justify-between !py-2 text-[#fff7a1] hover:bg-[#f9a825] hover:text-black`}
+                        className={`${mobRow} justify-between !py-2 text-pix-butter hover:bg-pix-amber hover:text-black`}
                       >
                         {item.label}
                         <ExternalArrow />
@@ -685,7 +672,7 @@ function MobileMenu({
                     <Avatar avatarUrl={avatarUrl} initials={initials} className="h-9 w-9" />
                     <div className="min-w-0">
                       <p className="truncate text-base">{displayName}</p>
-                      {username && <p className="truncate text-sm text-[#fff7a1]/60">@{username}</p>}
+                      {username && <p className="truncate text-sm text-pix-butter/60">@{username}</p>}
                     </div>
                   </div>
                   <form action="/api/auth/logout" method="POST">
@@ -707,7 +694,7 @@ function MobileMenu({
                   <Link
                     href="/signup"
                     onClick={onClose}
-                    className={`flex-1 bg-[#fff7a1] px-3 py-2 text-center text-base text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`}
+                    className={`flex-1 bg-pix-butter px-3 py-2 text-center text-base text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`}
                   >
                     Create account
                   </Link>
@@ -795,11 +782,11 @@ function SearchPalette({ onClose, isAdmin }: { onClose: () => void; isAdmin: boo
         role="dialog"
         aria-modal="true"
         aria-label="Search pages"
-        className={`${px} fixed left-1/2 top-[12vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 border-4 border-[#fff7a1] bg-black text-[#fff7a1] shadow-[8px_8px_0_#2c8f8f]`}
+        className={`${px} fixed left-1/2 top-[12vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 border-4 border-pix-butter bg-black text-pix-butter shadow-pixel-teal-8`}
         style={{ zIndex: 100001 }}
       >
         {/* Input */}
-        <div className="flex items-center gap-3 border-b-4 border-[#fff7a1] px-4 py-3">
+        <div className="flex items-center gap-3 border-b-4 border-pix-butter px-4 py-3">
           <Icon size={16}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></Icon>
           <input
             ref={inputRef}
@@ -807,25 +794,25 @@ function SearchPalette({ onClose, isAdmin }: { onClose: () => void; isAdmin: boo
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search pages…"
-            className="flex-1 bg-transparent text-base text-[#fff7a1] placeholder:text-[#fff7a1]/40 focus:outline-none"
+            className="flex-1 bg-transparent text-base text-pix-butter placeholder:text-pix-butter/40 focus:outline-none"
           />
-          <kbd className="hidden border-2 border-[#fff7a1]/50 px-1.5 py-0.5 text-xs text-[#fff7a1]/60 sm:block">ESC</kbd>
+          <kbd className="hidden border-2 border-pix-butter/50 px-1.5 py-0.5 text-xs text-pix-butter/60 sm:block">ESC</kbd>
         </div>
 
         {/* Results */}
         <div className="max-h-80 overflow-y-auto py-2">
           {Object.entries(groups).length === 0 ? (
-            <p className="px-4 py-6 text-center text-base text-[#fff7a1]/60">No pages found.</p>
+            <p className="px-4 py-6 text-center text-base text-pix-butter/60">No pages found.</p>
           ) : (
             Object.entries(groups).map(([group, items]) => (
               <div key={group}>
-                <p className={`${hd} px-4 pb-1 pt-2 text-2xl text-[#2c8f8f]`}>{group}</p>
+                <p className={`${hd} px-4 pb-1 pt-2 text-2xl text-pix-teal`}>{group}</p>
                 {items.map((item) => (
                   <button
                     key={item.href}
                     type="button"
                     onClick={() => navigate(item.href)}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-base transition-colors hover:bg-[#fff7a1] hover:text-black"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-base transition-colors hover:bg-pix-butter hover:text-black"
                   >
                     <span>{item.label}</span>
                     <span className="text-sm opacity-60">{item.href}</span>
@@ -885,16 +872,16 @@ function ProfileDropdown({
           <>
             <div className="fixed inset-0" style={{ zIndex: 99998 }} onClick={() => setOpen(false)} />
             <div
-              className={`${px} fixed w-60 bg-black text-[#fff7a1] shadow-[6px_6px_0_#2c8f8f]`}
+              className={`${px} fixed w-60 bg-black text-pix-butter shadow-pixel-teal-6`}
               style={{ zIndex: 99999, top: rect.bottom + 8, right: window.innerWidth - rect.right }}
             >
               {/* Identity row */}
-              <div className="flex items-center gap-3 border-b-2 border-[#fff7a1]/20 px-4 py-3">
+              <div className="flex items-center gap-3 border-b-2 border-pix-butter/20 px-4 py-3">
                 <Avatar avatarUrl={avatarUrl} initials={initials} className="h-10 w-10" />
                 <div className="min-w-0">
                   <p className="truncate text-base">{displayName}</p>
-                  {username && <p className="truncate text-sm text-[#fff7a1]/60">@{username}</p>}
-                  {memberId && <p className="truncate text-xs text-[#fff7a1]/40">{memberId}</p>}
+                  {username && <p className="truncate text-sm text-pix-butter/60">@{username}</p>}
+                  {memberId && <p className="truncate text-xs text-pix-butter/40">{memberId}</p>}
                 </div>
               </div>
 
@@ -914,7 +901,7 @@ function ProfileDropdown({
               </div>
 
               {/* Sign out */}
-              <div className="border-t-2 border-[#fff7a1]/20 py-1">
+              <div className="border-t-2 border-pix-butter/20 py-1">
                 <form action="/api/auth/logout" method="POST">
                   <button type="submit" className={`${rowBase} ${rowOff} w-full`}>
                     <SignOutIcon />
@@ -932,29 +919,29 @@ function ProfileDropdown({
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
-const footerLink = `text-lg text-[#fff7a1]/80 transition-colors hover:text-[#fff7a1] hover:underline hover:underline-offset-4 ${focus}`;
+const footerLink = `text-lg text-pix-butter/80 transition-colors hover:text-pix-butter hover:underline hover:underline-offset-4 ${focus}`;
 
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className={`${hd} text-3xl text-[#fff7a1]`}>{title}</p>
+      <p className={`${hd} text-3xl text-pix-butter`}>{title}</p>
       {children}
     </div>
   );
 }
 
-const socialTile = `flex h-11 w-11 items-center justify-center border-4 border-black bg-black text-[#fff7a1] shadow-[3px_3px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_#b32a0e] ${focus}`;
+const socialTile = `flex h-11 w-11 items-center justify-center border-4 border-black bg-black text-pix-butter shadow-pixel-rust-3 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-1 ${focus}`;
 
 export function Footer({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <footer className={`${px} bg-black text-[#fff7a1]`} aria-label="Site footer">
+    <footer className={`${px} bg-black text-pix-butter`} aria-label="Site footer">
       <Stripes className="h-4" />
 
       {/* ── Brand card + link columns ── */}
       <div className={`${wrap} pb-10 pt-14`}>
         <div className="grid gap-12 lg:grid-cols-[320px_1fr] lg:gap-16">
           {/* Brand card */}
-          <div className="self-start bg-[#fff7a1] p-5 text-black shadow-[6px_6px_0_#2c8f8f]">
+          <div className="self-start bg-pix-butter p-5 text-black shadow-pixel-teal-6">
             <div className="flex items-center gap-3">
               <Image src="/icons/logo.webp" alt="AWSSBG-UC logo" width={56} height={56} className="h-14 w-14 shrink-0 object-contain" />
               <div>
@@ -1018,7 +1005,7 @@ export function Footer({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {/* ── Big wordmark ── */}
       <div className={`${wrap} overflow-hidden`} aria-hidden="true">
-        <p className={`${hd} select-none whitespace-nowrap text-center text-[clamp(3.5rem,17vw,15rem)] text-[#fff7a1]`}>
+        <p className={`${hd} select-none whitespace-nowrap text-center text-[clamp(3.5rem,17vw,15rem)] text-pix-butter`}>
           AWSSBG-UC
         </p>
       </div>
@@ -1027,16 +1014,16 @@ export function Footer({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {/* ── Legal / copyright strip ── */}
       <div className={`${wrap} flex flex-col items-center gap-4 py-5 sm:flex-row sm:justify-between`}>
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-base text-[#fff7a1]/70">
-          <Link href="/privacy" className="transition-colors hover:text-[#fff7a1] hover:underline hover:underline-offset-4">Privacy</Link>
-          <Link href="/terms" className="transition-colors hover:text-[#fff7a1] hover:underline hover:underline-offset-4">Site Terms</Link>
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-base text-pix-butter/70">
+          <Link href="/privacy" className="transition-colors hover:text-pix-butter hover:underline hover:underline-offset-4">Privacy</Link>
+          <Link href="/terms" className="transition-colors hover:text-pix-butter hover:underline hover:underline-offset-4">Site Terms</Link>
           <span>© {new Date().getFullYear()} AWSSBG-UC. All rights reserved.</span>
         </div>
 
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className={`flex items-center gap-2 border-4 border-[#2c8f8f] px-3 py-1 text-base transition-colors hover:bg-[#2c8f8f] hover:text-black ${focus}`}
+          className={`flex items-center gap-2 border-4 border-pix-teal px-3 py-1 text-base transition-colors hover:bg-pix-teal hover:text-black ${focus}`}
         >
           Back to top
           <Icon size={13}><path d="m18 15-6-6-6 6" /></Icon>
@@ -1091,7 +1078,7 @@ export function DashboardShell({
       <SideGrid />
 
       {/* ── Main header ── */}
-      <header ref={headerRef} className={`${px} sticky top-0 z-20 bg-black text-[#fff7a1]`}>
+      <header ref={headerRef} className={`${px} sticky top-0 z-20 bg-black text-pix-butter`}>
         <div className={wrap}>
           <div className="flex h-[52px] items-center lg:h-[56px]">
 
@@ -1099,7 +1086,7 @@ export function DashboardShell({
             <Link href="/" className={`flex shrink-0 items-center gap-2.5 pr-4 ${focus}`}>
               <Image src="/icons/logo.webp" alt="AWSSBG-UC logo" width={32} height={32} className="h-8 w-8 object-contain" />
               <span className={`${hd} text-3xl`}>
-                AWSSBG<span className="text-[#3aaa6e]">-UC</span>
+                AWSSBG<span className="text-pix-green">-UC</span>
               </span>
             </Link>
 
@@ -1157,7 +1144,7 @@ export function DashboardShell({
                   </Link>
                   <Link
                     href="/signup"
-                    className={`ml-1 bg-[#fff7a1] px-4 py-1 text-base text-black shadow-[3px_3px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_#b32a0e] ${focus}`}
+                    className={`ml-1 bg-pix-butter px-4 py-1 text-base text-black shadow-pixel-rust-3 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-1 ${focus}`}
                   >
                     Create account
                   </Link>
@@ -1185,8 +1172,8 @@ export function DashboardShell({
                 aria-expanded={mobileOpen}
                 aria-controls="mobile-nav-menu"
                 onClick={() => setMobileOpen((o) => !o)}
-                className={`flex h-9 w-9 items-center justify-center transition-colors hover:bg-[#fff7a1] hover:text-black ${focus} ${
-                  mobileOpen ? "bg-[#fff7a1] text-black" : "text-[#fff7a1]"
+                className={`flex h-9 w-9 items-center justify-center transition-colors hover:bg-pix-butter hover:text-black ${focus} ${
+                  mobileOpen ? "bg-pix-butter text-black" : "text-pix-butter"
                 }`}
               >
                 {mobileOpen ? (

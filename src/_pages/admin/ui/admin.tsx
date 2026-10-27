@@ -53,26 +53,12 @@ type ToastState = { message: string; type: "success" | "error" } | null;
 const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus =
-  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
-
-const STRIPES: [string, number][] = [
-  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
-  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
-];
-const STRIPE_BG = (() => {
-  let at = 0;
-  const stops = STRIPES.map(([c, w]) => {
-    const st = `${c} ${at}% ${at + w}%`;
-    at += w;
-    return st;
-  });
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
-})();
+  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 function Stripes({ className = "h-4" }: { className?: string }) {
-  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+  return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
 }
 
 // Event status — same four states as the public Events page, in stripe colours.
@@ -84,41 +70,41 @@ const STATUS_LABELS: Record<EventRow["status"], string> = {
 };
 
 const STATUS_COLORS: Record<EventRow["status"], string> = {
-  not_started: "border-[#2c8f8f] text-[#2c8f8f]",
-  ongoing: "border-[#3aaa6e] bg-[#3aaa6e] text-black",
-  completed: "border-[#fff7a1]/50 text-[#fff7a1]/70",
-  cancelled: "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]",
+  not_started: "border-pix-teal text-pix-teal",
+  ongoing: "border-pix-green bg-pix-green text-black",
+  completed: "border-pix-butter/50 text-pix-butter/70",
+  cancelled: "border-pix-rust bg-pix-rust text-pix-butter",
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  admin: "border-[#b89a0a] bg-[#b89a0a] text-black",
-  officer: "border-[#2c8f8f] text-[#2c8f8f]",
-  member: "border-[#fff7a1]/50 text-[#fff7a1]/70",
+  admin: "border-pix-mustard bg-pix-mustard text-black",
+  officer: "border-pix-teal text-pix-teal",
+  member: "border-pix-butter/50 text-pix-butter/70",
 };
 
 const ACCOUNT_STATUS_COLORS: Record<string, string> = {
-  active: "border-[#3aaa6e] bg-[#3aaa6e] text-black",
+  active: "border-pix-green bg-pix-green text-black",
 };
-const ACCOUNT_STATUS_FALLBACK = "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]";
+const ACCOUNT_STATUS_FALLBACK = "border-pix-rust bg-pix-rust text-pix-butter";
 
-const BOX = "border-4 border-[#2c8f8f]";
+const BOX = "border-4 border-pix-teal";
 
 const BTN_PRIMARY =
-  `inline-flex items-center justify-center gap-2 border-4 border-[#fff7a1] bg-[#fff7a1] px-4 py-1.5 text-base text-black shadow-[3px_3px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_#b32a0e] disabled:pointer-events-none disabled:opacity-40 ${focus}`;
+  `inline-flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-4 py-1.5 text-base text-black shadow-pixel-rust-3 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-1 disabled:pointer-events-none disabled:opacity-40 ${focus}`;
 const BTN_SECONDARY =
-  `inline-flex items-center justify-center gap-2 border-4 border-[#2c8f8f] px-4 py-1.5 text-base text-[#fff7a1] transition-colors hover:bg-[#2c8f8f] hover:text-black disabled:pointer-events-none disabled:opacity-40 ${focus}`;
+  `inline-flex items-center justify-center gap-2 border-4 border-pix-teal px-4 py-1.5 text-base text-pix-butter transition-colors hover:bg-pix-teal hover:text-black disabled:pointer-events-none disabled:opacity-40 ${focus}`;
 const BTN_SUBMIT =
-  `flex items-center justify-center gap-2 border-4 border-[#fff7a1] bg-[#fff7a1] px-6 py-3 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:pointer-events-none disabled:opacity-50 ${focus}`;
+  `flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-6 py-3 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 disabled:pointer-events-none disabled:opacity-50 ${focus}`;
 
-const TH = "px-4 py-3 text-left text-base font-normal text-[#fff7a1]/60";
+const TH = "px-4 py-3 text-left text-base font-normal text-pix-butter/60";
 
 function inputCls(hasError?: boolean) {
   const base =
-    "w-full border-4 bg-black px-3 py-2 text-lg text-[#fff7a1] placeholder:text-[#fff7a1]/35 " +
+    "w-full border-4 bg-black px-3 py-2 text-lg text-pix-butter placeholder:text-pix-butter/35 " +
     "transition-colors focus:outline-none disabled:opacity-50";
   return hasError
-    ? `${base} border-[#b32a0e] focus:border-[#e26a56]`
-    : `${base} border-[#fff7a1]/50 focus:border-[#2c8f8f]`;
+    ? `${base} border-pix-rust focus:border-pix-coral`
+    : `${base} border-pix-butter/50 focus:border-pix-teal`;
 }
 
 function fmt(date: string) {
@@ -138,11 +124,11 @@ function Pill({ text, colorClass }: { text: string; colorClass: string }) {
 }
 
 const STAT_BORDERS = [
-  "border-[#2c8f8f] shadow-[6px_6px_0_#2c8f8f]",
-  "border-[#3aaa6e] shadow-[6px_6px_0_#3aaa6e]",
-  "border-[#b89a0a] shadow-[6px_6px_0_#b89a0a]",
-  "border-[#b32a0e] shadow-[6px_6px_0_#b32a0e]",
-  "border-[#2c8f8f] shadow-[6px_6px_0_#2c8f8f]",
+  "border-pix-teal shadow-pixel-teal-6",
+  "border-pix-green shadow-pixel-green-6",
+  "border-pix-mustard shadow-pixel-mustard-6",
+  "border-pix-rust shadow-pixel-rust-6",
+  "border-pix-teal shadow-pixel-teal-6",
 ];
 
 function StatCard({ icon: Icon, label, value, tone }: {
@@ -150,7 +136,7 @@ function StatCard({ icon: Icon, label, value, tone }: {
 }) {
   return (
     <div className={`border-4 bg-black p-5 ${STAT_BORDERS[tone % STAT_BORDERS.length]}`}>
-      <div className="flex items-center justify-between text-lg text-[#fff7a1]/70">
+      <div className="flex items-center justify-between text-lg text-pix-butter/70">
         <p>{label}</p>
         <Icon size={18} aria-hidden="true" />
       </div>
@@ -169,8 +155,8 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
   return (
     <div
       role="status"
-      className={`${pixel.className} fixed bottom-6 right-6 z-[99999] flex items-center gap-3 border-4 border-[#fff7a1] bg-black px-4 py-3 text-lg text-[#fff7a1] ${
-        type === "success" ? "shadow-[6px_6px_0_#3aaa6e]" : "shadow-[6px_6px_0_#b32a0e]"
+      className={`${pixel.className} fixed bottom-6 right-6 z-[99999] flex items-center gap-3 border-4 border-pix-butter bg-black px-4 py-3 text-lg text-pix-butter ${
+        type === "success" ? "shadow-pixel-green-6" : "shadow-pixel-rust-6"
       }`}
     >
       {type === "success" ? <Check size={16} /> : <AlertTriangle size={16} />}
@@ -186,7 +172,7 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
     <div>
       <h2 className={`${hd} text-5xl sm:text-6xl`}>{title}</h2>
-      {sub && <p className="mt-2 text-xl text-[#fff7a1]/70">{sub}</p>}
+      {sub && <p className="mt-2 text-xl text-pix-butter/70">{sub}</p>}
     </div>
   );
 }
@@ -204,7 +190,7 @@ function SearchInput({ value, onChange, placeholder, className = "" }: {
 }) {
   return (
     <div className={`relative ${className}`}>
-      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#fff7a1]/50" aria-hidden="true" />
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-pix-butter/50" aria-hidden="true" />
       <input
         type="text"
         value={value}
@@ -241,8 +227,8 @@ function RoleToggles({ roles, participantId, callerParticipantId, onToggle, size
               "border-2 transition-colors disabled:pointer-events-none disabled:opacity-40",
               focus, pad,
               has
-                ? `${ROLE_COLORS[role]} hover:border-[#b32a0e] hover:bg-[#b32a0e] hover:text-[#fff7a1]`
-                : "border-[#fff7a1]/40 text-[#fff7a1]/80 hover:bg-[#fff7a1] hover:text-black",
+                ? `${ROLE_COLORS[role]} hover:border-pix-rust hover:bg-pix-rust hover:text-pix-butter`
+                : "border-pix-butter/40 text-pix-butter/80 hover:bg-pix-butter hover:text-black",
             ].join(" ")}
           >
             {has ? `Remove ${role}` : `Add ${role}`}
@@ -254,7 +240,7 @@ function RoleToggles({ roles, participantId, callerParticipantId, onToggle, size
 }
 
 function Spinner() {
-  return <Loader2 size={22} className="mx-auto animate-spin text-[#fff7a1]/60" />;
+  return <Loader2 size={22} className="mx-auto animate-spin text-pix-butter/60" />;
 }
 
 // ─── Tab: Overview ────────────────────────────────────────────────────────────
@@ -332,9 +318,9 @@ const PEOPLE_FILTERS: { id: string; label: string }[] = [
 ];
 
 const REG_COLORS: Record<string, { text: string; cls: string }> = {
-  registered:   { text: "Registered", cls: "border-[#2c8f8f] text-[#2c8f8f]" },
-  attended:     { text: "Attended",   cls: "border-[#3aaa6e] bg-[#3aaa6e] text-black" },
-  not_attended: { text: "Absent",     cls: "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]" },
+  registered:   { text: "Registered", cls: "border-pix-teal text-pix-teal" },
+  attended:     { text: "Attended",   cls: "border-pix-green bg-pix-green text-black" },
+  not_attended: { text: "Absent",     cls: "border-pix-rust bg-pix-rust text-pix-butter" },
 };
 
 function fullName(s: PersonRow["student"]) {
@@ -354,7 +340,7 @@ function labelOf(key: string) {
 }
 
 function showValue(v: unknown): React.ReactNode {
-  if (v === null || v === undefined || v === "") return <span className="text-[#fff7a1]/35">—</span>;
+  if (v === null || v === undefined || v === "") return <span className="text-pix-butter/35">—</span>;
   if (typeof v === "boolean") return v ? "Yes" : "No";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
@@ -365,18 +351,18 @@ function TableCard({ table, note, row, children }: {
   table: string; note?: string; row?: Row | null; children?: React.ReactNode;
 }) {
   return (
-    <section className="border-4 border-[#2c8f8f]">
-      <header className="flex items-baseline justify-between gap-3 border-b-4 border-[#2c8f8f] px-4 py-2">
+    <section className="border-4 border-pix-teal">
+      <header className="flex items-baseline justify-between gap-3 border-b-4 border-pix-teal px-4 py-2">
         <h4 className={`${hd} text-3xl`}>{table}</h4>
-        {note && <span className="text-sm text-[#fff7a1]/55">{note}</span>}
+        {note && <span className="text-sm text-pix-butter/55">{note}</span>}
       </header>
       {row === null ? (
-        <p className="px-4 py-3 text-base text-[#fff7a1]/55">No row — nothing linked in this table.</p>
+        <p className="px-4 py-3 text-base text-pix-butter/55">No row — nothing linked in this table.</p>
       ) : row ? (
         <dl className="grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-1.5 px-4 py-3 text-base">
           {Object.entries(row).map(([k, v]) => (
             <div key={k} className="contents">
-              <dt className="text-[#fff7a1]/55">{labelOf(k)}</dt>
+              <dt className="text-pix-butter/55">{labelOf(k)}</dt>
               <dd className="min-w-0 break-words">{showValue(v)}</dd>
             </div>
           ))}
@@ -396,15 +382,15 @@ function SchemaLegend() {
     ["event_registrations (event_id, participant_id)", "events · participants"],
   ];
   return (
-    <div className="mt-6 border-4 border-[#fff7a1]/25 p-4">
+    <div className="mt-6 border-4 border-pix-butter/25 p-4">
       <p className="text-lg">
-        A <span className="text-[#2c8f8f]">participant</span> is anyone who can attend events — members and guests alike.
+        A <span className="text-pix-teal">participant</span> is anyone who can attend events — members and guests alike.
         Members are linked to a roster entry and their student record; people with a login also have a profile.
       </p>
-      <ul className="mt-3 space-y-1 text-base text-[#fff7a1]/70">
+      <ul className="mt-3 space-y-1 text-base text-pix-butter/70">
         {links.map(([a, b]) => (
           <li key={a}>
-            <span className="text-[#fff7a1]">{a}</span> <span className="text-[#2c8f8f]">→</span> {b}
+            <span className="text-pix-butter">{a}</span> <span className="text-pix-teal">→</span> {b}
           </li>
         ))}
       </ul>
@@ -460,25 +446,25 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
   return (
     <div className="fixed inset-0 z-[9998] flex justify-end" role="dialog" aria-modal="true" aria-label="Person details">
       <button type="button" aria-label="Close details" onClick={onClose} className="absolute inset-0 cursor-default bg-black/70" />
-      <div className={`${pixel.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l-4 border-[#2c8f8f] bg-black text-[#fff7a1]`}>
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-[#2c8f8f] bg-black px-5 py-4">
+      <div className={`${pixel.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l-4 border-pix-teal bg-black text-pix-butter`}>
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-pix-teal bg-black px-5 py-4">
           <div className="flex min-w-0 items-center gap-4">
             {avatar && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt="" className="h-14 w-14 shrink-0 border-4 border-[#fff7a1] object-cover" />
+              <img src={avatar} alt="" className="h-14 w-14 shrink-0 border-4 border-pix-butter object-cover" />
             )}
             <div className="min-w-0">
               <h3 className={`${hd} truncate text-5xl`}>{p ? String(p.display_name) : "Loading…"}</h3>
-              {p && <p className="truncate text-base text-[#fff7a1]/60">{String(p.supplied_name)}</p>}
+              {p && <p className="truncate text-base text-pix-butter/60">{String(p.supplied_name)}</p>}
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" autoFocus className={`border-4 border-[#fff7a1]/60 p-1.5 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}>
+          <button type="button" onClick={onClose} aria-label="Close" autoFocus className={`border-4 border-pix-butter/60 p-1.5 transition-colors hover:bg-pix-butter hover:text-black ${focus}`}>
             <X size={18} />
           </button>
         </div>
 
         <div className="space-y-6 px-5 py-6">
-          {error && <p role="alert" className="border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">{error}</p>}
+          {error && <p role="alert" className="border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">{error}</p>}
           {!detail && !error && <div className="py-10"><Spinner /></div>}
 
           {detail && p && (
@@ -495,11 +481,11 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
                 <div className="px-4 py-3">
                   <div className="mb-3 flex flex-wrap gap-1.5">
                     {detail.roles.length === 0
-                      ? <span className="text-base text-[#fff7a1]/55">No roles.</span>
+                      ? <span className="text-base text-pix-butter/55">No roles.</span>
                       : detail.roles.map((r) => (
                           <span key={r.role} className="flex items-center gap-2">
                             <Pill text={r.role} colorClass={ROLE_COLORS[r.role] ?? ROLE_COLORS.member} />
-                            <span className="text-sm text-[#fff7a1]/45">since {fmt(r.granted_at)}</span>
+                            <span className="text-sm text-pix-butter/45">since {fmt(r.granted_at)}</span>
                           </span>
                         ))}
                   </div>
@@ -512,25 +498,25 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
                       size="md"
                     />
                   ) : (
-                    <p className="text-sm text-[#fff7a1]/55">Roles can be changed once they have an account.</p>
+                    <p className="text-sm text-pix-butter/55">Roles can be changed once they have an account.</p>
                   )}
                 </div>
               </TableCard>
 
               <TableCard table="event_registrations" note={`${detail.registrations.length} event${detail.registrations.length !== 1 ? "s" : ""}`}>
                 {detail.registrations.length === 0 ? (
-                  <p className="px-4 py-3 text-base text-[#fff7a1]/55">Not registered for any event.</p>
+                  <p className="px-4 py-3 text-base text-pix-butter/55">Not registered for any event.</p>
                 ) : (
                   <ul>
                     {detail.registrations.map((r) => (
-                      <li key={r.event_id} className="flex flex-col gap-2 border-b-2 border-[#fff7a1]/15 px-4 py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between">
+                      <li key={r.event_id} className="flex flex-col gap-2 border-b-2 border-pix-butter/15 px-4 py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="text-lg">{r.name}</p>
-                          <p className="text-sm text-[#fff7a1]/55">
+                          <p className="text-sm text-pix-butter/55">
                             {fmtDateTime(r.starts_at)}{r.location ? ` · ${r.location}` : ""}
                           </p>
-                          {r.affiliation && <p className="text-sm text-[#fff7a1]/55">Affiliation: {r.affiliation}</p>}
-                          {r.note && <p className="text-sm text-[#fff7a1]/55">Note: {r.note}</p>}
+                          {r.affiliation && <p className="text-sm text-pix-butter/55">Affiliation: {r.affiliation}</p>}
+                          {r.note && <p className="text-sm text-pix-butter/55">Note: {r.note}</p>}
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-1.5">
                           <Pill text={(REG_COLORS[r.status] ?? REG_COLORS.registered).text} colorClass={(REG_COLORS[r.status] ?? REG_COLORS.registered).cls} />
@@ -608,8 +594,8 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
               onClick={() => { setFilter(f.id); setPage(1); }}
               className={`border-4 px-4 py-1 text-base transition-colors ${focus} ${
                 active
-                  ? "border-black bg-[#fff7a1] text-black shadow-[3px_3px_0_#2c8f8f]"
-                  : "border-[#2c8f8f] hover:bg-[#2c8f8f] hover:text-black"
+                  ? "border-black bg-pix-butter text-black shadow-pixel-teal-3"
+                  : "border-pix-teal hover:bg-pix-teal hover:text-black"
               }`}
             >
               {f.label}
@@ -624,13 +610,13 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
       {showSchema && <SchemaLegend />}
 
       {loadError && (
-        <p role="alert" className="mt-6 inline-block border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">{loadError}</p>
+        <p role="alert" className="mt-6 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">{loadError}</p>
       )}
 
       <div className={`${BOX} mt-6 overflow-x-auto`}>
         <table className="w-full min-w-[860px] text-lg">
           <thead>
-            <tr className="border-b-4 border-[#2c8f8f]">
+            <tr className="border-b-4 border-pix-teal">
               {["Person", "Membership", "Account", "Roles", "Events", ""].map((h, i) => (
                 <th key={i} scope="col" className={TH}>{h}</th>
               ))}
@@ -639,17 +625,17 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
           <tbody>
             {loading && <tr><td colSpan={6} className="py-12"><Spinner /></td></tr>}
             {!loading && people.length === 0 && (
-              <tr><td colSpan={6} className="py-12 text-center text-[#fff7a1]/60">No results.</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-pix-butter/60">No results.</td></tr>
             )}
             {!loading && people.map((m) => {
               const username = typeof m.profile?.username === "string" ? m.profile.username : null;
               const setupDone = m.profile?.initial_setup_completed;
               const real = fullName(m.student);
               return (
-                <tr key={m.participantId} className="border-b-2 border-[#fff7a1]/15 last:border-0 transition-colors hover:bg-[#fff7a1]/5">
+                <tr key={m.participantId} className="border-b-2 border-pix-butter/15 last:border-0 transition-colors hover:bg-pix-butter/5">
                   <td className="px-4 py-3">
                     <p className="max-w-[210px] truncate">{m.displayName}</p>
-                    <p className="max-w-[210px] truncate text-sm text-[#fff7a1]/55">
+                    <p className="max-w-[210px] truncate text-sm text-pix-butter/55">
                       {username ? `@${username} · ` : ""}{m.email ?? m.suppliedName}
                     </p>
                   </td>
@@ -657,38 +643,38 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
                     {m.memberId ? (
                       <>
                         <p className="text-base">{m.memberId}</p>
-                        <p className="max-w-[220px] truncate text-sm text-[#fff7a1]/55">
+                        <p className="max-w-[220px] truncate text-sm text-pix-butter/55">
                           {[real, m.student?.program, m.student?.year_level && `Y${m.student.year_level}`, m.student?.section]
                             .filter(Boolean).join(" · ") || m.student?.student_number}
                         </p>
                       </>
                     ) : (
-                      <span className="text-base text-[#fff7a1]/45">Not a member</span>
+                      <span className="text-base text-pix-butter/45">Not a member</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-base">
                     {m.userId ? (
-                      <span className={`flex items-center gap-1.5 ${setupDone === false ? "text-[#b89a0a]" : "text-[#3aaa6e]"}`}>
+                      <span className={`flex items-center gap-1.5 ${setupDone === false ? "text-pix-mustard" : "text-pix-green"}`}>
                         <Check size={14} />{setupDone === false ? "Setup pending" : "Linked"}
                       </span>
                     ) : (
-                      <span className="text-[#fff7a1]/50">No account</span>
+                      <span className="text-pix-butter/50">No account</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1.5">
                       {m.roles.length === 0
-                        ? <span className="text-[#fff7a1]/35">—</span>
+                        ? <span className="text-pix-butter/35">—</span>
                         : m.roles.map((r) => <Pill key={r} text={r} colorClass={ROLE_COLORS[r] ?? ROLE_COLORS.member} />)}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-base">
                     {m.events.registered === 0 ? (
-                      <span className="text-[#fff7a1]/35">—</span>
+                      <span className="text-pix-butter/35">—</span>
                     ) : (
                       <>
                         <p>{m.events.registered} registered</p>
-                        <p className="text-sm text-[#3aaa6e]">{m.events.attended} attended</p>
+                        <p className="text-sm text-pix-green">{m.events.attended} attended</p>
                       </>
                     )}
                   </td>
@@ -706,7 +692,7 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between text-lg">
-          <span className="text-[#fff7a1]/70">Page {page} of {totalPages}</span>
+          <span className="text-pix-butter/70">Page {page} of {totalPages}</span>
           <div className="flex gap-3">
             <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className={BTN_SECONDARY}>
               <ChevronLeft size={14} /> Prev
@@ -784,7 +770,7 @@ function EventsTab() {
       <div className={`${BOX} mt-8 overflow-x-auto`}>
         <table className="w-full min-w-[680px] text-lg">
           <thead>
-            <tr className="border-b-4 border-[#2c8f8f]">
+            <tr className="border-b-4 border-pix-teal">
               {["Event", "Date", "Registrations", "Status", "Change status"].map((h) => (
                 <th key={h} scope="col" className={TH}>{h}</th>
               ))}
@@ -795,24 +781,24 @@ function EventsTab() {
               <tr><td colSpan={5} className="py-12"><Spinner /></td></tr>
             )}
             {!loading && events.length === 0 && (
-              <tr><td colSpan={5} className="py-12 text-center text-[#fff7a1]/60">No events yet.</td></tr>
+              <tr><td colSpan={5} className="py-12 text-center text-pix-butter/60">No events yet.</td></tr>
             )}
             {!loading && events.map((e) => (
-              <tr key={e.event_id} className="border-b-2 border-[#fff7a1]/15 last:border-0 transition-colors hover:bg-[#fff7a1]/5">
+              <tr key={e.event_id} className="border-b-2 border-pix-butter/15 last:border-0 transition-colors hover:bg-pix-butter/5">
                 <td className="px-4 py-3">
                   <p className="max-w-[230px] truncate">{e.name}</p>
-                  {e.location && <p className="max-w-[230px] truncate text-sm text-[#fff7a1]/55">{e.location}</p>}
+                  {e.location && <p className="max-w-[230px] truncate text-sm text-pix-butter/55">{e.location}</p>}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-base text-[#fff7a1]/80">
+                <td className="whitespace-nowrap px-4 py-3 text-base text-pix-butter/80">
                   {fmt(e.starts_at)}
                   <br />
-                  <span className="text-[#fff7a1]/50">to {fmt(e.ends_at)}</span>
+                  <span className="text-pix-butter/50">to {fmt(e.ends_at)}</span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col text-base">
                     <span>{e.registrations.registered} registered</span>
-                    <span className="text-[#3aaa6e]">{e.registrations.attended} attended</span>
-                    <span className="text-[#fff7a1]/50">{e.registrations.not_attended} absent</span>
+                    <span className="text-pix-green">{e.registrations.attended} attended</span>
+                    <span className="text-pix-butter/50">{e.registrations.not_attended} absent</span>
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -823,7 +809,7 @@ function EventsTab() {
                     value={e.status}
                     onChange={(ev) => updateStatus(e.event_id, ev.target.value)}
                     aria-label={`Change status for ${e.name}`}
-                    className={`border-4 border-[#2c8f8f] bg-black px-2 py-1 text-base text-[#fff7a1] ${focus}`}
+                    className={`border-4 border-pix-teal bg-black px-2 py-1 text-base text-pix-butter ${focus}`}
                   >
                     {Object.entries(STATUS_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -847,8 +833,8 @@ function Field({ label, error, hint, className = "", children }: {
       <span className="text-lg">{label}</span>
       {children}
       {error
-        ? <span className="text-base text-[#e26a56]" role="alert">{error}</span>
-        : hint && <span className="text-base text-[#fff7a1]/55">{hint}</span>}
+        ? <span className="text-base text-pix-coral" role="alert">{error}</span>
+        : hint && <span className="text-base text-pix-butter/55">{hint}</span>}
     </label>
   );
 }
@@ -896,10 +882,10 @@ function CreateEventForm({ onClose, onCreated, setToast }: {
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   return (
-    <div className="mt-8 border-4 border-[#fff7a1] p-6 shadow-[8px_8px_0_#2c8f8f]">
+    <div className="mt-8 border-4 border-pix-butter p-6 shadow-pixel-teal-8">
       <div className="mb-5 flex items-center justify-between">
         <h3 className={`${hd} text-4xl`}>New event</h3>
-        <button type="button" onClick={onClose} aria-label="Close form" className={`border-2 border-[#fff7a1]/60 p-1 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}>
+        <button type="button" onClick={onClose} aria-label="Close form" className={`border-2 border-pix-butter/60 p-1 transition-colors hover:bg-pix-butter hover:text-black ${focus}`}>
           <X size={16} />
         </button>
       </div>
@@ -1120,9 +1106,9 @@ function ProvisionTab() {
   }
 
   const MAIL_PILL: Record<ResultRow["mail"], { text: string; cls: string }> = {
-    sent:   { text: "Emailed",     cls: "border-[#3aaa6e] bg-[#3aaa6e] text-black" },
-    failed: { text: "Not emailed", cls: "border-[#b32a0e] bg-[#b32a0e] text-[#fff7a1]" },
-    off:    { text: "Show only",   cls: "border-[#fff7a1]/50 text-[#fff7a1]/70" },
+    sent:   { text: "Emailed",     cls: "border-pix-green bg-pix-green text-black" },
+    failed: { text: "Not emailed", cls: "border-pix-rust bg-pix-rust text-pix-butter" },
+    off:    { text: "Show only",   cls: "border-pix-butter/50 text-pix-butter/70" },
   };
 
   return (
@@ -1142,7 +1128,7 @@ function ProvisionTab() {
       </div>
 
       {loadError && (
-        <p role="alert" className="mt-8 inline-block border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">
+        <p role="alert" className="mt-8 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">
           {loadError}
         </p>
       )}
@@ -1160,7 +1146,7 @@ function ProvisionTab() {
                   checked={sendEmail}
                   disabled={!mailConfigured}
                   onChange={(e) => setSendEmail(e.target.checked)}
-                  className="h-5 w-5 accent-[#2c8f8f]"
+                  className="h-5 w-5 accent-pix-teal"
                 />
                 Email temporary passwords
               </label>
@@ -1174,7 +1160,7 @@ function ProvisionTab() {
           </div>
 
           {!mailConfigured && !loading && (
-            <p className="mt-3 text-base text-[#fff7a1]/60">
+            <p className="mt-3 text-base text-pix-butter/60">
               Email isn&apos;t set up on the server yet (needs RESEND_API_KEY and MAIL_FROM), so passwords will only be shown here after provisioning.
             </p>
           )}
@@ -1183,7 +1169,7 @@ function ProvisionTab() {
           <div className={`${BOX} mt-6 max-h-[30rem] overflow-auto`}>
             <table className="w-full min-w-[640px] text-lg">
               <thead className="sticky top-0 z-10 bg-black">
-                <tr className="border-b-4 border-[#2c8f8f]">
+                <tr className="border-b-4 border-pix-teal">
                   <th scope="col" className="w-12 px-4 py-3">
                     <input
                       type="checkbox"
@@ -1191,7 +1177,7 @@ function ProvisionTab() {
                       onChange={toggleAll}
                       disabled={selectable.length === 0}
                       aria-label="Select all visible members that have an email"
-                      className="h-5 w-5 accent-[#2c8f8f]"
+                      className="h-5 w-5 accent-pix-teal"
                     />
                   </th>
                   <th scope="col" className={TH}>Member</th>
@@ -1203,7 +1189,7 @@ function ProvisionTab() {
                 {loading && <tr><td colSpan={4} className="py-12"><Spinner /></td></tr>}
                 {!loading && visible.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-12 text-center text-[#fff7a1]/60">
+                    <td colSpan={4} className="py-12 text-center text-pix-butter/60">
                       {pending.length === 0 ? "Everyone on the roster already has an account." : "No matches."}
                     </td>
                   </tr>
@@ -1212,7 +1198,7 @@ function ProvisionTab() {
                   const em = emailFor(p);
                   const valid = EMAIL_RE.test(em);
                   return (
-                    <tr key={p.memberId} className="border-b-2 border-[#fff7a1]/15 last:border-0 hover:bg-[#fff7a1]/5">
+                    <tr key={p.memberId} className="border-b-2 border-pix-butter/15 last:border-0 hover:bg-pix-butter/5">
                       <td className="px-4 py-2">
                         <input
                           type="checkbox"
@@ -1220,11 +1206,11 @@ function ProvisionTab() {
                           disabled={!valid}
                           onChange={() => toggleOne(p.memberId)}
                           aria-label={`Select ${p.name}`}
-                          className="h-5 w-5 accent-[#2c8f8f] disabled:opacity-30"
+                          className="h-5 w-5 accent-pix-teal disabled:opacity-30"
                         />
                       </td>
                       <td className="px-4 py-2"><p className="max-w-[240px] truncate">{p.name}</p></td>
-                      <td className="px-4 py-2 text-base text-[#fff7a1]/80">{p.memberId}</td>
+                      <td className="px-4 py-2 text-base text-pix-butter/80">{p.memberId}</td>
                       <td className="px-4 py-2">
                         <input
                           type="email"
@@ -1232,12 +1218,12 @@ function ProvisionTab() {
                           onChange={(e) => setEmails((m) => ({ ...m, [p.memberId]: e.target.value }))}
                           placeholder="Add an email to select"
                           aria-label={`Email for ${p.name}`}
-                          className={`w-full min-w-[220px] border-2 bg-black px-2 py-1 text-base text-[#fff7a1] placeholder:text-[#fff7a1]/35 focus:outline-none ${
+                          className={`w-full min-w-[220px] border-2 bg-black px-2 py-1 text-base text-pix-butter placeholder:text-pix-butter/35 focus:outline-none ${
                             em === ""
-                              ? "border-[#e26a56]/60 focus:border-[#e26a56]"
+                              ? "border-pix-coral/60 focus:border-pix-coral"
                               : valid
-                                ? "border-[#fff7a1]/30 focus:border-[#2c8f8f]"
-                                : "border-[#b32a0e] focus:border-[#e26a56]"
+                                ? "border-pix-butter/30 focus:border-pix-teal"
+                                : "border-pix-rust focus:border-pix-coral"
                           }`}
                         />
                       </td>
@@ -1247,7 +1233,7 @@ function ProvisionTab() {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-base text-[#fff7a1]/55">
+          <p className="mt-3 text-base text-pix-butter/55">
             {chosen.length} selected · members need a valid email before they can be selected. Each account must set a permanent password on first sign-in.
           </p>
         </>
@@ -1255,11 +1241,11 @@ function ProvisionTab() {
 
       {/* Result of the last batch */}
       {outcome && (
-        <div className="mt-10 border-4 border-[#fff7a1] p-6 shadow-[8px_8px_0_#3aaa6e]">
+        <div className="mt-10 border-4 border-pix-butter p-6 shadow-pixel-green-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className={`${hd} text-4xl`}>Batch result</h3>
-              <p className="mt-2 text-lg text-[#fff7a1]/70">
+              <p className="mt-2 text-lg text-pix-butter/70">
                 {outcome.rows.length} created · {outcome.errors.length} failed
                 {outcome.mailRequested && ` · ${outcome.rows.filter((r) => r.mail === "sent").length} emailed`}
               </p>
@@ -1274,13 +1260,13 @@ function ProvisionTab() {
 
           {outcome.rows.length > 0 && (
             <>
-              <p className="mt-4 text-base text-[#e26a56]">
+              <p className="mt-4 text-base text-pix-coral">
                 Temporary passwords are shown only now. Copy or download them before leaving this page.
               </p>
               <div className={`${BOX} mt-4 overflow-x-auto`}>
                 <table className="w-full min-w-[640px] text-base">
                   <thead>
-                    <tr className="border-b-4 border-[#2c8f8f]">
+                    <tr className="border-b-4 border-pix-teal">
                       {["Member", "Email", "Temporary password", "Email"].map((h) => (
                         <th key={h} scope="col" className={TH}>{h}</th>
                       ))}
@@ -1288,17 +1274,17 @@ function ProvisionTab() {
                   </thead>
                   <tbody>
                     {outcome.rows.map((r) => (
-                      <tr key={r.memberId} className="border-b-2 border-[#fff7a1]/15 last:border-0">
+                      <tr key={r.memberId} className="border-b-2 border-pix-butter/15 last:border-0">
                         <td className="px-4 py-2">
                           <p className="max-w-[200px] truncate">{r.name || r.memberId}</p>
-                          <p className="text-sm text-[#fff7a1]/55">{r.memberId}</p>
+                          <p className="text-sm text-pix-butter/55">{r.memberId}</p>
                         </td>
                         <td className="px-4 py-2">{r.email}</td>
                         <td className="select-all px-4 py-2 text-lg">{r.temporaryPassword}</td>
                         <td className="px-4 py-2">
                           <Pill text={MAIL_PILL[r.mail].text} colorClass={MAIL_PILL[r.mail].cls} />
                           {r.mail === "failed" && r.mailReason && (
-                            <p className="mt-1 max-w-[220px] text-sm text-[#e26a56]">{r.mailReason}</p>
+                            <p className="mt-1 max-w-[220px] text-sm text-pix-coral">{r.mailReason}</p>
                           )}
                         </td>
                       </tr>
@@ -1310,13 +1296,13 @@ function ProvisionTab() {
           )}
 
           {outcome.errors.length > 0 && (
-            <div className="mt-6 border-4 border-[#b32a0e] p-4" role="alert">
+            <div className="mt-6 border-4 border-pix-rust p-4" role="alert">
               <p className="flex items-center gap-2 text-lg"><AlertTriangle size={18} /> Couldn&apos;t provision</p>
               <ul className="mt-2 space-y-1 text-base">
                 {outcome.errors.map((er) => (
                   <li key={er.memberId}>
-                    <span className="text-[#fff7a1]">{er.name ? `${er.name} (${er.memberId})` : er.memberId}</span>
-                    <span className="text-[#fff7a1]/60"> — {er.reason}</span>
+                    <span className="text-pix-butter">{er.name ? `${er.name} (${er.memberId})` : er.memberId}</span>
+                    <span className="text-pix-butter/60"> — {er.reason}</span>
                   </li>
                 ))}
               </ul>
@@ -1326,7 +1312,7 @@ function ProvisionTab() {
       )}
 
       {/* One-off: for a member not in the list above */}
-      <div className="mt-16 border-t-4 border-[#fff7a1]/20 pt-10">
+      <div className="mt-16 border-t-4 border-pix-butter/20 pt-10">
         <ManualProvision onDone={load} />
       </div>
     </div>
@@ -1379,7 +1365,7 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
   return (
     <div className="max-w-xl">
       <h3 className={`${hd} text-4xl`}>Provision by member ID</h3>
-      <p className="mt-2 text-xl text-[#fff7a1]/70">For a single member who isn&apos;t in the list above.</p>
+      <p className="mt-2 text-xl text-pix-butter/70">For a single member who isn&apos;t in the list above.</p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-5">
         <Field label="Member ID *" error={errors.memberId} hint="Must already exist in the member roster.">
@@ -1410,22 +1396,22 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
         <div
           className={`mt-8 border-4 p-5 ${
             result.success
-              ? "border-[#3aaa6e] shadow-[6px_6px_0_#3aaa6e]"
-              : "border-[#b32a0e] bg-[#b32a0e]"
+              ? "border-pix-green shadow-pixel-green-6"
+              : "border-pix-rust bg-pix-rust"
           }`}
         >
           {result.success ? (
             <>
-              <div className="mb-3 flex items-center gap-2 text-[#3aaa6e]">
+              <div className="mb-3 flex items-center gap-2 text-pix-green">
                 <Check size={18} />
                 <p className="text-xl">Account provisioned</p>
               </div>
-              <p className="mb-2 text-base text-[#fff7a1]/70">Share these credentials securely:</p>
-              <div className="flex items-center justify-between gap-3 border-4 border-[#fff7a1]/40 px-4 py-2.5">
-                <span className="text-base text-[#fff7a1]/60">Temporary password</span>
+              <p className="mb-2 text-base text-pix-butter/70">Share these credentials securely:</p>
+              <div className="flex items-center justify-between gap-3 border-4 border-pix-butter/40 px-4 py-2.5">
+                <span className="text-base text-pix-butter/60">Temporary password</span>
                 <span className="select-all text-lg">{result.temporaryPassword}</span>
               </div>
-              <p className="mt-3 text-base text-[#fff7a1]/55">The member must change their password on first login.</p>
+              <p className="mt-3 text-base text-pix-butter/55">The member must change their password on first login.</p>
             </>
           ) : (
             <div className="flex items-start gap-2.5" role="alert">
@@ -1488,7 +1474,7 @@ function RolesTab({ callerParticipantId }: { callerParticipantId: string }) {
       {loading && <div className="py-8"><Spinner /></div>}
 
       {!loading && search && members.length === 0 && (
-        <p className="mt-6 text-lg text-[#fff7a1]/60">No accounts found.</p>
+        <p className="mt-6 text-lg text-pix-butter/60">No accounts found.</p>
       )}
 
       <ul className="mt-6 space-y-5">
@@ -1499,8 +1485,8 @@ function RolesTab({ callerParticipantId }: { callerParticipantId: string }) {
             <li key={m.participant_id} className={`${BOX} flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between`}>
               <div className="min-w-0">
                 <p className="truncate text-xl">{handle}</p>
-                <p className="truncate text-base text-[#fff7a1]/55">{m.email ?? m.supplied_name}</p>
-                {m.member_roster_id && <p className="mt-0.5 text-sm text-[#fff7a1]/45">{m.member_roster_id}</p>}
+                <p className="truncate text-base text-pix-butter/55">{m.email ?? m.supplied_name}</p>
+                {m.member_roster_id && <p className="mt-0.5 text-sm text-pix-butter/45">{m.member_roster_id}</p>}
               </div>
               <RoleToggles
                 roles={roles}
@@ -1531,7 +1517,7 @@ export function AdminDashboard({ callerParticipantId }: { callerParticipantId: s
   const [tab, setTab] = useState<Tab>("overview");
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />
@@ -1558,8 +1544,8 @@ export function AdminDashboard({ callerParticipantId }: { callerParticipantId: s
                   onClick={() => setTab(id)}
                   className={`flex items-center gap-2 border-4 px-5 py-2 text-lg transition-transform ${focus} ${
                     active
-                      ? "border-black bg-[#fff7a1] text-black shadow-[4px_4px_0_#2c8f8f]"
-                      : "border-[#2c8f8f] text-[#fff7a1] hover:bg-[#2c8f8f] hover:text-black"
+                      ? "border-black bg-pix-butter text-black shadow-pixel-teal-4"
+                      : "border-pix-teal text-pix-butter hover:bg-pix-teal hover:text-black"
                   }`}
                 >
                   <Icon size={16} aria-hidden="true" />

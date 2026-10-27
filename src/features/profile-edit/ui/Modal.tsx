@@ -74,11 +74,11 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`flex max-h-[90vh] w-full flex-col border-4 outline-none shadow-[8px_8px_0_#2c8f8f] ${
+        className={`flex max-h-[90vh] w-full flex-col border-4 outline-none shadow-pixel-teal-8 ${
           wide ? "max-w-2xl" : "max-w-sm"
-        } ${dark ? "border-[#fff7a1] bg-black text-[#fff7a1]" : "border-black bg-[#fff7a1] text-black"}`}
+        } ${dark ? "border-pix-butter bg-black text-pix-butter" : "border-black bg-pix-butter text-black"}`}
       >
-        <div className={`flex shrink-0 items-center justify-between gap-4 border-b-4 px-5 py-3 ${dark ? "border-[#fff7a1]" : "border-black"}`}>
+        <div className={`flex shrink-0 items-center justify-between gap-4 border-b-4 px-5 py-3 ${dark ? "border-pix-butter" : "border-black"}`}>
           <h2 id={titleId} className={`${headingClass} text-4xl`}>
             {title}
           </h2>
@@ -87,7 +87,7 @@ export function Modal({
             onClick={onClose}
             aria-label="Close"
             className={`flex h-9 w-9 shrink-0 items-center justify-center border-4 transition-colors ${focus} ${
-              dark ? "border-[#fff7a1] hover:bg-[#fff7a1] hover:text-black" : "border-black hover:bg-black hover:text-[#fff7a1]"
+              dark ? "border-pix-butter hover:bg-pix-butter hover:text-black" : "border-black hover:bg-black hover:text-pix-butter"
             }`}
           >
             <CloseIcon />

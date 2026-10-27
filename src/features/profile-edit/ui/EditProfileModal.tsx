@@ -30,7 +30,7 @@ function daysUntilDeletion(iso: string): number {
 }
 
 const SUPPORT_EMAIL = SOCIALS.email;
-const mutedText = "text-sm text-[#fff7a1]/60";
+const mutedText = "text-sm text-pix-butter/60";
 
 export function EditProfileModal({
   api,
@@ -77,8 +77,8 @@ export function EditProfileModal({
     setDeleteBusy(false);
   }
 
-  const groupTitle = `${headingClass} text-3xl text-[#2c8f8f]`;
-  const group = "border-t-4 border-dashed border-[#fff7a1]/25 pt-6 first:border-t-0 first:pt-0";
+  const groupTitle = `${headingClass} text-3xl text-pix-teal`;
+  const group = "border-t-4 border-dashed border-pix-butter/25 pt-6 first:border-t-0 first:pt-0";
 
   return (
     <Modal title="Edit profile" onClose={onClose} bodyClass={bodyClass} headingClass={headingClass} wide>
@@ -104,7 +104,7 @@ export function EditProfileModal({
               <EditableField
                 id="username"
                 label="Username"
-                badge={<span className="border-2 border-[#3aaa6e] px-1.5 text-xs text-[#3aaa6e]">one-time</span>}
+                badge={<span className="border-2 border-pix-green px-1.5 text-xs text-pix-green">one-time</span>}
                 value={profile.username}
                 placeholder="e.g. cloudbuilder"
                 hint="6–24 characters. Start with a letter; letters, numbers, and _ only. You can only set this once."
@@ -112,7 +112,7 @@ export function EditProfileModal({
               />
             ) : (
               <div>
-                <dt className="text-sm uppercase tracking-wide text-[#fff7a1]/70">Username</dt>
+                <dt className="text-sm uppercase tracking-wide text-pix-butter/70">Username</dt>
                 {profile.username ? (
                   <>
                     <dd className="mt-1 break-words text-lg">{profile.username}</dd>
@@ -128,7 +128,7 @@ export function EditProfileModal({
                     </p>
                   </>
                 ) : (
-                  <dd className="mt-1 text-lg text-[#fff7a1]/50">No username set.</dd>
+                  <dd className="mt-1 text-lg text-pix-butter/50">No username set.</dd>
                 )}
               </div>
             )}
@@ -181,7 +181,7 @@ export function EditProfileModal({
           <h3 id="edit-public" className={groupTitle}>Public profile</h3>
           <dl className="mt-4 flex flex-col gap-5">
             <div>
-              <dt className="text-sm uppercase tracking-wide text-[#fff7a1]/70">Public directory</dt>
+              <dt className="text-sm uppercase tracking-wide text-pix-butter/70">Public directory</dt>
               <dd className="mt-2">
                 <div className="flex items-center gap-3">
                   <button
@@ -191,13 +191,13 @@ export function EditProfileModal({
                     aria-label="Show profile in public member directory"
                     onClick={toggleDirectory}
                     disabled={dirBusy}
-                    className={`relative inline-block h-9 w-[4.5rem] shrink-0 border-4 border-[#fff7a1] transition-colors disabled:opacity-50 ${focus} ${
-                      profile.directoryVisible ? "bg-[#3aaa6e]" : "bg-black"
+                    className={`relative inline-block h-9 w-[4.5rem] shrink-0 border-4 border-pix-butter transition-colors disabled:opacity-50 ${focus} ${
+                      profile.directoryVisible ? "bg-pix-green" : "bg-black"
                     }`}
                   >
                     <span
                       aria-hidden="true"
-                      className={`absolute top-1 h-5 w-5 bg-[#fff7a1] transition-[left] ${
+                      className={`absolute top-1 h-5 w-5 bg-pix-butter transition-[left] ${
                         profile.directoryVisible ? "left-[calc(100%-1.5rem)]" : "left-1"
                       }`}
                     />
@@ -210,7 +210,7 @@ export function EditProfileModal({
                     : "Enable to appear in the public member directory."}
                 </p>
                 {dirError && (
-                  <p role="alert" className="mt-2 text-sm text-[#e26a56]">{dirError}</p>
+                  <p role="alert" className="mt-2 text-sm text-pix-coral">{dirError}</p>
                 )}
                 {profile.directoryVisible && (
                   <p className={`mt-2 ${mutedText}`}>
@@ -247,7 +247,7 @@ export function EditProfileModal({
           <h3 id="edit-ids" className={groupTitle}>IDs</h3>
           <dl className="mt-4 flex flex-col gap-5">
             <div>
-              <dt className="text-sm uppercase tracking-wide text-[#fff7a1]/70">Member ID</dt>
+              <dt className="text-sm uppercase tracking-wide text-pix-butter/70">Member ID</dt>
               {memberId ? (
                 <>
                   <dd className="mt-1 text-lg">{memberId}</dd>
@@ -263,14 +263,14 @@ export function EditProfileModal({
                   </p>
                 </>
               ) : (
-                <dd className="mt-1 text-lg text-[#fff7a1]/50">No member ID assigned.</dd>
+                <dd className="mt-1 text-lg text-pix-butter/50">No member ID assigned.</dd>
               )}
             </div>
 
             {participantId && (
               <div>
-                <dt className="text-sm uppercase tracking-wide text-[#fff7a1]/70">Participant ID</dt>
-                <dd className="mt-1 break-all text-sm text-[#fff7a1]/60">{participantId}</dd>
+                <dt className="text-sm uppercase tracking-wide text-pix-butter/70">Participant ID</dt>
+                <dd className="mt-1 break-all text-sm text-pix-butter/60">{participantId}</dd>
               </div>
             )}
           </dl>
@@ -278,30 +278,30 @@ export function EditProfileModal({
 
         {/* ── Danger zone ───────────────────────────────────────────────── */}
         <section className={group} aria-labelledby="edit-danger">
-          <h3 id="edit-danger" className={`${headingClass} text-3xl text-[#e26a56]`}>Danger zone</h3>
+          <h3 id="edit-danger" className={`${headingClass} text-3xl text-pix-coral`}>Danger zone</h3>
 
-          <div className="mt-4 border-4 border-[#b32a0e] p-4">
+          <div className="mt-4 border-4 border-pix-rust p-4">
             {profile.deletionScheduledAt ? (
               <>
-                <p className="text-lg text-[#e26a56]">Account deletion scheduled</p>
+                <p className="text-lg text-pix-coral">Account deletion scheduled</p>
                 <p className={`mt-1 ${mutedText}`}>
                   Your account will be permanently deleted on{" "}
-                  <span className="text-[#fff7a1]">{formatDeletionDate(profile.deletionScheduledAt)}</span>{" "}
+                  <span className="text-pix-butter">{formatDeletionDate(profile.deletionScheduledAt)}</span>{" "}
                   ({daysUntilDeletion(profile.deletionScheduledAt)} days remaining).
                 </p>
-                {deleteError && <p role="alert" className="mt-2 text-sm text-[#e26a56]">{deleteError}</p>}
+                {deleteError && <p role="alert" className="mt-2 text-sm text-pix-coral">{deleteError}</p>}
                 <button type="button" onClick={handleCancelDeletion} disabled={deleteBusy} className={`${btnSmGhost} mt-3`}>
                   {deleteBusy ? "Cancelling…" : "Cancel deletion"}
                 </button>
               </>
             ) : confirmDelete ? (
               <>
-                <p className="text-lg text-[#e26a56]">Are you sure?</p>
+                <p className="text-lg text-pix-coral">Are you sure?</p>
                 <p className={`mt-1 ${mutedText}`}>
                   Your account will be scheduled for permanent deletion in{" "}
-                  <span className="text-[#fff7a1]">30 days</span>. You can cancel at any time before then.
+                  <span className="text-pix-butter">30 days</span>. You can cancel at any time before then.
                 </p>
-                {deleteError && <p role="alert" className="mt-2 text-sm text-[#e26a56]">{deleteError}</p>}
+                {deleteError && <p role="alert" className="mt-2 text-sm text-pix-coral">{deleteError}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={handleRequestDeletion} disabled={deleteBusy} className={btnSmDanger}>
                     {deleteBusy ? "Scheduling…" : "Yes, delete my account"}

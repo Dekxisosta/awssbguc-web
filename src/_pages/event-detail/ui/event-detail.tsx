@@ -30,9 +30,9 @@ import {
 const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
-const CARD_BORDERS = ["border-[#2c8f8f]", "border-[#b89a0a]", "border-[#b32a0e]", "border-[#3aaa6e]"];
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
+const CARD_BORDERS = ["border-pix-teal", "border-pix-mustard", "border-pix-rust", "border-pix-green"];
 
 /** How many registrants are drawn before the rest fold into a disclosure. */
 const ATTENDEES_SHOWN = 48;
@@ -80,7 +80,7 @@ function WhenPanel({ event, pageUrl, color }: { event: EventRow; pageUrl: string
   const canAddToCalendar = event.status === "not_started" || event.status === "ongoing";
 
   return (
-    <section aria-labelledby="when-heading" className="border-4 border-[#fff7a1] bg-black p-5 shadow-[6px_6px_0_#b89a0a]">
+    <section aria-labelledby="when-heading" className="border-4 border-pix-butter bg-black p-5 shadow-pixel-mustard-6">
       <h2 id="when-heading" className="sr-only">
         When
       </h2>
@@ -99,19 +99,19 @@ function WhenPanel({ event, pageUrl, color }: { event: EventRow; pageUrl: string
           {sameDay ? (
             <>
               <p>{fmtDay(event.starts_at, tz)}</p>
-              <p className="text-[#fff7a1]/80">
-                {fmtTime(event.starts_at, tz)} – {fmtTime(event.ends_at, tz)} <span className="text-[#fff7a1]/60">{zone}</span>
+              <p className="text-pix-butter/80">
+                {fmtTime(event.starts_at, tz)} – {fmtTime(event.ends_at, tz)} <span className="text-pix-butter/60">{zone}</span>
               </p>
             </>
           ) : (
             <>
               <p>
-                <span className="text-[#fff7a1]/60">From </span>
+                <span className="text-pix-butter/60">From </span>
                 {fmtShortDate(event.starts_at, tz)}, {fmtTime(event.starts_at, tz)}
               </p>
               <p>
-                <span className="text-[#fff7a1]/60">To </span>
-                {fmtShortDate(event.ends_at, tz)}, {fmtTime(event.ends_at, tz)} <span className="text-[#fff7a1]/60">{zone}</span>
+                <span className="text-pix-butter/60">To </span>
+                {fmtShortDate(event.ends_at, tz)}, {fmtTime(event.ends_at, tz)} <span className="text-pix-butter/60">{zone}</span>
               </p>
             </>
           )}
@@ -123,7 +123,7 @@ function WhenPanel({ event, pageUrl, color }: { event: EventRow; pageUrl: string
           href={googleCalendarUrl(event, pageUrl)}
           target="_blank"
           rel="noopener noreferrer"
-          className={`mt-5 inline-block border-4 border-[#fff7a1]/60 px-4 py-1.5 text-base transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+          className={`mt-5 inline-block border-4 border-pix-butter/60 px-4 py-1.5 text-base transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
         >
           Add to Google Calendar
         </a>
@@ -165,12 +165,12 @@ function Schedule({ event, color }: { event: EventRow; color: string }) {
                 >
                   <p className="text-lg leading-snug">
                     {fmtTime(item.starts_at, tz)}
-                    {item.ends_at && <span className="block text-base text-[#fff7a1]/60">to {fmtTime(item.ends_at, tz)}</span>}
+                    {item.ends_at && <span className="block text-base text-pix-butter/60">to {fmtTime(item.ends_at, tz)}</span>}
                   </p>
                   <div className="min-w-0">
                     <h3 className={`${hd} break-words text-3xl`}>{item.title}</h3>
-                    {item.speaker && <p className="mt-1 text-base text-[#fff7a1]/70">with {item.speaker}</p>}
-                    {item.description && <p className="mt-2 max-w-xl text-base leading-snug text-[#fff7a1]/85">{item.description}</p>}
+                    {item.speaker && <p className="mt-1 text-base text-pix-butter/70">with {item.speaker}</p>}
+                    {item.description && <p className="mt-2 max-w-xl text-base leading-snug text-pix-butter/85">{item.description}</p>}
                   </div>
                 </li>
               ))}
@@ -191,12 +191,12 @@ function Where({ event }: { event: EventRow }) {
   return (
     <section aria-labelledby="where-heading">
       <SectionTitle id="where-heading">{event.format === "online" ? "Join online" : "Where"}</SectionTitle>
-      <div className="mt-6 flex w-fit max-w-full flex-col gap-4 border-4 border-[#2c8f8f] p-5 shadow-[6px_6px_0_#2c8f8f]">
+      <div className="mt-6 flex w-fit max-w-full flex-col gap-4 border-4 border-pix-teal p-5 shadow-pixel-teal-6">
         <div className="flex gap-3 text-lg leading-snug">
           <PinIcon />
           <div className="min-w-0">
             {event.location && <p className="break-words">{event.location}</p>}
-            {event.location_address && <p className="mt-1 break-words text-[#fff7a1]/75">{event.location_address}</p>}
+            {event.location_address && <p className="mt-1 break-words text-pix-butter/75">{event.location_address}</p>}
           </div>
         </div>
         {event.location_url && (
@@ -204,7 +204,7 @@ function Where({ event }: { event: EventRow }) {
             href={event.location_url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`w-fit border-4 border-[#fff7a1] px-4 py-1.5 text-base transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+            className={`w-fit border-4 border-pix-butter px-4 py-1.5 text-base transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
           >
             {linkLabel} ↗
           </a>
@@ -221,14 +221,14 @@ function AttendeeTile({ attendee, border }: { attendee: Pick<EventPublicAttendee
     <li>
       <Link
         href={`/members/${encodeURIComponent(attendee.username)}`}
-        className={`flex items-center gap-3 border-4 ${border} p-2 transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+        className={`flex items-center gap-3 border-4 ${border} p-2 transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
       >
         {attendee.avatar_url ? (
-          <span className="block h-10 w-10 shrink-0 border-2 border-[#fff7a1]">
+          <span className="block h-10 w-10 shrink-0 border-2 border-pix-butter">
             <PixelPhoto src={attendee.avatar_url} width={16} height={16} />
           </span>
         ) : (
-          <span className={`${hd} flex h-10 w-10 shrink-0 items-center justify-center border-2 border-[#fff7a1] bg-[#fff7a1] text-2xl text-black`}>
+          <span className={`${hd} flex h-10 w-10 shrink-0 items-center justify-center border-2 border-pix-butter bg-pix-butter text-2xl text-black`}>
             {attendee.username.slice(0, 1).toUpperCase()}
           </span>
         )}
@@ -266,7 +266,7 @@ function Going({
         <>
           <p className="mt-6 text-xl leading-snug">
             {counts.total} {past ? (counts.total === 1 ? "registrant" : "registrants") : "going"}
-            {event.capacity !== null && <span className="text-[#fff7a1]/70"> · {event.capacity} seats</span>}
+            {event.capacity !== null && <span className="text-pix-butter/70"> · {event.capacity} seats</span>}
           </p>
 
           {shown.length > 0 && (
@@ -279,7 +279,7 @@ function Going({
 
           {rest.length > 0 && (
             <details className="group mt-4">
-              <summary className={`w-fit cursor-pointer border-4 border-[#fff7a1]/60 px-4 py-1.5 text-base transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}>
+              <summary className={`w-fit cursor-pointer border-4 border-pix-butter/60 px-4 py-1.5 text-base transition-colors hover:bg-pix-butter hover:text-black ${focus}`}>
                 <span className="group-open:hidden">Show {rest.length} more</span>
                 <span className="hidden group-open:inline">Show fewer</span>
               </summary>
@@ -292,13 +292,13 @@ function Going({
           )}
 
           {counts.hidden > 0 && (
-            <p className="mt-5 inline-block border-4 border-dashed border-[#fff7a1]/40 px-4 py-2 text-base text-[#fff7a1]/80">
+            <p className="mt-5 inline-block border-4 border-dashed border-pix-butter/40 px-4 py-2 text-base text-pix-butter/80">
               {shown.length > 0 ? "+ " : ""}
               {counts.hidden} {counts.hidden === 1 ? "member keeps" : "members keep"} their registration private
             </p>
           )}
 
-          <p className="mt-5 max-w-xl text-sm leading-snug text-[#fff7a1]/60">
+          <p className="mt-5 max-w-xl text-sm leading-snug text-pix-butter/60">
             Names appear only for members with a public profile. Everyone else counts toward the total.
           </p>
         </>
@@ -350,7 +350,7 @@ export function EventDetailPage({
   };
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <PixelClouds />
       <SidePixels side="left" />
@@ -367,8 +367,8 @@ export function EventDetailPage({
             <span className="px-2 py-0.5 text-base text-black" style={{ background: color }}>
               {STATUS_LABELS[event.status]}
             </span>
-            <span className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-base">{FORMAT_LABELS[event.format]}</span>
-            {event.host_name && <span className="text-base text-[#fff7a1]/70">Hosted by {event.host_name}</span>}
+            <span className="border-2 border-pix-butter/60 px-2 py-0.5 text-base">{FORMAT_LABELS[event.format]}</span>
+            {event.host_name && <span className="text-base text-pix-butter/70">Hosted by {event.host_name}</span>}
           </div>
 
           <h1 className={`${hd} mt-5 break-words text-[clamp(3.5rem,10vw,8rem)]`}>{event.name}</h1>
@@ -378,7 +378,7 @@ export function EventDetailPage({
           {event.tags.length > 0 && (
             <ul className="mt-6 flex flex-wrap gap-2" aria-label="Topics">
               {event.tags.map((tag) => (
-                <li key={tag} className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-sm">
+                <li key={tag} className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">
                   {tag}
                 </li>
               ))}
@@ -386,7 +386,7 @@ export function EventDetailPage({
           )}
 
           {event.status === "cancelled" && (
-            <p role="status" className="mt-6 inline-block border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-2 text-lg">
+            <p role="status" className="mt-6 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-2 text-lg">
               This event was cancelled.
             </p>
           )}
@@ -432,7 +432,7 @@ export function EventDetailPage({
               {event.description && (
                 <section aria-labelledby="about-heading">
                   <SectionTitle id="about-heading">About this event</SectionTitle>
-                  <p className="mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-[#fff7a1]/90">{event.description}</p>
+                  <p className="mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-pix-butter/90">{event.description}</p>
                 </section>
               )}
 

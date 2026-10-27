@@ -22,7 +22,7 @@ export default function PrivacyPage() {
       </LegalSection>
 
       <LegalSection title="2. Information We Collect">
-        <ul className="list-disc space-y-2 pl-6 marker:text-[#b89a0a]">
+        <ul className="list-disc space-y-2 pl-6 marker:text-pix-mustard">
           <li>
             <strong>Account information:</strong> your name, email address, and password (stored securely
             via our authentication provider, Supabase).
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
       </LegalSection>
 
       <LegalSection title="3. How We Use Your Information">
-        <ul className="list-disc space-y-2 pl-6 marker:text-[#b89a0a]">
+        <ul className="list-disc space-y-2 pl-6 marker:text-pix-mustard">
           <li>To create and manage your account and member profile.</li>
           <li>To process event registrations, verify attendance, and issue certificates or credits.</li>
           <li>To communicate updates, announcements, and event-related information to you.</li>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
         <p>
           We do not sell your personal information. We may share limited information:
         </p>
-        <ul className="list-disc space-y-2 pl-6 marker:text-[#b89a0a]">
+        <ul className="list-disc space-y-2 pl-6 marker:text-pix-mustard">
           <li>With the University of Cabuyao&apos;s Student Affairs and Services Department (SASD), where required for accreditation or compliance.</li>
           <li>With the AWS Builder Center / AWS Student Community program, where required to verify participation in AWS-affiliated events or certifications.</li>
           <li>With service providers (such as Supabase) strictly to operate the Platform on our behalf.</li>
@@ -102,7 +102,7 @@ export default function PrivacyPage() {
       <LegalSection title="9. Contact">
         <p>
           For privacy questions or requests, contact us at{" "}
-          <a href={MAILTO} className="underline underline-offset-4 hover:bg-[#fff7a1] hover:text-black">
+          <a href={MAILTO} className="underline underline-offset-4 hover:bg-pix-butter hover:text-black">
             {SOCIALS.email}
           </a>
           .

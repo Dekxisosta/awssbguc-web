@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { colors } from "@/tailwind.tokens";
 
 const PixelBlast = dynamic(
   () => import("@/src/widgets/pixel-blast/ui/PixelBlast"),
@@ -35,7 +36,7 @@ export default function LandingPage() {
           <PixelBlast
             variant="circle"
             pixelSize={5}
-            color="#00e482"
+            color={colors.brand.green}
             patternScale={1.75}
             patternDensity={1.05}
             pixelSizeJitter={0.5}
@@ -69,7 +70,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-[#00e482]"
+            className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-brand-green"
           >
             AWS Student Builder Group — University of Cabuyao
           </motion.p>
@@ -81,7 +82,7 @@ export default function LandingPage() {
             className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl"
           >
             Build on the cloud.{" "}
-            <span className="text-[#00e482]">Learn together.</span>
+            <span className="text-brand-green">Learn together.</span>
           </motion.h1>
 
           <motion.p
@@ -103,7 +104,7 @@ export default function LandingPage() {
           >
             <Link
               href="/login"
-              className="rounded-md bg-[#161d27] px-6 py-2.5 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90"
+              className="rounded-md bg-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-green transition-opacity hover:opacity-90"
             >
               Sign in
             </Link>
@@ -151,7 +152,7 @@ export default function LandingPage() {
               transition={{ duration: 0.55, delay: i * 0.1, ease: "easeOut" }}
               className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-6 py-6"
             >
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#00e482]">{label}</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand-green">{label}</p>
               <p className="mt-2 text-sm leading-relaxed text-neutral-400">{body}</p>
             </motion.div>
           ))}
@@ -166,7 +167,7 @@ export default function LandingPage() {
         >
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 rounded-md bg-[#161d27] px-6 py-2.5 text-sm font-semibold text-[#00e482] transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-md bg-brand-dark px-6 py-2.5 text-sm font-semibold text-brand-green transition-opacity hover:opacity-90"
           >
             Get started
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

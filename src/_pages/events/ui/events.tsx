@@ -11,7 +11,7 @@ export const eventsMetadata = { title: "Events — AWSSBG-UC" };
 const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 
 interface EventsPageProps {
   events: EventRow[];
@@ -43,7 +43,7 @@ export function EventsPage({ events, registrationMap, participantId, error }: Ev
   );
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />
@@ -62,18 +62,18 @@ export function EventsPage({ events, registrationMap, participantId, error }: Ev
 
         <section className={`${wrap} py-12 sm:py-16`}>
           {error && (
-            <p role="alert" className="inline-block border-4 border-[#b32a0e] bg-[#b32a0e] px-4 py-3 text-lg">
+            <p role="alert" className="inline-block border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">
               Could not load events. Please try refreshing.
             </p>
           )}
 
           {!error && events.length === 0 && (
-            <div className="mx-auto max-w-xl border-4 border-[#2c8f8f] p-8 text-center shadow-[6px_6px_0_#2c8f8f]">
+            <div className="mx-auto max-w-xl border-4 border-pix-teal p-8 text-center shadow-pixel-teal-6">
               <p className={`${hd} text-5xl`}>No events yet</p>
               <p className="mt-3 text-lg">Check back soon.</p>
               <Link
                 href="/about"
-                className="mt-6 inline-block border-4 border-[#fff7a1] px-6 py-3 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]"
+                className="mt-6 inline-block border-4 border-pix-butter px-6 py-3 text-lg transition-colors hover:bg-pix-butter hover:text-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal"
               >
                 What is AWSSBG-UC?
               </Link>

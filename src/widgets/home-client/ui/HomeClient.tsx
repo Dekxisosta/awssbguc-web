@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { JetBrains_Mono, Jersey_10, Pixelify_Sans } from "next/font/google";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { GlobeOrbit } from "./GlobeOrbit";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
@@ -12,15 +12,19 @@ import type { PublicMemberProfile } from "@/src/entities/member";
 
 /**
  * Home page in the style of a pixel-art portfolio:
- *  - black ground, butter-yellow type, bitmap fonts (Jersey 10 for headlines, Pixelify Sans for text)
+ *  - black ground, butter-yellow type, Jersey 10 (pixel) for headlines, JetBrains Mono for text
  *  - one motif: a vertical stripe "tunnel" with stepped edges, reused as thin dividers
- *  - the hero photo is pixelated on a canvas; a butter card overlaps it
+ *  - the hero is a two-column split: text on the left, a full-colour photo with a striped panel and a butter card on the right
  *  - hard offset shadows and square corners, no blur, no gradients, no rounded anything
  *  - only the moving side pixels use the green-teal palette from the Operations poster
  */
 
-export const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], display: "swap" });
+// Body font. Still exported as `pixel` so other pages that import it pick up JetBrains Mono too.
+export const pixel = jetbrains;
 const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
+// Pixel face with a larger x-height than Jersey 10, so small caps lines stay readable.
+const pixelify = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 
 // Headlines: the element-level heading font in globals.css would win over inheritance, so set the class directly.
 export const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
@@ -28,8 +32,8 @@ export const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal
 const HERO_IMAGES = ["/images/hero/1.jpg", "/images/hero/2.jpg", "/images/hero/3.jpg", "/images/hero/4.jpg"];
 
 const STRIPES: [string, number][] = [
-  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
-  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
+  ["#b32a0e", 8], ["#2c8f8f", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
+  ["#5f9e80", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#2c8f8f", 10],
 ];
 const STRIPE_BG = (() => {
   let at = 0;
@@ -41,11 +45,10 @@ const STRIPE_BG = (() => {
   return `linear-gradient(90deg, ${stops.join(", ")})`;
 })();
 
-// Narrow column that widens into a stepped base, like the reference.
-const FLARE =
-  "polygon(12% 0, 88% 0, 88% 58%, 92% 58%, 92% 70%, 96% 70%, 96% 82%, 100% 82%, 100% 100%, 0 100%, 0 82%, 4% 82%, 4% 70%, 8% 70%, 8% 58%, 12% 58%)";
-
 export const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
+// Home page only: lets desktop content use more of the screen. Other pages keep `wrap`.
+const WIDE_MAX = 1680;
+export const wrapWide = "mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-12 2xl:px-16";
 export const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
 export const btnDark = `inline-block border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
 
@@ -189,7 +192,7 @@ const rand = (min: number, max: number) => min + Math.floor(Math.random() * (max
  * (and a little different per pixel, so they drift instead of tracing identical squares), and each pixel
  * leaves a short fading trail. Densest at the outer edge, fading out toward the content.
  */
-export function SidePixels({ side }: { side: "left" | "right" }) {
+export function SidePixels({ side, contentWidth = 1300 }: { side: "left" | "right"; contentWidth?: number }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduce = useReducedMotion();
@@ -274,7 +277,8 @@ export function SidePixels({ side }: { side: "left" | "right" }) {
     <div
       ref={wrapRef}
       aria-hidden="true"
-      className={`pointer-events-none absolute inset-y-0 z-0 w-[clamp(16px,calc((100%_-_1300px)/2),320px)] ${side === "left" ? "left-0" : "right-0"}`}
+      style={{ width: `clamp(16px, calc((100% - ${contentWidth}px) / 2), 320px)` }}
+      className={`pointer-events-none absolute inset-y-0 z-0 ${side === "left" ? "left-0" : "right-0"}`}
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
     </div>
@@ -380,6 +384,7 @@ export function PixelClouds() {
 }
 
 // ─── Pixelated photo ─────────────────────────────────────────────────────────
+// No longer used by the members section (avatars are now plain images). Kept because it is exported.
 
 const PW = 40;
 const PH = 50;
@@ -502,7 +507,7 @@ function WanderingDuck() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none relative mx-auto mt-10 h-[260px] w-full max-w-sm border-b-4 border-dashed border-[#2c8f8f]/40"
+      className="pointer-events-none relative mt-6 h-[260px] w-full border-b-4 border-dashed border-[#2c8f8f]/40 lg:mt-[2vh] lg:h-[clamp(252px,30vh,300px)] xl:mt-0"
     >
       <div className="absolute bottom-0 left-0 h-full" style={{ width: `calc(100% - ${DUCK_W}px)` }}>
         <motion.div
@@ -589,43 +594,53 @@ function Tunnel({ registeredCount, participantCount }: { registeredCount: number
   ].filter((s) => s.value > 0);
 
   return (
-    <div className="relative mx-auto w-full max-w-[400px] pb-8">
-      <div aria-hidden="true" className="absolute inset-0" style={{ background: STRIPE_BG, clipPath: FLARE }} />
-      {/* Photo sits above the card (only a sliver of overlap) so it can be seen in full. */}
-      <div className="relative mx-auto w-[64%] border-4 border-black bg-black shadow-[6px_6px_0_#000]">
-        <PixelPhoto src={HERO_IMAGES[index]} width={64} height={80} />
-        <div className="absolute inset-x-0 bottom-6 flex justify-center">
-          {HERO_IMAGES.map((_, i) => (
+    <div className="relative mx-auto w-full max-w-[780px] pb-8 lg:mr-0">
+      {/* Slim striped panel peeking out behind the photo and the card. */}
+      <div aria-hidden="true" className="absolute bottom-0 left-0 top-12 w-[34%]" style={{ background: STRIPE_BG }} />
+      <div className="relative ml-[10%] aspect-[4/3] overflow-hidden border-4 border-black bg-black shadow-[8px_8px_0_#000] lg:aspect-auto lg:h-[clamp(240px,calc((100svh-64px)*0.5),640px)]">
+        {HERO_IMAGES.map((src, i) => (
+          <Image
+            key={src}
+            src={src}
+            alt=""
+            fill
+            priority={i === 0}
+            sizes="(min-width: 1024px) 48vw, 92vw"
+            className={`object-cover transition-opacity duration-700 motion-reduce:transition-none ${i === index ? "opacity-100" : "opacity-0"}`}
+          />
+        ))}
+        <div className="absolute inset-x-0 bottom-2 flex justify-center">
+          {HERO_IMAGES.map((src, i) => (
             <button
-              key={HERO_IMAGES[i]}
+              key={src}
               type="button"
               onClick={() => setIndex(i)}
               aria-label={`Show photo ${i + 1} of ${HERO_IMAGES.length}`}
               aria-current={i === index}
               className={`p-2 ${focus}`}
             >
-              <span className={`block h-2 w-2 border border-black ${i === index ? "bg-[#fff7a1]" : "bg-[#fff7a1]/40"}`} />
+              <span className={`block h-2.5 w-2.5 border border-black ${i === index ? "bg-[#fff7a1]" : "bg-[#fff7a1]/50"}`} />
             </button>
           ))}
         </div>
       </div>
-      <div className="relative z-10 mx-auto -mt-5 w-[80%] bg-[#fff7a1] p-5 text-center text-black shadow-[6px_6px_0_#000]">
-        <h2 className={`${hd} text-4xl text-balance`}>Ready to build with us?</h2>
-        <p className="mt-3 text-sm leading-snug">Free for every University of Cabuyao student. No experience needed.</p>
+      <div className="relative z-10 -mt-10 ml-auto w-[92%] bg-[#fff7a1] p-5 text-center text-black shadow-[8px_8px_0_#000] sm:w-[72%]">
+        <h2 className={`${hd} text-4xl text-balance xl:text-5xl`}>Ready to build with us?</h2>
+        <p className="mt-2 leading-snug">Free for every University of Cabuyao student. No experience needed.</p>
         {stats.length > 0 && (
-          <dl className="mt-4 flex justify-center gap-6">
+          <dl className="mt-3 flex justify-center gap-8">
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col-reverse">
-                <dt className="text-xs">{s.label}</dt>
+                <dt className="text-sm">{s.label}</dt>
                 <dd className={`${hd} text-4xl tabular-nums`}>{s.value.toLocaleString()}</dd>
               </div>
             ))}
           </dl>
         )}
-        <Link href="/signup" className={`${btnDark} mt-5 w-full`}>
+        <Link href="/signup" className={`${btnDark} mt-4 w-full`}>
           Join the community
         </Link>
-        <Link href="/events" className={`mt-3 block underline underline-offset-4 ${focus}`}>
+        <Link href="/events" className={`mt-2 block underline underline-offset-4 ${focus}`}>
           See upcoming events
         </Link>
       </div>
@@ -640,7 +655,7 @@ function Hero({ registeredCount, participantCount }: { registeredCount: number; 
     { label: "Email", href: MAILTO, external: false },
   ];
   return (
-    <section className={`${wrap} pb-14 pt-6`}>
+    <section className={`${wrapWide} flex flex-col pb-10 pt-4 lg:min-h-[calc(100svh-64px)] lg:pb-6`}>
       <nav aria-label="Find us" className="flex flex-wrap justify-center gap-3 lg:justify-end">
         {socials.map((l) => (
           <a
@@ -654,33 +669,33 @@ function Hero({ registeredCount, participantCount }: { registeredCount: number; 
         ))}
       </nav>
 
-      <div className="mt-8 grid items-center gap-12 lg:grid-cols-[1fr_400px_1fr] lg:gap-8">
-        <div className="text-center">
+      <div className="mt-4 grid flex-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10 xl:gap-20">
+        <div className="text-left">
+          {/* Magazine-style stack: kicker, masthead, deck between rules, big statement, body + duck. */}
           <p className="text-xl">Hi, we are</p>
-          <h1 className={`${hd} mt-3 text-[clamp(6rem,15vw,11rem)]`}>
-            <span className="sr-only">AWS Student Builder Group, University of Cabuyao</span>
-            <span aria-hidden="true" className="block">AWS</span>
-            <span aria-hidden="true" className="block">SBG</span>
-            <span aria-hidden="true" className="block">UC</span>
+          <h1 className={`${hd} mt-2 whitespace-nowrap text-[length:clamp(2.75rem,15vw,6rem)] lg:text-[length:clamp(4rem,min(7vw,14vh),8.5rem)]`}>
+            <span className="sr-only">Amazon Web Services Student Builder Group - University of Cabuyao</span>
+            <span aria-hidden="true">AWSSBG - UC</span>
           </h1>
-          <p className={`${hd} mt-4 text-5xl`}>&amp;</p>
-          <p className="mt-3 text-lg leading-snug">
-            we learn cloud by building
-            <br />
-            really cool things
+          <p className={`${pixelify.className} mt-3 border-y-4 border-[#2c8f8f] py-2 text-lg uppercase leading-tight tracking-wide text-[#2c8f8f] sm:text-xl`}>
+            Amazon Web Services Student Builder Group - University of Cabuyao
           </p>
+          <p className={`${hd} mt-5 text-[length:clamp(2.75rem,min(4.4vw,8vh),5.25rem)] lg:mt-[2.5vh]`}>
+            We&apos;re{" "}
+            <span className="underline decoration-[#3aaa6e] decoration-4 underline-offset-8">students</span>,{" "}
+            <span className="underline decoration-[#b89a0a] decoration-4 underline-offset-8">builders</span>,{" "}
+            <span className="underline decoration-[#2c8f8f] decoration-4 underline-offset-8">tinkerers</span>,{" "}
+            <span className="underline decoration-[#b32a0e] decoration-4 underline-offset-8">dreamers</span>.
+          </p>
+          <div className="mt-5 xl:mt-[2vh] xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-center xl:gap-8">
+            <p className="max-w-xl border-l-4 border-[#b89a0a] pl-4 text-lg leading-snug">
+              The AWS Student Builder Group of the University of Cabuyao. We run workshops, ship projects, and learn AWS together, for free.
+            </p>
+            <WanderingDuck />
+          </div>
         </div>
 
         <Tunnel registeredCount={registeredCount} participantCount={participantCount} />
-
-        <div className="text-center">
-          <p className={`${hd} text-[clamp(5rem,10vw,8rem)]`}>We&apos;re</p>
-          <p className="mx-auto mt-4 max-w-xs text-2xl uppercase leading-tight">Students, builders, tinkerers, dreamers</p>
-          <p className="mx-auto mt-6 max-w-xs leading-relaxed">
-            The AWS Student Builder Group of the University of Cabuyao. We run workshops, ship projects, and learn AWS together, for free.
-          </p>
-          <WanderingDuck />
-        </div>
       </div>
     </section>
   );
@@ -688,13 +703,13 @@ function Hero({ registeredCount, participantCount }: { registeredCount: number; 
 
 // ─── Section wrapper ─────────────────────────────────────────────────────────
 
-export function Section({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
+export function Section({ title, intro, children, wide = false }: { title: string; intro?: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <>
       <Stripes />
-      <section className={`${wrap} py-14 sm:py-20`}>
+      <section className={`${wide ? wrapWide : wrap} py-14 sm:py-20`}>
         <h2 className={`${hd} text-6xl sm:text-8xl`}>{title}</h2>
-        {intro && <p className="mt-5 max-w-xl text-lg leading-relaxed">{intro}</p>}
+        {intro && <p className={`mt-5 text-lg leading-relaxed ${wide ? "max-w-2xl" : "max-w-xl"}`}>{intro}</p>}
         <div className="mt-10">{children}</div>
       </section>
     </>
@@ -738,7 +753,7 @@ function PartnerTile({ name, logo, href, isCircle }: { name: string; logo: strin
 
 function Partners() {
   return (
-    <Section title="Community partners" intro="Student organizations and cloud communities that run events with us.">
+    <Section wide title="Community partners" intro="Student organizations and cloud communities that run events with us.">
       <div className="flex flex-wrap gap-6">
         {COMMUNITY_PARTNERS.map((p) => (
           <PartnerTile key={p.name} name={p.name} logo={p.logo} href={p.href} isCircle={p.isCircle ?? true} />
@@ -764,11 +779,11 @@ function About() {
     <>
       {/* Custom section (not <Section>) so the title, text and images share one row and line up. */}
       <Stripes />
-      <section className={`${wrap} py-14 sm:py-20`}>
-        <div className="grid items-center gap-10 md:grid-cols-[1fr_auto]">
+      <section className={`${wrapWide} py-14 sm:py-20`}>
+        <div className="grid items-center gap-10 md:grid-cols-[1fr_auto] lg:gap-16">
           <div>
             <h2 className={`${hd} text-6xl sm:text-8xl`}>What is AWSSBG-UC?</h2>
-            <p className="mt-6 max-w-2xl text-2xl leading-snug">
+            <p className="mt-6 max-w-3xl text-2xl leading-snug xl:text-3xl">
               We&apos;re the AWS Student Builder Group at the University of Cabuyao. We run workshops, ship projects, and build cloud skills together, all free and all on AWS. Every UC student is welcome. No experience needed.
             </p>
           </div>
@@ -795,7 +810,7 @@ function About() {
         </div>
       </section>
 
-      <Section title="Why join?" intro="Six pillars guide everything we do, with AWS cloud technology as the common thread.">
+      <Section wide title="Why join?" intro="Six pillars guide everything we do, with AWS cloud technology as the common thread.">
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {PILLARS.map((p) => (
             <li key={p.title} className={`border-4 ${p.border} p-5`}>
@@ -814,10 +829,10 @@ function About() {
 
 function WhatIsAws() {
   return (
-    <Section title="What is AWS?">
-      <div className="grid items-center gap-12 lg:grid-cols-2">
+    <Section wide title="What is AWS?">
+      <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
         <div>
-          <p className="text-2xl leading-snug">
+          <p className="text-2xl leading-snug xl:text-3xl">
             Amazon Web Services powers millions of businesses, from startups to governments. With over 200 services spanning compute, storage, databases, AI/ML, and security, it&apos;s the on-ramp to building anything at scale.
           </p>
           <p className="mt-5 leading-relaxed text-[#fff7a1]/80">
@@ -827,7 +842,7 @@ function WhatIsAws() {
             Browse free AWS resources
           </Link>
         </div>
-        <div className="relative mx-auto w-full max-w-[560px] border-4 border-[#b89a0a] bg-[#fff7a1] p-4 text-black shadow-[8px_8px_0_#b89a0a]">
+        <div className="relative mx-auto w-full max-w-[640px] border-4 border-[#b89a0a] bg-[#fff7a1] p-4 text-black shadow-[8px_8px_0_#b89a0a]">
           <PixelMap src="/images/hero/globe.png" />
           <div className="absolute inset-x-4 top-1/2 -translate-y-1/2">
             <GlobeOrbit />
@@ -849,8 +864,16 @@ function MemberCard({ member, border }: { member: PublicMemberProfile; border: s
     <li className={`relative border-4 ${border} p-4 transition-colors focus-within:bg-[#fff7a1]/5 hover:bg-[#fff7a1]/5`}>
       <div className="flex items-center gap-4">
         {member.avatar_url ? (
-          <div className="h-20 w-20 shrink-0 border-4 border-[#fff7a1]">
-            <PixelPhoto src={member.avatar_url} width={24} height={24} />
+          <div className="relative h-20 w-20 shrink-0 border-4 border-[#fff7a1]">
+            {/* `unoptimized` skips the next.config remotePatterns check for external avatar hosts. */}
+            <Image
+              src={member.avatar_url}
+              alt=""
+              fill
+              sizes="80px"
+              unoptimized
+              className="object-cover"
+            />
           </div>
         ) : (
           <span className={`${hd} flex h-20 w-20 shrink-0 items-center justify-center border-4 border-[#fff7a1] bg-[#fff7a1] text-5xl text-black`}>
@@ -889,7 +912,7 @@ function Members({ members, memberCount }: { members: PublicMemberProfile[]; mem
       ? `${memberCount.toLocaleString()} ${memberCount === 1 ? "member has" : "members have"} a public profile in our directory.`
       : "Member profiles show up here once students add theirs to the directory.";
   return (
-    <Section title="Meet our members" intro={intro}>
+    <Section wide title="Meet our members" intro={intro}>
       {members.length > 0 && (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {members.map((m, i) => (
@@ -915,7 +938,7 @@ function JoinCta() {
     <>
       <Stripes className="h-4" />
       <section className="bg-[#fff7a1] text-black">
-        <div className={`${wrap} py-16 sm:py-24`}>
+        <div className={`${wrapWide} py-16 sm:py-24`}>
           <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto] lg:gap-8">
             <div className="text-center">
               <h2 className={`${hd} text-[clamp(4.5rem,10vw,9rem)]`}>
@@ -982,8 +1005,8 @@ export default function HomeClient({
     <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
       <WIPBanner />
       <PixelClouds />
-      <SidePixels side="left" />
-      <SidePixels side="right" />
+      <SidePixels side="left" contentWidth={1680} />
+      <SidePixels side="right" contentWidth={1680} />
       <div className="relative z-10">
         <Hero registeredCount={registeredCount} participantCount={participantCount} />
         <Partners />

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { EventStatus, RegistrationAvailability, RegistrationStatus } from "@/src/entities/event";
+import { colors, withAlpha } from "@/tailwind.tokens";
 
 /**
  * Registration box on the event detail page. Same pixel-art direction as EventCard:
@@ -36,7 +37,7 @@ const REG_LABELS: Record<RegistrationStatus, string> = {
   not_attended: "Marked as not attended",
 };
 
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 const BLOCKS = 20;
 
 function SeatBar({ going, capacity, color }: { going: number; capacity: number; color: string }) {
@@ -55,14 +56,14 @@ function SeatBar({ going, capacity, color }: { going: number; capacity: number; 
             key={i}
             aria-hidden="true"
             className="h-4 flex-1"
-            style={i < filled ? { background: color } : { border: "2px solid rgba(255,247,161,0.25)" }}
+            style={i < filled ? { background: color } : { border: `2px solid ${withAlpha(colors.pix.butter, 0.25)}` }}
           />
         ))}
       </div>
       <p className="mt-2 text-base">
-        <span className="text-[#fff7a1]">{going}</span>
-        <span className="text-[#fff7a1]/70"> of {capacity} seats taken</span>
-        {left > 0 && left <= 10 && <span className="text-[#fff7a1]/70"> · {left} left</span>}
+        <span className="text-pix-butter">{going}</span>
+        <span className="text-pix-butter/70"> of {capacity} seats taken</span>
+        {left > 0 && left <= 10 && <span className="text-pix-butter/70"> · {left} left</span>}
       </p>
     </div>
   );
@@ -136,8 +137,8 @@ export function EventRegisterPanel({
           <SeatBar going={goingCount} capacity={capacity} color={color} />
         ) : (
           <p className="text-base">
-            <span className="text-[#fff7a1]">{goingCount}</span>
-            <span className="text-[#fff7a1]/70"> going · no seat limit</span>
+            <span className="text-pix-butter">{goingCount}</span>
+            <span className="text-pix-butter/70"> going · no seat limit</span>
           </p>
         )}
       </div>
@@ -146,13 +147,13 @@ export function EventRegisterPanel({
         <dl className="mt-4 space-y-1 text-base">
           {opensLabel && (
             <div className="flex gap-2">
-              <dt className="text-[#fff7a1]/60">Opens</dt>
+              <dt className="text-pix-butter/60">Opens</dt>
               <dd>{opensLabel}</dd>
             </div>
           )}
           {closesLabel && (
             <div className="flex gap-2">
-              <dt className="text-[#fff7a1]/60">Closes</dt>
+              <dt className="text-pix-butter/60">Closes</dt>
               <dd>{closesLabel}</dd>
             </div>
           )}
@@ -161,7 +162,7 @@ export function EventRegisterPanel({
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
         {regStatus !== null && (
-          <span className="border-4 border-[#fff7a1] px-2 py-0.5 text-base">{REG_LABELS[regStatus]}</span>
+          <span className="border-4 border-pix-butter px-2 py-0.5 text-base">{REG_LABELS[regStatus]}</span>
         )}
 
         {canRegister && (
@@ -169,7 +170,7 @@ export function EventRegisterPanel({
             type="button"
             onClick={() => send("POST", "Registration failed. Please try again.", "registered")}
             disabled={isPending}
-            className={`border-4 border-[#fff7a1] bg-[#fff7a1] px-5 py-2 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:opacity-50 ${focus}`}
+            className={`border-4 border-pix-butter bg-pix-butter px-5 py-2 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 disabled:opacity-50 ${focus}`}
           >
             {isPending ? "Registering…" : "Register"}
           </button>
@@ -180,7 +181,7 @@ export function EventRegisterPanel({
             type="button"
             onClick={() => send("DELETE", "Could not unregister. Please try again.", null)}
             disabled={isPending}
-            className={`border-4 border-[#2c8f8f] px-5 py-2 text-lg transition-colors hover:bg-[#2c8f8f] hover:text-black disabled:opacity-50 ${focus}`}
+            className={`border-4 border-pix-teal px-5 py-2 text-lg transition-colors hover:bg-pix-teal hover:text-black disabled:opacity-50 ${focus}`}
           >
             {isPending ? "Removing…" : "Unregister"}
           </button>
@@ -189,7 +190,7 @@ export function EventRegisterPanel({
         {!isSignedIn && eventOpen && availability === "open" && (
           <Link
             href={loginHref}
-            className={`border-4 border-[#fff7a1] bg-[#fff7a1] px-5 py-2 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`}
+            className={`border-4 border-pix-butter bg-pix-butter px-5 py-2 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`}
           >
             Log in to register
           </Link>
@@ -197,13 +198,13 @@ export function EventRegisterPanel({
       </div>
 
       {isSignedIn && !participantId && eventOpen && availability === "open" && (
-        <p className="mt-4 text-base text-[#fff7a1]/70">Complete your profile to register for events.</p>
+        <p className="mt-4 text-base text-pix-butter/70">Complete your profile to register for events.</p>
       )}
 
-      {blocked && <p className="mt-4 text-base text-[#fff7a1]/80">{blocked}</p>}
+      {blocked && <p className="mt-4 text-base text-pix-butter/80">{blocked}</p>}
 
       {error && (
-        <p role="alert" className="mt-4 inline-block bg-[#b32a0e] px-3 py-1 text-base text-[#fff7a1]">
+        <p role="alert" className="mt-4 inline-block bg-pix-rust px-3 py-1 text-base text-pix-butter">
           {error}
         </p>
       )}

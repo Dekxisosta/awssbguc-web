@@ -9,7 +9,7 @@ const TABS: { key: LegalTabKey; label: string; href: string }[] = [
   { key: "privacy", label: "Privacy Policy", href: "/privacy" },
 ];
 
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 export function LegalTabs({ active }: { active: LegalTabKey }) {
   return (
@@ -25,8 +25,8 @@ export function LegalTabs({ active }: { active: LegalTabKey }) {
             scroll={false}
             className={`flex-1 border-4 px-5 py-2 text-center text-lg transition-transform sm:flex-none sm:px-8 ${focus} ${
               isActive
-                ? "border-black bg-[#fff7a1] text-black shadow-[4px_4px_0_#2c8f8f]"
-                : "border-[#2c8f8f] text-[#fff7a1] hover:bg-[#2c8f8f] hover:text-black"
+                ? "border-black bg-pix-butter text-black shadow-pixel-teal-4"
+                : "border-pix-teal text-pix-butter hover:bg-pix-teal hover:text-black"
             }`}
           >
             {tab.label}

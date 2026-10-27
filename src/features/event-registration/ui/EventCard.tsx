@@ -24,7 +24,7 @@ const REG_LABELS: Record<RegistrationRow["status"], string> = {
   not_attended: "Not attended",
 };
 
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 // Fixed to Philippine time so server and browser render the same text.
 const TZ = "Asia/Manila";
@@ -124,7 +124,7 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
                 {event.name}
               </Link>
             </h2>
-            <p className="mt-2 text-base text-[#fff7a1]/70">{formatDateRange(event.starts_at, event.ends_at)}</p>
+            <p className="mt-2 text-base text-pix-butter/70">{formatDateRange(event.starts_at, event.ends_at)}</p>
           </div>
 
           <span className="shrink-0 px-2 py-0.5 text-base text-black" style={{ background: color }}>
@@ -140,12 +140,12 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
         )}
 
         {event.description && (
-          <p className="mt-3 text-lg leading-snug text-[#fff7a1]/85">{event.description}</p>
+          <p className="mt-3 text-lg leading-snug text-pix-butter/85">{event.description}</p>
         )}
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {regStatus !== null && (
-            <span className="border-4 border-[#fff7a1] px-2 py-0.5 text-base">{REG_LABELS[regStatus]}</span>
+            <span className="border-4 border-pix-butter px-2 py-0.5 text-base">{REG_LABELS[regStatus]}</span>
           )}
 
           {canRegister && (
@@ -153,7 +153,7 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
               type="button"
               onClick={handleRegister}
               disabled={isPending}
-              className={`border-4 border-[#fff7a1] bg-[#fff7a1] px-5 py-2 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] disabled:opacity-50 ${focus}`}
+              className={`border-4 border-pix-butter bg-pix-butter px-5 py-2 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 disabled:opacity-50 ${focus}`}
             >
               {isPending ? "Registering…" : "Register"}
             </button>
@@ -164,7 +164,7 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
               type="button"
               onClick={handleUnregister}
               disabled={isPending}
-              className={`border-4 border-[#2c8f8f] px-5 py-2 text-lg transition-colors hover:bg-[#2c8f8f] hover:text-black disabled:opacity-50 ${focus}`}
+              className={`border-4 border-pix-teal px-5 py-2 text-lg transition-colors hover:bg-pix-teal hover:text-black disabled:opacity-50 ${focus}`}
             >
               {isPending ? "Removing…" : "Unregister"}
             </button>
@@ -172,18 +172,18 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
 
           <Link
             href={`/events/${event.slug}`}
-            className={`border-4 border-[#fff7a1]/60 px-5 py-2 text-lg transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+            className={`border-4 border-pix-butter/60 px-5 py-2 text-lg transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
           >
             Details
           </Link>
 
           {!participantId && (event.status === "not_started" || event.status === "ongoing") && (
-            <span className="text-base text-[#fff7a1]/70">Complete your profile to register for events.</span>
+            <span className="text-base text-pix-butter/70">Complete your profile to register for events.</span>
           )}
         </div>
 
         {error && (
-          <p role="alert" className="mt-3 inline-block bg-[#b32a0e] px-3 py-1 text-base text-[#fff7a1]">
+          <p role="alert" className="mt-3 inline-block bg-pix-rust px-3 py-1 text-base text-pix-butter">
             {error}
           </p>
         )}

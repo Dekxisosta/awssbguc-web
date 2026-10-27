@@ -13,7 +13,7 @@ const HEADINGS: Record<WizardStep, { title: string; sub: string; bubble: string 
   review:     { title: "Review and create",         sub: "Check everything, then create your account.",                 bubble: "Last step!" },
 };
 
-const linkCls = `underline underline-offset-4 hover:bg-black hover:text-[#fff7a1] ${focusRing}`;
+const linkCls = `underline underline-offset-4 hover:bg-black hover:text-pix-butter ${focusRing}`;
 
 export function SignupPage() {
   const [step, setStep] = useState<WizardStep>("account");

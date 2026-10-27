@@ -3,6 +3,7 @@
 
 import { Effect, EffectComposer, EffectPass, RenderPass } from 'postprocessing';
 import { useEffect, useRef } from 'react';
+import { colors } from '@/tailwind.tokens';
 import * as THREE from 'three';
 import './PixelBlast.css';
 
@@ -312,7 +313,7 @@ const MAX_CLICKS = 10;
 const PixelBlast = ({
   variant            = 'square',
   pixelSize          = 3,
-  color              = '#B497CF',
+  color              = colors.lilac,
   className          = undefined,
   style              = undefined,
   antialias          = true,

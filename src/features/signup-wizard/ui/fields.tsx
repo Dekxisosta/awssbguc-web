@@ -48,7 +48,7 @@ export function TextField({
 
 export function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div role="note" className="border-4 border-black bg-[#2c8f8f]/25 px-4 py-3 text-base leading-relaxed text-black">
+    <div role="note" className="border-4 border-black bg-pix-teal/25 px-4 py-3 text-base leading-relaxed text-black">
       {children}
     </div>
   );

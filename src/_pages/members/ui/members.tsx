@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Pixelify_Sans, Jersey_10 } from "next/font/google";
 import type { PublicMemberProfile } from "@/src/entities/member";
 import { SOCIALS } from "@/src/shared/config/socials";
+import { colors } from "@/tailwind.tokens";
 
 export const membersMetadata = { title: "Community — AWSSBG-UC" };
 
@@ -20,30 +21,16 @@ const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" })
 // Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
 const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
-const STRIPES: [string, number][] = [
-  ["#b32a0e", 8], ["#b89a0a", 10], ["#000000", 3], ["#3aaa6e", 14], ["#b32a0e", 9], ["#000000", 3],
-  ["#b89a0a", 8], ["#2c8f8f", 12], ["#3aaa6e", 9], ["#000000", 3], ["#b32a0e", 11], ["#b89a0a", 10],
-];
-const STRIPE_BG = (() => {
-  let at = 0;
-  const stops = STRIPES.map(([c, w]) => {
-    const s = `${c} ${at}% ${at + w}%`;
-    at += w;
-    return s;
-  });
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
-})();
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
+const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
-const wrap = "mx-auto w-full max-w-[1300px] px-5 sm:px-8";
-const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]";
+const btnPrimary = `inline-flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-6 py-3 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
+const btnDark = `inline-flex items-center justify-center gap-2 border-4 border-black bg-black px-6 py-3 text-lg text-pix-butter shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
 
-const btnPrimary = `inline-flex items-center justify-center gap-2 border-4 border-[#fff7a1] bg-[#fff7a1] px-6 py-3 text-lg text-black shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
-const btnDark = `inline-flex items-center justify-center gap-2 border-4 border-black bg-black px-6 py-3 text-lg text-[#fff7a1] shadow-[4px_4px_0_#b32a0e] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#b32a0e] ${focus}`;
-
-const CARD_BORDERS = ["border-[#2c8f8f]", "border-[#b89a0a]", "border-[#b32a0e]", "border-[#3aaa6e]"];
+const CARD_BORDERS = ["border-pix-teal", "border-pix-mustard", "border-pix-rust", "border-pix-green"];
 
 function Stripes({ className = "h-4" }: { className?: string }) {
-  return <div aria-hidden="true" className={className} style={{ background: STRIPE_BG }} />;
+  return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
 }
 
 // ─── Pixelated avatar ─────────────────────────────────────────────────────────
@@ -122,33 +109,33 @@ const CHANNELS = [
 function DiscordMock() {
   return (
     <div
-      className="flex h-[500px] w-full overflow-hidden border-4 border-[#fff7a1] shadow-[8px_8px_0_#2c8f8f] sm:h-[540px]"
+      className="flex h-[500px] w-full overflow-hidden border-4 border-pix-butter shadow-pixel-teal-8 sm:h-[540px]"
       aria-label="Discord community preview"
       role="img"
     >
       {/* ── Server icon rail ── */}
-      <div className="flex w-[52px] shrink-0 flex-col items-center gap-2 px-1.5 py-3 overflow-y-auto [scrollbar-width:none]" style={{ background: "#1e1f22" }}>
+      <div className="flex w-[52px] shrink-0 flex-col items-center gap-2 px-1.5 py-3 overflow-y-auto [scrollbar-width:none]" style={{ background: colors.discord.rail }}>
         {/* Server icon */}
-        <div className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[16px] bg-[#5865F2] transition-all hover:rounded-[12px] cursor-default">
+        <div className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[16px] bg-discord-blurple transition-all hover:rounded-[12px] cursor-default">
           <DiscordIcon size={22} className="text-white" />
           {/* Active pill */}
           <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />
         </div>
         <div className="h-px w-8 rounded-full bg-white/10 my-1" />
         {/* DMs icon */}
-        <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#313338] cursor-default hover:rounded-[12px] hover:bg-[#5865F2] transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-discord-chat cursor-default hover:rounded-[12px] hover:bg-discord-blurple transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </div>
       </div>
 
       {/* ── Channel sidebar ── */}
-      <div className="flex w-[172px] shrink-0 flex-col" style={{ background: "#2b2d31" }}>
+      <div className="flex w-[172px] shrink-0 flex-col" style={{ background: colors.discord.side }}>
         {/* Server name header */}
-        <div className="flex h-12 shrink-0 items-center justify-between border-b px-3 shadow-sm cursor-default" style={{ borderColor: "#1e1f22" }}>
-          <span className="text-[13px] font-semibold truncate" style={{ color: "#f2f3f5" }}>AWSSBG-UC</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        <div className="flex h-12 shrink-0 items-center justify-between border-b px-3 shadow-sm cursor-default" style={{ borderColor: colors.discord.rail }}>
+          <span className="text-[13px] font-semibold truncate" style={{ color: colors.discord.text }}>AWSSBG-UC</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
         </div>
 
         {/* Channel list */}
@@ -162,15 +149,15 @@ function DiscordMock() {
                 <div key={ch.id}>
                   {showCat && (
                     <div className="flex items-center gap-1 px-1 pt-4 pb-1 cursor-default">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#949ba4" }}>{ch.category}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.discord.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: colors.discord.muted }}>{ch.category}</span>
                     </div>
                   )}
                   <div
                     className="flex items-center gap-1.5 rounded-[4px] px-2 py-[5px] cursor-default"
                     style={{
-                      background: ch.active ? "#404249" : "transparent",
-                      color: ch.active ? "#f2f3f5" : "#949ba4",
+                      background: ch.active ? colors.discord.hover : "transparent",
+                      color: ch.active ? colors.discord.text : colors.discord.muted,
                     }}
                   >
                     {ch.voice ? (
@@ -189,36 +176,36 @@ function DiscordMock() {
         </div>
 
         {/* User bar */}
-        <div className="flex h-[52px] shrink-0 items-center gap-2 px-2" style={{ background: "#232428" }}>
+        <div className="flex h-[52px] shrink-0 items-center gap-2 px-2" style={{ background: colors.discord.bar }}>
           <div className="relative shrink-0">
             <div className="h-8 w-8 overflow-hidden rounded-full">
               <Image src="/images/discord/discord.jpg" alt="Capybara67" width={32} height={32} className="h-full w-full object-cover" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 bg-[#23a559]" style={{ borderColor: "#232428" }} aria-hidden="true" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 bg-discord-online" style={{ borderColor: colors.discord.bar }} aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-semibold leading-none" style={{ color: "#f2f3f5" }}>Capybara67</p>
-            <p className="mt-0.5 truncate text-[11px] leading-none" style={{ color: "#949ba4" }}>Online</p>
+            <p className="truncate text-[12px] font-semibold leading-none" style={{ color: colors.discord.text }}>Capybara67</p>
+            <p className="mt-0.5 truncate text-[11px] leading-none" style={{ color: colors.discord.muted }}>Online</p>
           </div>
           <div className="flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="23" y2="15" /><line x1="23" y1="9" x2="17" y2="12" /><line x1="23" y1="15" x2="17" y2="12" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M4.93 4.93a10 10 0 0 0 0 14.14" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="23" y2="15" /><line x1="23" y1="9" x2="17" y2="12" /><line x1="23" y1="15" x2="17" y2="12" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M4.93 4.93a10 10 0 0 0 0 14.14" /></svg>
           </div>
         </div>
       </div>
 
       {/* ── Chat area ── */}
-      <div className="flex min-w-0 flex-1 flex-col" style={{ background: "#313338" }}>
+      <div className="flex min-w-0 flex-1 flex-col" style={{ background: colors.discord.chat }}>
         {/* Channel header */}
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4 shadow-sm" style={{ borderColor: "#1e1f22" }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-          <span className="text-[13px] font-semibold" style={{ color: "#f2f3f5" }}>general</span>
-          <div className="mx-2 h-4 w-px" style={{ background: "#4e5058" }} />
-          <span className="text-[12px] truncate" style={{ color: "#949ba4" }}>AWSSBG-UC community · all members welcome</span>
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4 shadow-sm" style={{ borderColor: colors.discord.rail }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+          <span className="text-[13px] font-semibold" style={{ color: colors.discord.text }}>general</span>
+          <div className="mx-2 h-4 w-px" style={{ background: colors.discord.divider }} />
+          <span className="text-[12px] truncate" style={{ color: colors.discord.muted }}>AWSSBG-UC community · all members welcome</span>
           <div className="ml-auto flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5bac1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
           </div>
         </div>
 
@@ -228,10 +215,10 @@ function DiscordMock() {
         </div>
 
         {/* Message input bar */}
-        <div className="mx-4 mb-4 flex items-center gap-2 rounded-lg px-4 py-2.5" style={{ background: "#383a40" }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
-          <span className="flex-1 text-[13px]" style={{ color: "#6c6f78" }}>Message #general</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#949ba4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
+        <div className="mx-4 mb-4 flex items-center gap-2 rounded-lg px-4 py-2.5" style={{ background: colors.discord.input }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+          <span className="flex-1 text-[13px]" style={{ color: colors.discord.placeholder }}>Message #general</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
         </div>
       </div>
     </div>
@@ -241,10 +228,10 @@ function DiscordMock() {
 // ─── Discord CTA ──────────────────────────────────────────────────────────────
 
 const DISCORD_PERKS = [
-  { text: "Channels for AWS services, study sessions, and job sharing", dot: "bg-[#2c8f8f]" },
-  { text: "First to hear about upcoming events and workshops", dot: "bg-[#b89a0a]" },
-  { text: "Connect directly with officers, mentors, and alumni", dot: "bg-[#b32a0e]" },
-  { text: "Project feedback, career tips, and certification support", dot: "bg-[#3aaa6e]" },
+  { text: "Channels for AWS services, study sessions, and job sharing", dot: "bg-pix-teal" },
+  { text: "First to hear about upcoming events and workshops", dot: "bg-pix-mustard" },
+  { text: "Connect directly with officers, mentors, and alumni", dot: "bg-pix-rust" },
+  { text: "Project feedback, career tips, and certification support", dot: "bg-pix-green" },
 ];
 
 function DiscordCTA() {
@@ -252,7 +239,7 @@ function DiscordCTA() {
     <div className="flex flex-col justify-center">
       <p className="text-xl">Community</p>
       <h2 className={`${hd} mt-3 text-[clamp(4.5rem,9vw,8rem)]`}>
-        Where the <span className="text-[#3aaa6e]">community</span> lives.
+        Where the <span className="text-pix-green">community</span> lives.
       </h2>
 
       <p className="mt-6 max-w-md text-lg leading-snug">
@@ -273,18 +260,18 @@ function DiscordCTA() {
           <DiscordIcon size={18} />
           Join the Discord
         </a>
-        <span className="text-[#fff7a1]/70">Free · Open to all members</span>
+        <span className="text-pix-butter/70">Free · Open to all members</span>
       </div>
 
-      <div className="mt-6 flex w-fit max-w-full items-center gap-3 border-4 border-[#2c8f8f] px-4 py-2">
-        <span className="text-[#fff7a1]/60">discord.gg/</span>
+      <div className="mt-6 flex w-fit max-w-full items-center gap-3 border-4 border-pix-teal px-4 py-2">
+        <span className="text-pix-butter/60">discord.gg/</span>
         <span className="font-bold">JxACGrMAMK</span>
         <a
           href={SOCIALS.discord}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open Discord invite"
-          className={`ml-2 border-2 border-[#fff7a1]/60 px-2 py-0.5 text-sm transition-colors hover:bg-[#2c8f8f] hover:text-black ${focus}`}
+          className={`ml-2 border-2 border-pix-butter/60 px-2 py-0.5 text-sm transition-colors hover:bg-pix-teal hover:text-black ${focus}`}
         >
           Open ↗
         </a>
@@ -307,7 +294,7 @@ function FacebookCTA() {
     <div className="order-1 flex flex-col justify-center lg:order-2">
       <p className="text-xl">Facebook</p>
       <h2 className={`${hd} mt-3 text-[clamp(4rem,8vw,7rem)]`}>
-        Events, updates, <span className="text-[#b32a0e]">announcements.</span>
+        Events, updates, <span className="text-pix-rust">announcements.</span>
       </h2>
 
       <p className="mt-6 max-w-md text-lg leading-snug">
@@ -341,14 +328,14 @@ function MemberCard({ member, border }: { member: PublicMemberProfile; border: s
   const isMemberId = /^SBG-UC-\d{6}$/.test(member.member_id);
 
   return (
-    <div className={`relative flex h-full w-full flex-col border-4 ${border} transition-colors focus-within:bg-[#fff7a1]/5 hover:bg-[#fff7a1]/5`}>
+    <div className={`relative flex h-full w-full flex-col border-4 ${border} transition-colors focus-within:bg-pix-butter/5 hover:bg-pix-butter/5`}>
       <div className="flex items-center gap-4 p-4">
         {member.avatar_url ? (
-          <div className="h-16 w-16 shrink-0 border-4 border-[#fff7a1]">
+          <div className="h-16 w-16 shrink-0 border-4 border-pix-butter">
             <PixelPhoto src={member.avatar_url} width={24} height={24} />
           </div>
         ) : (
-          <span className={`${hd} flex h-16 w-16 shrink-0 items-center justify-center border-4 border-[#fff7a1] bg-[#fff7a1] text-4xl text-black`}>
+          <span className={`${hd} flex h-16 w-16 shrink-0 items-center justify-center border-4 border-pix-butter bg-pix-butter text-4xl text-black`}>
             {handle.slice(0, 1).toUpperCase()}
           </span>
         )}
@@ -363,44 +350,44 @@ function MemberCard({ member, border }: { member: PublicMemberProfile; border: s
               member.display_name ?? "—"
             )}
           </h3>
-          {member.username && <p className="truncate text-sm text-[#fff7a1]/70">@{member.username}</p>}
-          {isMemberId && <p className="truncate text-xs text-[#fff7a1]/50">{member.member_id}</p>}
+          {member.username && <p className="truncate text-sm text-pix-butter/70">@{member.username}</p>}
+          {isMemberId && <p className="truncate text-xs text-pix-butter/50">{member.member_id}</p>}
         </div>
       </div>
 
       {member.bio ? (
-        <p className="line-clamp-2 px-4 pb-3 text-sm leading-snug text-[#fff7a1]/85">{member.bio}</p>
+        <p className="line-clamp-2 px-4 pb-3 text-sm leading-snug text-pix-butter/85">{member.bio}</p>
       ) : (
-        <p className="px-4 pb-3 text-sm italic text-[#fff7a1]/40">No bio added.</p>
+        <p className="px-4 pb-3 text-sm italic text-pix-butter/40">No bio added.</p>
       )}
 
       {member.skills && member.skills.length > 0 && (
         <ul className="flex flex-wrap gap-2 px-4 pb-4" aria-label="Skills">
           {member.skills.slice(0, 5).map((skill) => (
-            <li key={skill} className="border-2 border-[#fff7a1]/60 px-2 py-0.5 text-xs">
+            <li key={skill} className="border-2 border-pix-butter/60 px-2 py-0.5 text-xs">
               {skill}
             </li>
           ))}
           {member.skills.length > 5 && (
-            <li className="border-2 border-[#fff7a1]/30 px-2 py-0.5 text-xs text-[#fff7a1]/60">+{member.skills.length - 5}</li>
+            <li className="border-2 border-pix-butter/30 px-2 py-0.5 text-xs text-pix-butter/60">+{member.skills.length - 5}</li>
           )}
         </ul>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t-4 border-dashed border-[#fff7a1]/20 px-4 py-3">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t-4 border-dashed border-pix-butter/20 px-4 py-3">
         {member.github_username ? (
           <a
             href={`https://github.com/${member.github_username}`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${handle} on GitHub`}
-            className={`relative z-10 inline-flex items-center gap-2 border-2 border-[#fff7a1]/60 px-2.5 py-1 text-sm transition-colors hover:bg-[#fff7a1] hover:text-black ${focus}`}
+            className={`relative z-10 inline-flex items-center gap-2 border-2 border-pix-butter/60 px-2.5 py-1 text-sm transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
           >
             <GitHubIcon size={12} />
             GitHub
           </a>
         ) : (
-          <span className="text-sm italic text-[#fff7a1]/40">No socials added.</span>
+          <span className="text-sm italic text-pix-butter/40">No socials added.</span>
         )}
       </div>
     </div>
@@ -423,8 +410,8 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
   const pageNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
 
   const btn = `flex h-10 min-w-[2.5rem] items-center justify-center px-2.5 text-lg transition-colors ${focus}`;
-  const btnLink = `${btn} border-4 border-[#2c8f8f] hover:bg-[#2c8f8f] hover:text-black`;
-  const btnOff = `${btn} border-4 border-[#fff7a1]/20 text-[#fff7a1]/30`;
+  const btnLink = `${btn} border-4 border-pix-teal hover:bg-pix-teal hover:text-black`;
+  const btnOff = `${btn} border-4 border-pix-butter/20 text-pix-butter/30`;
 
   return (
     <nav className="mt-12 flex flex-wrap items-center justify-center gap-2" aria-label="Pagination">
@@ -437,13 +424,13 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
       {start > 1 && (
         <>
           <Link href="/members?page=1" className={btnLink}>1</Link>
-          {start > 2 && <span className={`${btn} text-[#fff7a1]/50`}>…</span>}
+          {start > 2 && <span className={`${btn} text-pix-butter/50`}>…</span>}
         </>
       )}
 
       {pageNumbers.map((n) =>
         n === page ? (
-          <span key={n} aria-current="page" className={`${btn} border-4 border-[#fff7a1] bg-[#fff7a1] text-black shadow-[3px_3px_0_#b32a0e]`}>{n}</span>
+          <span key={n} aria-current="page" className={`${btn} border-4 border-pix-butter bg-pix-butter text-black shadow-pixel-rust-3`}>{n}</span>
         ) : (
           <Link key={n} href={`/members?page=${n}`} className={btnLink}>{n}</Link>
         )
@@ -451,7 +438,7 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
 
       {end < totalPages && (
         <>
-          {end < totalPages - 1 && <span className={`${btn} text-[#fff7a1]/50`}>…</span>}
+          {end < totalPages - 1 && <span className={`${btn} text-pix-butter/50`}>…</span>}
           <Link href={`/members?page=${totalPages}`} className={btnLink}>{totalPages}</Link>
         </>
       )}
@@ -477,7 +464,7 @@ interface MembersPageProps {
 export function MembersPage({ members, page, totalPages, totalCount }: MembersPageProps) {
   const shared = totalCount ?? 0;
   return (
-    <div className={`${pixel.className} bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${pixel.className} bg-black tracking-normal text-pix-butter`}>
 
       {/* ── Discord ── */}
       <section className={`${wrap} py-14 sm:py-20`}>
@@ -489,10 +476,10 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
 
       {/* ── Facebook (butter panel) ── */}
       <Stripes />
-      <section className="bg-[#fff7a1] text-black">
+      <section className="bg-pix-butter text-black">
         <div className={`${wrap} py-14 sm:py-20`}>
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-            <div className="order-2 border-4 border-black bg-black shadow-[8px_8px_0_#b32a0e] lg:order-1">
+            <div className="order-2 border-4 border-black bg-black shadow-pixel-rust-8 lg:order-1">
               <Image
                 src="/images/facebook/facebook_image.png"
                 alt="AWSSBG-UC Facebook page"
@@ -513,7 +500,7 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
         <p className="mt-5 max-w-xl text-lg leading-relaxed">
           Members who have opted into the public directory.
           {shared > 0 && (
-            <span className="ml-1 text-[#fff7a1]/70">
+            <span className="ml-1 text-pix-butter/70">
               {shared} {shared !== 1 ? "profiles" : "profile"} shared.
             </span>
           )}
@@ -521,9 +508,9 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
 
         <div className="mt-10">
           {members.length === 0 ? (
-            <div className="flex flex-col items-center justify-center border-4 border-dashed border-[#2c8f8f]/60 px-6 py-20 text-center">
+            <div className="flex flex-col items-center justify-center border-4 border-dashed border-pix-teal/60 px-6 py-20 text-center">
               <p className={`${hd} text-4xl`}>No public profiles yet</p>
-              <p className="mt-3 text-[#fff7a1]/70">Members who opt into the directory will appear here.</p>
+              <p className="mt-3 text-pix-butter/70">Members who opt into the directory will appear here.</p>
             </div>
           ) : (
             <>
@@ -539,7 +526,7 @@ export function MembersPage({ members, page, totalPages, totalCount }: MembersPa
               </ul>
               <Pagination page={page} totalPages={totalPages} />
               {totalPages > 1 && (
-                <p className="mt-4 text-center text-sm text-[#fff7a1]/60">Page {page} of {totalPages}</p>
+                <p className="mt-4 text-center text-sm text-pix-butter/60">Page {page} of {totalPages}</p>
               )}
             </>
           )}

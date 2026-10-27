@@ -30,8 +30,8 @@ export function StepIndicator({
               <span
                 className={[
                   "flex h-9 w-9 items-center justify-center border-4 text-lg",
-                  done ? "border-black bg-[#3aaa6e] text-black"
-                    : active ? "border-black bg-black text-[#fff7a1]"
+                  done ? "border-black bg-pix-green text-black"
+                    : active ? "border-black bg-black text-pix-butter"
                     : "border-black/40 text-black/50",
                 ].join(" ")}
               >

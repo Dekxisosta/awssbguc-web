@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { colors } from "@/tailwind.tokens";
 
 interface WatcherCharacterProps {
   /** When true the eyes close (e.g. a password field is focused) */
@@ -67,29 +68,29 @@ export function WatcherCharacter({ eyesClosed }: WatcherCharacterProps) {
       className="select-none"
     >
       {/* ── Shadow ── */}
-      <ellipse cx="60" cy="116" rx="28" ry="4" fill="rgba(0,0,0,0.18)" />
+      <ellipse cx="60" cy="116" rx="28" ry="4" fill={colors.pix.ink} fillOpacity={0.18} />
 
       {/* ── Head ── */}
-      <circle cx="60" cy="60" r="44" fill="#1e2a35" />
+      <circle cx="60" cy="60" r="44" fill={colors.watcher.body} />
       {/* subtle rim highlight */}
-      <circle cx="60" cy="60" r="44" fill="none" stroke="#2e3f50" strokeWidth="2" />
+      <circle cx="60" cy="60" r="44" fill="none" stroke={colors.watcher.rim} strokeWidth="2" />
 
       {/* AWS-green cap stripe */}
       <path
         d="M16 52 A44 44 0 0 1 104 52"
-        fill="#00e482"
+        fill={colors.brand.green}
         opacity="0.12"
       />
 
       {/* ── Ears ── */}
-      <ellipse cx="16"  cy="62" rx="6" ry="9" fill="#1e2a35" stroke="#2e3f50" strokeWidth="1.5" />
-      <ellipse cx="104" cy="62" rx="6" ry="9" fill="#1e2a35" stroke="#2e3f50" strokeWidth="1.5" />
+      <ellipse cx="16"  cy="62" rx="6" ry="9" fill={colors.watcher.body} stroke={colors.watcher.rim} strokeWidth="1.5" />
+      <ellipse cx="104" cy="62" rx="6" ry="9" fill={colors.watcher.body} stroke={colors.watcher.rim} strokeWidth="1.5" />
       {/* inner ear */}
-      <ellipse cx="16"  cy="62" rx="3" ry="5" fill="#152030" opacity="0.7" />
-      <ellipse cx="104" cy="62" rx="3" ry="5" fill="#152030" opacity="0.7" />
+      <ellipse cx="16"  cy="62" rx="3" ry="5" fill={colors.watcher.ear} opacity="0.7" />
+      <ellipse cx="104" cy="62" rx="3" ry="5" fill={colors.watcher.ear} opacity="0.7" />
 
       {/* ── Eyebrows ── */}
-      <g stroke="#00e482" strokeWidth="2.5" strokeLinecap="round" opacity="0.85">
+      <g stroke={colors.brand.green} strokeWidth="2.5" strokeLinecap="round" opacity="0.85">
         {/* left brow — raises slightly when eyes closed */}
         <line
           x1="34" y1={eyesClosed ? 35 : 38}
@@ -111,7 +112,7 @@ export function WatcherCharacter({ eyesClosed }: WatcherCharacterProps) {
       <EyeSocket socket={RIGHT_EYE} pupil={rightPupil} closed={eyesClosed} />
 
       {/* ── Nose ── */}
-      <ellipse cx="60" cy="70" rx="4" ry="2.5" fill="#0f1e2c" opacity="0.6" />
+      <ellipse cx="60" cy="70" rx="4" ry="2.5" fill={colors.watcher.mouth} opacity="0.6" />
 
       {/* ── Mouth ── */}
       <path
@@ -120,15 +121,15 @@ export function WatcherCharacter({ eyesClosed }: WatcherCharacterProps) {
           : "M 48 82 Q 60 90 72 82"   // happy smile when open
         }
         fill="none"
-        stroke="#8ca0b0"
+        stroke={colors.watcher.whisker}
         strokeWidth="2.5"
         strokeLinecap="round"
         style={{ transition: "d 0.25s ease" }}
       />
 
       {/* Blush dots */}
-      <circle cx="32" cy="72" r="7" fill="#ff6b6b" opacity="0.15" />
-      <circle cx="88" cy="72" r="7" fill="#ff6b6b" opacity="0.15" />
+      <circle cx="32" cy="72" r="7" fill={colors.watcher.blush} opacity="0.15" />
+      <circle cx="88" cy="72" r="7" fill={colors.watcher.blush} opacity="0.15" />
     </svg>
   );
 }
@@ -157,7 +158,7 @@ function EyeSocket({
           cx={pupil.x}
           cy={pupil.y}
           r={PUPIL_R}
-          fill="#0f1923"
+          fill={colors.brand.ink}
         />
       )}
 
@@ -179,7 +180,7 @@ function EyeSocket({
           A ${rx} ${ry} 0 0 1 ${cx + rx} ${cy}
           A ${rx} ${ry} 0 0 0 ${cx - rx} ${cy}
         `}
-        fill="#1e2a35"
+        fill={colors.watcher.body}
         style={{
           transform: `scaleY(${closed ? 1 : 0})`,
           transformOrigin: `${cx}px ${cy}px`,
@@ -194,7 +195,7 @@ function EyeSocket({
           A ${rx} ${ry} 0 0 0 ${cx + rx} ${cy}
           A ${rx} ${ry} 0 0 1 ${cx - rx} ${cy}
         `}
-        fill="#1e2a35"
+        fill={colors.watcher.body}
         style={{
           transform: `scaleY(${closed ? 1 : 0})`,
           transformOrigin: `${cx}px ${cy}px`,
@@ -206,7 +207,7 @@ function EyeSocket({
       <ellipse
         cx={cx} cy={cy} rx={rx} ry={ry}
         fill="none"
-        stroke="#2e3f50"
+        stroke={colors.watcher.rim}
         strokeWidth="1.5"
       />
     </g>

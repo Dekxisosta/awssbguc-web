@@ -27,7 +27,7 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
         Don&apos;t have an account?{" "}
         <Link
           href="/signup"
-          className="underline underline-offset-4 hover:bg-black hover:text-[#fff7a1] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#2c8f8f]"
+          className="underline underline-offset-4 hover:bg-black hover:text-pix-butter focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal"
         >
           Create one
         </Link>
