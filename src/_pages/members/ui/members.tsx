@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
@@ -30,32 +30,19 @@ function Stripes({ className = "h-4" }: { className?: string }) {
   return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
 }
 
-// ─── Pixelated avatar ─────────────────────────────────────────────────────────
+// ─── Avatar ───────────────────────────────────────────────────────────────────
 
 function PixelPhoto({ src, width = 24, height = 24 }: { src: string; width?: number; height?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    const img = new window.Image();
-    img.onload = () => {
-      const k = Math.max(width / img.width, height / img.height); // cover
-      const w = img.width * k;
-      const h = img.height * k;
-      ctx.clearRect(0, 0, width, height);
-      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
-    };
-    img.src = src;
-  }, [src, width, height]);
   return (
-    <canvas
-      ref={ref}
-      width={width}
-      height={height}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
       aria-hidden="true"
+      loading="lazy"
+      decoding="async"
       style={{ aspectRatio: `${width} / ${height}` }}
-      className="block w-full [image-rendering:pixelated]"
+      className="block w-full object-cover"
     />
   );
 }

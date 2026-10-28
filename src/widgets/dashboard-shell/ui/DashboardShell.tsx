@@ -478,7 +478,7 @@ function Avatar({ avatarUrl, initials, className = "" }: { avatarUrl: string | n
     <div className={`shrink-0 overflow-hidden border-2 border-pix-butter bg-pix-butter text-black ${className}`}>
       {avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatarUrl} alt="" className="h-full w-full object-cover [image-rendering:pixelated]" />
+        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
       ) : (
         <span className={`${hd} flex h-full w-full items-center justify-center text-xl`}>{initials || "?"}</span>
       )}
