@@ -25,7 +25,7 @@ export function EventsPage({ events, registrationMap, participantId, error }: Ev
     .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
 
   const renderList = (list: EventRow[], label: string) => (
-    <ul className="space-y-8" aria-label={label}>
+    <ul className="space-y-4" aria-label={label}>
       {list.map((event) => (
         <li key={event.event_id}>
           <EventCard
@@ -46,18 +46,9 @@ export function EventsPage({ events, registrationMap, participantId, error }: Ev
       <SidePixels side="right" />
 
       <div className="relative z-10">
-        {/* Header */}
-        <section className={`${wrap} pb-12 pt-10 sm:pb-16 sm:pt-14`}>
-          <p className="text-xl">AWSSBG-UC</p>
-          <h1 className={`${hd} mt-3 text-[clamp(5rem,13vw,10rem)]`}>Events</h1>
-          <p className="mt-6 max-w-2xl text-2xl leading-snug">
-            Upcoming and past AWSSBG-UC events. Register with your QR token to mark attendance.
-          </p>
-        </section>
+        <h1 className="sr-only">Events</h1>
 
-        <Stripes className="h-4" />
-
-        <section className={`${wrap} py-12 sm:py-16`}>
+        <section className={`${wrap} py-8 sm:py-10`}>
           {error && (
             <p role="alert" className="inline-block border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">
               Could not load events. Please try refreshing.
@@ -79,14 +70,14 @@ export function EventsPage({ events, registrationMap, participantId, error }: Ev
 
           {!error && open.length > 0 && (
             <div>
-              <h2 className={`${hd} mb-8 text-6xl sm:text-7xl`}>Up next</h2>
+              <h2 className={`${hd} mb-5 text-5xl sm:text-6xl`}>Up next</h2>
               {renderList(open, "Upcoming events")}
             </div>
           )}
 
           {!error && past.length > 0 && (
-            <div className={open.length > 0 ? "mt-20" : ""}>
-              <h2 className={`${hd} mb-8 text-6xl sm:text-7xl`}>Past events</h2>
+            <div className={open.length > 0 ? "mt-12" : ""}>
+              <h2 className={`${hd} mb-5 text-5xl sm:text-6xl`}>Past events</h2>
               {renderList(past, "Past events")}
             </div>
           )}

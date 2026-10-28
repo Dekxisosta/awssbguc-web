@@ -84,6 +84,7 @@ export default async function EventDetailRoute({ params }: Props) {
           .select("event_id, status")
           .eq("event_id", event.event_id)
           .eq("participant_id", participant.participant_id)
+          .neq("status", "unregistered")
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
