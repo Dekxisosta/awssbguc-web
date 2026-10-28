@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
-import { EDITABLE_FIELDS, FIELD_LABELS } from "@/src/entities/student-data";
 import { QueryProvider } from "@/src/shared/lib/query";
 import {
   BOX, BTN_PRIMARY, BTN_SECONDARY, BTN_SUBMIT, SCROLL_AREA, THEAD_STICKY, TH, focus, inputCls,
@@ -29,7 +28,7 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Row = Record<string, unknown>;
-type Tab = "overview" | "members" | "events" | "requests" | "provision" | "roles";
+type Tab = "overview" | "members" | "events" | "provision" | "roles";
 type ToastState = { message: string; type: "success" | "error" } | null;
 
 // ─── Shared look — same pixel-art language as the Events page and the nav ─────
@@ -1575,7 +1574,6 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "overview",  label: "Overview",  icon: LayoutDashboard },
   { id: "members",   label: "Members",   icon: Users },
   { id: "events",    label: "Events",    icon: CalendarDays },
-  { id: "requests",  label: "Requests",  icon: ClipboardList },
   { id: "provision", label: "Provision", icon: UserCog },
   { id: "roles",     label: "Roles",     icon: ShieldCheck },
 ];
@@ -1591,8 +1589,6 @@ export function AdminDashboard({ callerParticipantId }: { callerParticipantId: s
 
 function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
-  // Badge on the Requests tab so pending student-data changes don't go unnoticed (polled).
-  const { data: pendingRequests = 0 } = usePendingRequestCount();
 
   // Layout: the page itself scrolls normally (only the admin nav is pinned). Individual long lists
   // — members, events, roles, requests, provisioning rows — scroll inside their own bounded areas.
@@ -1658,14 +1654,6 @@ function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
                   >
                     <Icon size={16} aria-hidden="true" />
                     {label}
-                    {id === "requests" && pendingRequests > 0 && (
-                      <span
-                        className="border-2 border-pix-rust bg-pix-rust px-1.5 text-sm leading-tight text-pix-butter"
-                        aria-label={`${pendingRequests} pending`}
-                      >
-                        {pendingRequests}
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -1697,7 +1685,6 @@ function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
             {tab === "overview"  && <OverviewTab />}
             {tab === "members"   && <MembersTab callerParticipantId={callerParticipantId} />}
             {tab === "events"    && <EventsTab />}
-            {tab === "requests"  && <RequestsTab />}
             {tab === "provision" && <ProvisionTab />}
             {tab === "roles"     && <RolesTab callerParticipantId={callerParticipantId} />}
           </div>
