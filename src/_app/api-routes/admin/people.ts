@@ -109,7 +109,7 @@ export async function handlePeopleList(req: NextRequest) {
     pids.length ? admin.from("participant_roles").select("participant_id, role").in("participant_id", pids) : null,
     uids.length ? admin.from("profiles").select("*").in("profile_id", uids) : null,
     mids.length ? admin.from("member_roster").select("member_id, student_number").in("member_id", mids) : null,
-    pids.length ? admin.from("event_registrations").select("participant_id, status").in("participant_id", pids) : null,
+    pids.length ? admin.from("event_registrations").select("participant_id, status").neq("status", "unregistered").in("participant_id", pids) : null,
   ]);
 
   const rosterRows = asRows(rosterR?.data);
@@ -194,7 +194,7 @@ export async function handlePersonDetail(participantId: string) {
     admin.from("participant_roles").select("role, granted_at").eq("participant_id", participantId),
     uid ? admin.from("profiles").select("*").eq("profile_id", uid).maybeSingle() : null,
     mid ? admin.from("member_roster").select("*").eq("member_id", mid).maybeSingle() : null,
-    admin.from("event_registrations").select("event_id, status, affiliation, note, created_at").eq("participant_id", participantId),
+    admin.from("event_registrations").select("event_id, status, affiliation, note, created_at").neq("status", "unregistered").eq("participant_id", participantId),
   ]);
 
   const roster = (rosterR?.data as Row | null) ?? null;

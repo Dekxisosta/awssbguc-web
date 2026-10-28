@@ -43,6 +43,7 @@ export const PERMISSIONS = {
   ROLES_MANAGE:        "roles.manage",
   CONTENT_MANAGE:      "content.manage",
   SETTINGS_MANAGE:     "settings.manage",
+  STUDENT_DATA_REVIEW: "student_data.review",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

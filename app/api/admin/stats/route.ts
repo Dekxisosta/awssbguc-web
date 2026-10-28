@@ -25,7 +25,7 @@ export async function GET() {
     admin.from("member_roster").select("*", { count: "exact", head: true }),
     admin.from("profiles").select("*", { count: "exact", head: true }),
     admin.from("events").select("*", { count: "exact", head: true }),
-    admin.from("event_registrations").select("*", { count: "exact", head: true }),
+    admin.from("event_registrations").select("*", { count: "exact", head: true }).neq("status", "unregistered"),
   ]);
 
   return NextResponse.json({
