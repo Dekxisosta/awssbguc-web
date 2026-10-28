@@ -1,59 +1,43 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
+import { EDITABLE_FIELDS, FIELD_LABELS } from "@/src/entities/student-data";
+import { QueryProvider } from "@/src/shared/lib/query";
+import {
+  BOX, BTN_PRIMARY, BTN_SECONDARY, BTN_SUBMIT, SCROLL_AREA, THEAD_STICKY, TH, focus, inputCls,
+} from "./styles";
+import { RegistrationSheet } from "./registration-sheet";
+import { DeleteEventDialog, EventForm } from "./event-form";
+import {
+  useDebounced, useEvents, useInvalidateAfterProvision, usePeople,
+  usePendingRequestCount, usePerson, useProvisionPending, useRequests, useReviewRequest,
+  useRoleSearch, useStats, useToggleRole, useUpdateEventStatus,
+} from "../model/queries";
+import type {
+  EventRow, PendingMember, PersonRow, RequestStatus,
+} from "../model/types";
 import {
   Users, ShieldCheck, CalendarDays, LayoutDashboard,
   UserCog, Megaphone, Plus, Search, ChevronLeft,
   ChevronRight, RefreshCw, Check, X, AlertTriangle,
-  BadgeCheck, Loader2,
+  BadgeCheck, Loader2, ClipboardList, ArrowUp,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Stats {
-  participantCount: number;
-  memberCount: number;
-  accountCount: number;
-  eventCount: number;
-  registrationCount: number;
-}
-
-interface MemberRow {
-  participant_id: string;
-  display_name: string;
-  supplied_name: string;
-  email: string | null;
-  status: string;
-  member_roster_id: string | null;
-  user_id: string | null;
-  participant_roles: { role: string; granted_at: string }[];
-  profiles: { username: string | null; avatar_url: string | null; initial_setup_completed: boolean } | null;
-}
-
-interface EventRow {
-  event_id: string;
-  name: string;
-  description: string | null;
-  location: string | null;
-  starts_at: string;
-  ends_at: string;
-  status: "not_started" | "ongoing" | "completed" | "cancelled";
-  registrations: { registered: number; attended: number; not_attended: number };
-}
-
-type Tab = "overview" | "members" | "events" | "provision" | "roles";
+type Row = Record<string, unknown>;
+type Tab = "overview" | "members" | "events" | "requests" | "provision" | "roles";
 type ToastState = { message: string; type: "success" | "error" } | null;
 
 // ─── Shared look — same pixel-art language as the Events page and the nav ─────
 // Black ground, butter (#fff7a1) type, Jersey 10 headings, JetBrains Mono text,
 // 4px square borders, hard offset shadows, stripe palette for accents.
 
-const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
-const focus =
-  "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
+// Wider than the public pages (max-w-page = 1300px): admin tables and sheets need the room.
+const wrap = "mx-auto w-full max-w-[1680px] px-5 sm:px-8";
 
 function Stripes({ className = "h-4" }: { className?: string }) {
   return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
@@ -85,26 +69,6 @@ const ACCOUNT_STATUS_COLORS: Record<string, string> = {
 };
 const ACCOUNT_STATUS_FALLBACK = "border-pix-rust bg-pix-rust text-pix-butter";
 
-const BOX = "border-4 border-pix-teal";
-
-const BTN_PRIMARY =
-  `inline-flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-4 py-1.5 text-base text-black shadow-pixel-rust-3 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-1 disabled:pointer-events-none disabled:opacity-40 ${focus}`;
-const BTN_SECONDARY =
-  `inline-flex items-center justify-center gap-2 border-4 border-pix-teal px-4 py-1.5 text-base text-pix-butter transition-colors hover:bg-pix-teal hover:text-black disabled:pointer-events-none disabled:opacity-40 ${focus}`;
-const BTN_SUBMIT =
-  `flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-6 py-3 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 disabled:pointer-events-none disabled:opacity-50 ${focus}`;
-
-const TH = "px-4 py-3 text-left text-base font-normal text-pix-butter/60";
-
-function inputCls(hasError?: boolean) {
-  const base =
-    "w-full border-4 bg-black px-3 py-2 text-lg text-pix-butter placeholder:text-pix-butter/35 " +
-    "transition-colors focus:outline-none disabled:opacity-50";
-  return hasError
-    ? `${base} border-pix-rust focus:border-pix-coral`
-    : `${base} border-pix-butter/50 focus:border-pix-teal`;
-}
-
 function fmt(date: string) {
   return new Date(date).toLocaleDateString("en-PH", {
     year: "numeric", month: "short", day: "numeric",
@@ -122,23 +86,23 @@ function Pill({ text, colorClass }: { text: string; colorClass: string }) {
 }
 
 const STAT_BORDERS = [
-  "border-pix-teal shadow-pixel-teal-6",
-  "border-pix-green shadow-pixel-green-6",
-  "border-pix-mustard shadow-pixel-mustard-6",
-  "border-pix-rust shadow-pixel-rust-6",
-  "border-pix-teal shadow-pixel-teal-6",
+  "border-pix-teal shadow-pixel-teal-4",
+  "border-pix-green shadow-pixel-green-4",
+  "border-pix-mustard shadow-pixel-mustard-4",
+  "border-pix-rust shadow-pixel-rust-4",
+  "border-pix-teal shadow-pixel-teal-4",
 ];
 
 function StatCard({ icon: Icon, label, value, tone }: {
   icon: React.ElementType; label: string; value: number | null; tone: number;
 }) {
   return (
-    <div className={`border-4 bg-black p-5 ${STAT_BORDERS[tone % STAT_BORDERS.length]}`}>
-      <div className="flex items-center justify-between text-lg text-pix-butter/70">
+    <div className={`border-4 bg-black px-3 py-2 ${STAT_BORDERS[tone % STAT_BORDERS.length]}`}>
+      <div className="flex items-center justify-between text-base text-pix-butter/70">
         <p>{label}</p>
         <Icon size={18} aria-hidden="true" />
       </div>
-      <p className={`${hd} mt-3 text-6xl tabular-nums`}>
+      <p className={`${hd} text-3xl tabular-nums`}>
         {value === null ? "—" : value.toLocaleString()}
       </p>
     </div>
@@ -157,8 +121,8 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
     <div
       role="status"
       style={{ zIndex: 99999 }}
-      className={`${bodyFont.className} fixed bottom-6 right-6 flex items-center gap-3 border-4 border-pix-butter bg-black px-4 py-3 text-lg text-pix-butter ${
-        type === "success" ? "shadow-pixel-green-6" : "shadow-pixel-rust-6"
+      className={`${bodyFont.className} fixed bottom-6 right-6 flex items-center gap-3 border-4 border-pix-butter bg-black px-3 py-1 text-base text-pix-butter ${
+        type === "success" ? "shadow-pixel-green-4" : "shadow-pixel-rust-4"
       }`}
     >
       {type === "success" ? <Check size={16} /> : <AlertTriangle size={16} />}
@@ -174,8 +138,8 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
     <div>
-      <h2 className={`${hd} text-5xl sm:text-6xl`}>{title}</h2>
-      {sub && <p className="mt-2 text-xl text-pix-butter/70">{sub}</p>}
+      <h2 className={`${hd} text-2xl sm:text-3xl`}>{title}</h2>
+      {sub && <p className="text-sm text-pix-butter/70">{sub}</p>}
     </div>
   );
 }
@@ -249,68 +213,63 @@ function Spinner() {
 // ─── Tab: Overview ────────────────────────────────────────────────────────────
 
 function OverviewTab() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isFetching: statsFetching, refetch: refetchStats } = useStats();
+  const { data: events, isFetching: eventsFetching, refetch: refetchEvents } = useEvents();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch("/api/admin/stats");
-    if (res.ok) setStats(await res.json());
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
+  // First three events that are ongoing or upcoming: ongoing first, then soonest start.
+  const activeEvents = (events ?? [])
+    .filter((e) => e.status === "ongoing" || e.status === "not_started")
+    .sort((a, b) =>
+      (a.status === b.status ? 0 : a.status === "ongoing" ? -1 : 1) ||
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+    .slice(0, 3);
 
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
         <SectionHeader title="Overview" sub="Platform-wide counts at a glance." />
-        <RefreshButton onClick={load} loading={loading} />
+        <RefreshButton onClick={() => { refetchStats(); refetchEvents(); }} loading={statsFetching || eventsFetching} />
       </div>
-      <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard tone={0} icon={Users}        label="Participants"  value={stats?.participantCount  ?? null} />
         <StatCard tone={1} icon={BadgeCheck}   label="Members"       value={stats?.memberCount       ?? null} />
         <StatCard tone={2} icon={ShieldCheck}  label="Accounts"      value={stats?.accountCount      ?? null} />
         <StatCard tone={3} icon={CalendarDays} label="Events"        value={stats?.eventCount        ?? null} />
         <StatCard tone={4} icon={Megaphone}    label="Registrations" value={stats?.registrationCount ?? null} />
       </div>
+
+      <div className="mt-6">
+        <SectionHeader title="Upcoming & ongoing" sub="The next three events that are live or still to come." />
+        {!events ? (
+          <p className="mt-3 text-base text-pix-butter/55">Loading events…</p>
+        ) : activeEvents.length === 0 ? (
+          <p className="mt-3 border-4 border-pix-butter/25 px-3 py-2 text-base text-pix-butter/70">
+            No upcoming or ongoing events.
+          </p>
+        ) : (
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            {activeEvents.map((e, i) => (
+              <article key={e.event_id} className={`border-4 bg-black p-3 ${STAT_BORDERS[i % STAT_BORDERS.length]}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className={`${hd} min-w-0 break-words text-2xl leading-tight`}>{e.name}</h3>
+                  <Pill text={STATUS_LABELS[e.status]} colorClass={STATUS_COLORS[e.status]} />
+                </div>
+                <p className="mt-2 text-base text-pix-butter/80">{fmtDateTime(e.starts_at)}</p>
+                {e.location && <p className="text-sm text-pix-butter/60">{e.location}</p>}
+                <p className="mt-2 text-sm text-pix-butter/70">
+                  {e.registrations.registered + e.registrations.attended + e.registrations.not_attended} registered
+                  {e.registrations.attended > 0 && <> · {e.registrations.attended} attended</>}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 // ─── Tab: Members (participants + profiles + roster + student data + events) ──
-
-type Row = Record<string, unknown>;
-
-interface PersonRow {
-  participantId: string;
-  displayName: string;
-  suppliedName: string;
-  email: string | null;
-  status: string;
-  userId: string | null;
-  memberId: string | null;
-  roles: string[];
-  profile: Row | null;
-  student: {
-    student_number: string; first_name: string | null; middle_name: string | null; last_name: string | null;
-    year_level: string | null; program: string | null; section: string | null; email: string | null;
-  } | null;
-  events: { registered: number; attended: number; notAttended: number };
-}
-
-interface PersonDetail {
-  participant: Row;
-  roles: { role: string; granted_at: string }[];
-  profile: Row | null;
-  roster: Row | null;
-  student: Row | null;
-  registrations: {
-    event_id: string; name: string; location: string | null; starts_at: string | null; ends_at: string | null;
-    event_status: EventRow["status"] | null; status: string; affiliation: string | null; note: string | null;
-    registered_at: string | null;
-  }[];
-}
 
 const PEOPLE_FILTERS: { id: string; label: string }[] = [
   { id: "all",        label: "Everyone" },
@@ -355,14 +314,14 @@ function TableCard({ table, note, row, children }: {
 }) {
   return (
     <section className="border-4 border-pix-teal">
-      <header className="flex items-baseline justify-between gap-3 border-b-4 border-pix-teal px-4 py-2">
-        <h4 className={`${hd} text-3xl`}>{table}</h4>
+      <header className="flex items-baseline justify-between gap-3 border-b-4 border-pix-teal px-3 py-1">
+        <h4 className={`${hd} text-2xl`}>{table}</h4>
         {note && <span className="text-sm text-pix-butter/55">{note}</span>}
       </header>
       {row === null ? (
-        <p className="px-4 py-3 text-base text-pix-butter/55">No row — nothing linked in this table.</p>
+        <p className="px-3 py-1 text-base text-pix-butter/55">No row — nothing linked in this table.</p>
       ) : row ? (
-        <dl className="grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-1.5 px-4 py-3 text-base">
+        <dl className="grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-0.5 px-3 py-1 text-base">
           {Object.entries(row).map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-pix-butter/55">{labelOf(k)}</dt>
@@ -385,8 +344,8 @@ function SchemaLegend() {
     ["event_registrations (event_id, participant_id)", "events · participants"],
   ];
   return (
-    <div className="mt-6 border-4 border-pix-butter/25 p-4">
-      <p className="text-lg">
+    <div className="mt-3 border-4 border-pix-butter/25 p-4">
+      <p className="text-base">
         A <span className="text-pix-teal">participant</span> is anyone who can attend events — members and guests alike.
         Members are linked to a roster entry and their student record; people with a login also have a profile.
       </p>
@@ -401,27 +360,17 @@ function SchemaLegend() {
   );
 }
 
-function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, setToast }: {
+function PersonDrawer({ participantId, callerParticipantId, onClose, setToast }: {
   participantId: string;
   callerParticipantId: string;
   onClose: () => void;
-  onChanged: () => void;
   setToast: (t: ToastState) => void;
 }) {
-  const [detail, setDetail] = useState<PersonDetail | null>(null);
-  const [error, setError]   = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/admin/people/${participantId}`);
-      const d = await res.json().catch(() => ({} as Record<string, unknown>));
-      if (!res.ok) { setError((d.error as string) ?? `Could not load (HTTP ${res.status}).`); return; }
-      setDetail(d as unknown as PersonDetail);
-      setError(null);
-    } catch { setError("Network error."); }
-  }, [participantId]);
-
-  useEffect(() => { setDetail(null); load(); }, [load]);
+  // Cached per person and re-polled while the drawer is open, so role changes and event
+  // registrations made elsewhere show up without reopening it.
+  const { data: detail, error: loadError } = usePerson(participantId);
+  const error = !detail && loadError ? loadError.message : null;
+  const toggle = useToggleRole();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -429,17 +378,14 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  async function toggleRole(pid: string, role: string, has: boolean) {
-    const res = await fetch("/api/admin/roles", {
-      method: has ? "DELETE" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participant_id: pid, role }),
-    });
-    const data = await res.json().catch(() => ({} as Record<string, unknown>));
-    if (!res.ok) { setToast({ message: (data.error as string) ?? "Failed to update role", type: "error" }); return; }
-    setToast({ message: `Role ${has ? "revoked" : "granted"}: ${role}`, type: "success" });
-    load();
-    onChanged();
+  function toggleRole(pid: string, role: string, has: boolean) {
+    toggle.mutate(
+      { participantId: pid, role, has },
+      {
+        onSuccess: () => setToast({ message: `Role ${has ? "revoked" : "granted"}: ${role}`, type: "success" }),
+        onError: (e) => setToast({ message: e.message || "Failed to update role", type: "error" }),
+      },
+    );
   }
 
   const p = detail?.participant;
@@ -455,14 +401,14 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
     <div style={{ zIndex: 99990 }} className="fixed inset-0 flex justify-end" role="dialog" aria-modal="true" aria-label="Person details">
       <button type="button" aria-label="Close details" onClick={onClose} className="absolute inset-0 cursor-default bg-black/70" />
       <div className={`${bodyFont.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto overscroll-contain border-l-4 border-pix-teal bg-black text-pix-butter`}>
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-pix-teal bg-black px-5 py-4">
-          <div className="flex min-w-0 items-center gap-4">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-pix-teal bg-black px-4 py-2">
+          <div className="flex min-w-0 items-center gap-3">
             {avatar && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatar} alt="" className="h-14 w-14 shrink-0 border-4 border-pix-butter object-cover" />
             )}
             <div className="min-w-0">
-              <h3 className={`${hd} truncate text-5xl`}>{p ? String(p.display_name) : "Loading…"}</h3>
+              <h3 className={`${hd} truncate text-4xl`}>{p ? String(p.display_name) : "Loading…"}</h3>
               {p && <p className="truncate text-base text-pix-butter/60">{String(p.supplied_name)}</p>}
             </div>
           </div>
@@ -471,8 +417,8 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
           </button>
         </div>
 
-        <div className="space-y-6 px-5 py-6">
-          {error && <p role="alert" className="border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">{error}</p>}
+        <div className="space-y-3 px-4 py-4">
+          {error && <p role="alert" className="border-4 border-pix-rust bg-pix-rust px-3 py-1 text-base">{error}</p>}
           {!detail && !error && <div className="py-10"><Spinner /></div>}
 
           {detail && p && (
@@ -486,7 +432,7 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
               <TableCard table="student_data" note="student record" row={detail.student} />
 
               <TableCard table="participant_roles" note="permissions">
-                <div className="px-4 py-3">
+                <div className="px-3 py-1">
                   <div className="mb-3 flex flex-wrap gap-1.5">
                     {detail.roles.length === 0
                       ? <span className="text-base text-pix-butter/55">No roles.</span>
@@ -513,13 +459,13 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
 
               <TableCard table="event_registrations" note={`${detail.registrations.length} event${detail.registrations.length !== 1 ? "s" : ""}`}>
                 {detail.registrations.length === 0 ? (
-                  <p className="px-4 py-3 text-base text-pix-butter/55">Not registered for any event.</p>
+                  <p className="px-3 py-1 text-base text-pix-butter/55">Not registered for any event.</p>
                 ) : (
                   <ul>
                     {detail.registrations.map((r) => (
-                      <li key={r.event_id} className="flex flex-col gap-2 border-b-2 border-pix-butter/15 px-4 py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between">
+                      <li key={r.event_id} className="flex flex-col gap-2 border-b-2 border-pix-butter/15 px-3 py-1 last:border-0 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                          <p className="text-lg">{r.name}</p>
+                          <p className="text-base">{r.name}</p>
                           <p className="text-sm text-pix-butter/55">
                             {fmtDateTime(r.starts_at)}{r.location ? ` · ${r.location}` : ""}
                           </p>
@@ -545,54 +491,35 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
 }
 
 function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
-  const [people, setPeople]         = useState<PersonRow[]>([]);
-  const [total, setTotal]           = useState(0);
   const [page, setPage]             = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter]         = useState("all");
   const [search, setSearch]         = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [loading, setLoading]       = useState(true);
-  const [loadError, setLoadError]   = useState<string | null>(null);
   const [openId, setOpenId]         = useState<string | null>(null);
   const [showSchema, setShowSchema] = useState(false);
   const [toast, setToast]           = useState<ToastState>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedSearch = useDebounced(search).trim();
+  const { data, isLoading: loading, error } = usePeople(page, filter, debouncedSearch);
+  const people: PersonRow[] = data?.people ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const loadError = error ? error.message : null;
 
   function handleSearch(v: string) {
     setSearch(v);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { setDebouncedSearch(v); setPage(1); }, 350);
+    setPage(1);
   }
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const params = new URLSearchParams({ page: String(page), filter });
-      if (debouncedSearch) params.set("q", debouncedSearch);
-      const res = await fetch(`/api/admin/people?${params}`);
-      const d = await res.json().catch(() => ({} as Record<string, unknown>));
-      if (!res.ok) { setLoadError((d.error as string) ?? `Could not load people (HTTP ${res.status}).`); return; }
-      setPeople(d.people as PersonRow[]);
-      setTotal(d.total as number);
-      setTotalPages(d.totalPages as number);
-    } catch { setLoadError("Network error while loading people."); }
-    finally { setLoading(false); }
-  }, [page, filter, debouncedSearch]);
-
-  useEffect(() => { load(); }, [load]);
 
   return (
     <div>
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader title="Members" sub={`${total.toLocaleString()} participant${total !== 1 ? "s" : ""}`} />
         <SearchInput value={search} onChange={handleSearch} placeholder="Name, username, ID, email…" className="w-full sm:w-72" />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         {PEOPLE_FILTERS.map((f) => {
           const active = filter === f.id;
           return (
@@ -601,7 +528,7 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
               type="button"
               aria-pressed={active}
               onClick={() => { setFilter(f.id); setPage(1); }}
-              className={`border-4 px-4 py-1 text-base transition-colors ${focus} ${
+              className={`border-4 px-3 py-0.5 text-base transition-colors ${focus} ${
                 active
                   ? "border-black bg-pix-butter text-black shadow-pixel-teal-3"
                   : "border-pix-teal hover:bg-pix-teal hover:text-black"
@@ -619,12 +546,12 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
       {showSchema && <SchemaLegend />}
 
       {loadError && (
-        <p role="alert" className="mt-6 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">{loadError}</p>
+        <p role="alert" className="mt-3 inline-block border-4 border-pix-rust bg-pix-rust px-3 py-1 text-base">{loadError}</p>
       )}
 
-      <div className={`${BOX} mt-6 overflow-x-auto`}>
-        <table className="w-full min-w-[860px] text-lg">
-          <thead>
+      <div className={`${BOX} mt-3 ${SCROLL_AREA}`}>
+        <table className="w-full min-w-[860px] text-base">
+          <thead className={THEAD_STICKY}>
             <tr className="border-b-4 border-pix-teal">
               {["Person", "Membership", "Account", "Roles", "Events", ""].map((h, i) => (
                 <th key={i} scope="col" className={TH}>{h}</th>
@@ -632,9 +559,9 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} className="py-12"><Spinner /></td></tr>}
+            {loading && <tr><td colSpan={6} className="py-5"><Spinner /></td></tr>}
             {!loading && people.length === 0 && (
-              <tr><td colSpan={6} className="py-12 text-center text-pix-butter/60">No results.</td></tr>
+              <tr><td colSpan={6} className="py-5 text-center text-pix-butter/60">No results.</td></tr>
             )}
             {!loading && people.map((m) => {
               const username = typeof m.profile?.username === "string" ? m.profile.username : null;
@@ -642,13 +569,13 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
               const real = fullName(m.student);
               return (
                 <tr key={m.participantId} className="border-b-2 border-pix-butter/15 last:border-0 transition-colors hover:bg-pix-butter/5">
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-1">
                     <p className="max-w-[210px] truncate">{m.displayName}</p>
                     <p className="max-w-[210px] truncate text-sm text-pix-butter/55">
                       {username ? `@${username} · ` : ""}{m.email ?? m.suppliedName}
                     </p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-1">
                     {m.memberId ? (
                       <>
                         <p className="text-base">{m.memberId}</p>
@@ -661,7 +588,7 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
                       <span className="text-base text-pix-butter/45">Not a member</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-base">
+                  <td className="px-3 py-1 text-base">
                     {m.userId ? (
                       <span className={`flex items-center gap-1.5 ${setupDone === false ? "text-pix-mustard" : "text-pix-green"}`}>
                         <Check size={14} />{setupDone === false ? "Setup pending" : "Linked"}
@@ -670,14 +597,14 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
                       <span className="text-pix-butter/50">No account</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-1">
                     <div className="flex flex-wrap gap-1.5">
                       {m.roles.length === 0
                         ? <span className="text-pix-butter/35">—</span>
                         : m.roles.map((r) => <Pill key={r} text={r} colorClass={ROLE_COLORS[r] ?? ROLE_COLORS.member} />)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-base">
+                  <td className="px-3 py-1 text-base">
                     {m.events.registered === 0 ? (
                       <span className="text-pix-butter/35">—</span>
                     ) : (
@@ -687,7 +614,7 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
                       </>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-1 text-right">
                     <button type="button" onClick={() => setOpenId(m.participantId)} className={`${BTN_SECONDARY} !py-0.5`}>
                       Details
                     </button>
@@ -700,7 +627,7 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between text-lg">
+        <div className="mt-3 flex items-center justify-between text-base">
           <span className="text-pix-butter/70">Page {page} of {totalPages}</span>
           <div className="flex gap-3">
             <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className={BTN_SECONDARY}>
@@ -718,7 +645,6 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
           participantId={openId}
           callerParticipantId={callerParticipantId}
           onClose={() => setOpenId(null)}
-          onChanged={load}
           setToast={setToast}
         />
       )}
@@ -729,91 +655,123 @@ function MembersTab({ callerParticipantId }: { callerParticipantId: string }) {
 // ─── Tab: Events ──────────────────────────────────────────────────────────────
 
 function EventsTab() {
-  const [events, setEvents]         = useState<EventRow[]>([]);
-  const [loading, setLoading]       = useState(true);
   const [toast, setToast]           = useState<ToastState>(null);
-  const [showCreate, setShowCreate] = useState(false);
+  // null = list; "new" = create form; an event id = edit form for that event.
+  const [formFor, setFormFor] = useState<"new" | string | null>(null);
+  const [deleting, setDeleting] = useState<EventRow | null>(null);
+  const [sheetEventId, setSheetEventId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch("/api/admin/events");
-    if (res.ok) { const d = await res.json(); setEvents(d.events); }
-    setLoading(false);
-  }, []);
+  const { data: events = [], isLoading: loading, isFetching, error, refetch } = useEvents();
+  const statusMutation = useUpdateEventStatus();
 
-  useEffect(() => { load(); }, [load]);
+  function updateStatus(eventId: string, status: string) {
+    statusMutation.mutate(
+      { eventId, status },
+      {
+        onSuccess: () => setToast({ message: "Status updated", type: "success" }),
+        onError: (e) => setToast({ message: e.message || "Failed", type: "error" }),
+      },
+    );
+  }
 
-  async function updateStatus(eventId: string, status: string) {
-    const res = await fetch("/api/admin/events", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_id: eventId, status }),
-    });
-    const data = await res.json();
-    if (!res.ok) { setToast({ message: data.error ?? "Failed", type: "error" }); return; }
-    setToast({ message: "Status updated", type: "success" });
-    load();
+  // Spreadsheet view of one event's registrations and attendance — replaces the list until closed.
+  if (sheetEventId) {
+    return (
+      <div>
+        {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
+        <RegistrationSheet eventId={sheetEventId} onBack={() => setSheetEventId(null)} setToast={setToast} />
+      </div>
+    );
+  }
+
+  // Create / edit form — replaces the list until closed, like the registrations sheet.
+  if (formFor) {
+    const target = formFor === "new" ? undefined : events.find((e) => e.event_id === formFor);
+    if (formFor === "new" || target) {
+      return (
+        <div>
+          {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
+          <EventForm event={target} onClose={() => setFormFor(null)} setToast={setToast} />
+        </div>
+      );
+    }
   }
 
   return (
     <div>
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader title="Events" sub={`${events.length} event${events.length !== 1 ? "s" : ""}`} />
         <div className="flex flex-wrap gap-3">
-          <RefreshButton onClick={load} loading={loading} />
-          <button type="button" onClick={() => setShowCreate(true)} className={BTN_PRIMARY}>
+          <RefreshButton onClick={() => refetch()} loading={isFetching} />
+          <button type="button" onClick={() => setFormFor("new")} className={BTN_PRIMARY}>
             <Plus size={14} /> New event
           </button>
         </div>
       </div>
 
-      {showCreate && (
-        <CreateEventForm
-          onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); load(); }}
+      {error && events.length === 0 && (
+        <p role="alert" className="mt-3 inline-block border-4 border-pix-rust bg-pix-rust px-3 py-1 text-base">{error.message}</p>
+      )}
+
+      {deleting && (
+        <DeleteEventDialog
+          event={deleting}
+          onCancel={() => setDeleting(null)}
+          onDeleted={() => setDeleting(null)}
           setToast={setToast}
         />
       )}
 
-      <div className={`${BOX} mt-8 overflow-x-auto`}>
-        <table className="w-full min-w-[680px] text-lg">
-          <thead>
+      <div className={`${BOX} mt-3 ${SCROLL_AREA}`}>
+        <table className="w-full min-w-[820px] text-base">
+          <thead className={THEAD_STICKY}>
             <tr className="border-b-4 border-pix-teal">
-              {["Event", "Date", "Registrations", "Status", "Change status"].map((h) => (
+              {["Event", "Date", "Registrations", "Status", "Change status", "Actions"].map((h) => (
                 <th key={h} scope="col" className={TH}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={5} className="py-12"><Spinner /></td></tr>
+              <tr><td colSpan={6} className="py-5"><Spinner /></td></tr>
             )}
             {!loading && events.length === 0 && (
-              <tr><td colSpan={5} className="py-12 text-center text-pix-butter/60">No events yet.</td></tr>
+              <tr><td colSpan={6} className="py-5 text-center text-pix-butter/60">No events yet.</td></tr>
             )}
             {!loading && events.map((e) => (
               <tr key={e.event_id} className="border-b-2 border-pix-butter/15 last:border-0 transition-colors hover:bg-pix-butter/5">
-                <td className="px-4 py-3">
-                  <p className="max-w-[230px] truncate">{e.name}</p>
+                <td className="px-3 py-1">
+                  <p className="flex max-w-[260px] items-center gap-2">
+                    <span className="truncate">{e.name}</span>
+                    {!e.is_published && <Pill text="Draft" colorClass="border-pix-mustard text-pix-mustard" />}
+                  </p>
                   {e.location && <p className="max-w-[230px] truncate text-sm text-pix-butter/55">{e.location}</p>}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-base text-pix-butter/80">
+                <td className="whitespace-nowrap px-3 py-1 text-base text-pix-butter/80">
                   {fmt(e.starts_at)}
                   <br />
                   <span className="text-pix-butter/50">to {fmt(e.ends_at)}</span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1">
                   <div className="flex flex-col text-base">
                     <span>{e.registrations.registered} registered</span>
                     <span className="text-pix-green">{e.registrations.attended} attended</span>
                     <span className="text-pix-butter/50">{e.registrations.not_attended} absent</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setSheetEventId(e.event_id)}
+                    aria-label={`Open registrations sheet for ${e.name}`}
+                    className={`${BTN_SECONDARY} mt-1 !py-0 text-sm`}
+                  >
+                    Open sheet
+                  </button>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1">
                   <Pill text={STATUS_LABELS[e.status]} colorClass={STATUS_COLORS[e.status]} />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1">
                   <select
                     value={e.status}
                     onChange={(ev) => updateStatus(e.event_id, ev.target.value)}
@@ -824,6 +782,35 @@ function EventsTab() {
                       <option key={val} value={val}>{label}</option>
                     ))}
                   </select>
+                </td>
+                <td className="px-3 py-1">
+                  <div className="flex flex-col items-start gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormFor(e.event_id)}
+                      aria-label={`Edit ${e.name}`}
+                      className={`${BTN_SECONDARY} !py-0 text-sm`}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(e)}
+                      aria-label={`Delete ${e.name}`}
+                      className={`inline-flex items-center gap-1 border-2 border-pix-rust px-2 text-sm transition-colors hover:bg-pix-rust ${focus}`}
+                    >
+                      Delete
+                    </button>
+                    <a
+                      href={`/events/${e.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${e.is_published ? "View" : "Preview"} the public page for ${e.name}`}
+                      className={`text-sm underline underline-offset-4 hover:text-pix-teal ${focus}`}
+                    >
+                      {e.is_published ? "View page" : "Preview"} ↗
+                    </a>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -839,7 +826,7 @@ function Field({ label, error, hint, className = "", children }: {
 }) {
   return (
     <label className={`flex flex-col gap-1.5 ${className}`}>
-      <span className="text-lg">{label}</span>
+      <span className="text-base">{label}</span>
       {children}
       {error
         ? <span className="text-base text-pix-coral" role="alert">{error}</span>
@@ -848,91 +835,7 @@ function Field({ label, error, hint, className = "", children }: {
   );
 }
 
-function CreateEventForm({ onClose, onCreated, setToast }: {
-  onClose: () => void;
-  onCreated: () => void;
-  setToast: (t: { message: string; type: "success" | "error" }) => void;
-}) {
-  const [form, setForm] = useState({ name: "", description: "", location: "", starts_at: "", ends_at: "" });
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setErrors({});
-    const errs: Record<string, string> = {};
-    if (!form.name.trim()) errs.name = "Name is required.";
-    if (!form.starts_at) errs.starts_at = "Start date/time is required.";
-    if (!form.ends_at) errs.ends_at = "End date/time is required.";
-    if (form.starts_at && form.ends_at && new Date(form.ends_at) <= new Date(form.starts_at))
-      errs.ends_at = "End must be after start.";
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-
-    setSaving(true);
-    const res = await fetch("/api/admin/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: form.name.trim(),
-        description: form.description.trim() || undefined,
-        location: form.location.trim() || undefined,
-        starts_at: new Date(form.starts_at).toISOString(),
-        ends_at: new Date(form.ends_at).toISOString(),
-      }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (!res.ok) { setToast({ message: data.error ?? "Failed to create event", type: "error" }); return; }
-    setToast({ message: "Event created", type: "success" });
-    onCreated();
-  }
-
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  return (
-    <div className="mt-8 border-4 border-pix-butter p-6 shadow-pixel-teal-8">
-      <div className="mb-5 flex items-center justify-between">
-        <h3 className={`${hd} text-4xl`}>New event</h3>
-        <button type="button" onClick={onClose} aria-label="Close form" className={`border-2 border-pix-butter/60 p-1 transition-colors hover:bg-pix-butter hover:text-black ${focus}`}>
-          <X size={16} />
-        </button>
-      </div>
-      <form onSubmit={handleSubmit} noValidate className="grid gap-5 sm:grid-cols-2">
-        <Field label="Event name *" error={errors.name} className="sm:col-span-2">
-          <input value={form.name} onChange={set("name")} placeholder="e.g. AWS Cloud Day" className={inputCls(!!errors.name)} />
-        </Field>
-        <Field label="Location">
-          <input value={form.location} onChange={set("location")} placeholder="e.g. AVR, PnC Main Campus" className={inputCls()} />
-        </Field>
-        <Field label="Description">
-          <input value={form.description} onChange={set("description")} placeholder="Short description" className={inputCls()} />
-        </Field>
-        <Field label="Starts at *" error={errors.starts_at}>
-          <input type="datetime-local" value={form.starts_at} onChange={set("starts_at")} className={inputCls(!!errors.starts_at)} />
-        </Field>
-        <Field label="Ends at *" error={errors.ends_at}>
-          <input type="datetime-local" value={form.ends_at} onChange={set("ends_at")} className={inputCls(!!errors.ends_at)} />
-        </Field>
-        <div className="flex flex-wrap justify-end gap-3 sm:col-span-2">
-          <button type="button" onClick={onClose} className={`${BTN_SECONDARY} !px-6 !py-2 !text-lg`}>Cancel</button>
-          <button type="submit" disabled={saving} className={`${BTN_SUBMIT} !px-6 !py-2`}>
-            {saving && <Loader2 size={16} className="animate-spin" />} Create event
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
 // ─── Tab: Provision ───────────────────────────────────────────────────────────
-
-interface PendingMember {
-  memberId: string;
-  studentNumber: string;
-  name: string;
-  email: string | null;
-}
 
 interface ResultRow {
   memberId: string;
@@ -957,11 +860,6 @@ function csvCell(v: string) {
 }
 
 function ProvisionTab() {
-  const [pending, setPending]       = useState<PendingMember[]>([]);
-  const [accountCount, setAccountCount] = useState(0);
-  const [mailConfigured, setMailConfigured] = useState(false);
-  const [loading, setLoading]       = useState(true);
-  const [loadError, setLoadError]   = useState<string | null>(null);
   const [search, setSearch]         = useState("");
   const [selected, setSelected]     = useState<Set<string>>(new Set());
   const [emails, setEmails]         = useState<Record<string, string>>({});
@@ -971,29 +869,15 @@ function ProvisionTab() {
   const [outcome, setOutcome]       = useState<BatchOutcome | null>(null);
   const [toast, setToast]           = useState<ToastState>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const res = await fetch("/api/admin/provision/pending");
-      const d = await res.json().catch(() => ({} as Record<string, unknown>));
-      if (!res.ok) {
-        setLoadError((d.error as string) ?? `Could not load members (HTTP ${res.status}).`);
-        return;
-      }
-      setPending(d.members as PendingMember[]);
-      setAccountCount((d.accountCount as number) ?? 0);
-      const configured = !!d.mailConfigured;
-      setMailConfigured(configured);
-      if (!configured) setSendEmail(false);
-    } catch {
-      setLoadError("Network error while loading members.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
+  // Polling pauses while a batch is running so the list doesn't shift mid-run.
+  const query = useProvisionPending(running);
+  const invalidateAfterProvision = useInvalidateAfterProvision();
+  const pending: PendingMember[] = query.data?.members ?? [];
+  const accountCount = query.data?.accountCount ?? 0;
+  const mailConfigured = !!query.data?.mailConfigured;
+  const emailOn = mailConfigured && sendEmail;
+  const loading = query.isLoading;
+  const loadError = !query.data && query.error ? query.error.message : null;
 
   const emailFor = (p: PendingMember) => (emails[p.memberId] ?? p.email ?? "").trim();
 
@@ -1047,7 +931,7 @@ function ProvisionTab() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             members: chunk.map((p) => ({ memberId: p.memberId, email: emailFor(p).toLowerCase(), name: p.name })),
-            sendEmail,
+            sendEmail: emailOn,
           }),
         });
         const d = await res.json().catch(() => ({} as Record<string, any>));
@@ -1063,7 +947,7 @@ function ProvisionTab() {
             name: nameOf.get(c.memberId) ?? "",
             email: c.email,
             temporaryPassword: c.temporaryPassword,
-            mail: !sendEmail ? "off" : sent.has(c.memberId) ? "sent" : "failed",
+            mail: !emailOn ? "off" : sent.has(c.memberId) ? "sent" : "failed",
             mailReason: failed.get(c.memberId),
           });
         }
@@ -1076,14 +960,14 @@ function ProvisionTab() {
     }
 
     setProgress(null);
-    setOutcome({ rows, errors, mailRequested: sendEmail });
+    setOutcome({ rows, errors, mailRequested: emailOn });
     setSelected(new Set());
     setRunning(false);
     setToast({
       message: `${rows.length} account${rows.length !== 1 ? "s" : ""} created${errors.length ? `, ${errors.length} failed` : ""}`,
       type: errors.length && rows.length === 0 ? "error" : "success",
     });
-    load();
+    invalidateAfterProvision();
   }
 
   function copyAll() {
@@ -1133,11 +1017,11 @@ function ProvisionTab() {
               : `${pending.length} member${pending.length !== 1 ? "s" : ""} without an account · ${accountCount} with one`
           }
         />
-        <RefreshButton onClick={load} loading={loading} />
+        <RefreshButton onClick={() => query.refetch()} loading={query.isFetching} />
       </div>
 
       {loadError && (
-        <p role="alert" className="mt-8 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-3 text-lg">
+        <p role="alert" className="mt-4 inline-block border-4 border-pix-rust bg-pix-rust px-3 py-1 text-base">
           {loadError}
         </p>
       )}
@@ -1145,14 +1029,14 @@ function ProvisionTab() {
       {!loadError && (
         <>
           {/* Controls */}
-          <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <SearchInput value={search} onChange={setSearch} placeholder="Search name, ID, email…" className="w-full lg:w-80" />
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <label className={`flex items-center gap-2 text-lg ${mailConfigured ? "" : "opacity-50"}`}>
+              <label className={`flex items-center gap-2 text-base ${mailConfigured ? "" : "opacity-50"}`}>
                 <input
                   type="checkbox"
-                  checked={sendEmail}
+                  checked={emailOn}
                   disabled={!mailConfigured}
                   onChange={(e) => setSendEmail(e.target.checked)}
                   className="h-5 w-5 accent-pix-teal"
@@ -1175,11 +1059,11 @@ function ProvisionTab() {
           )}
 
           {/* Pending members */}
-          <div className={`${BOX} mt-6 max-h-[30rem] overflow-auto`}>
-            <table className="w-full min-w-[640px] text-lg">
-              <thead className="sticky top-0 z-10 bg-black">
+          <div className={`${BOX} mt-3 ${SCROLL_AREA}`}>
+            <table className="w-full min-w-[640px] text-base">
+              <thead className={THEAD_STICKY}>
                 <tr className="border-b-4 border-pix-teal">
-                  <th scope="col" className="w-12 px-4 py-3">
+                  <th scope="col" className="w-12 px-3 py-1">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -1195,10 +1079,10 @@ function ProvisionTab() {
                 </tr>
               </thead>
               <tbody>
-                {loading && <tr><td colSpan={4} className="py-12"><Spinner /></td></tr>}
+                {loading && <tr><td colSpan={4} className="py-5"><Spinner /></td></tr>}
                 {!loading && visible.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-12 text-center text-pix-butter/60">
+                    <td colSpan={4} className="py-5 text-center text-pix-butter/60">
                       {pending.length === 0 ? "Everyone on the roster already has an account." : "No matches."}
                     </td>
                   </tr>
@@ -1208,7 +1092,7 @@ function ProvisionTab() {
                   const valid = EMAIL_RE.test(em);
                   return (
                     <tr key={p.memberId} className="border-b-2 border-pix-butter/15 last:border-0 hover:bg-pix-butter/5">
-                      <td className="px-4 py-2">
+                      <td className="px-3 py-1">
                         <input
                           type="checkbox"
                           checked={selected.has(p.memberId)}
@@ -1218,9 +1102,9 @@ function ProvisionTab() {
                           className="h-5 w-5 accent-pix-teal disabled:opacity-30"
                         />
                       </td>
-                      <td className="px-4 py-2"><p className="max-w-[240px] truncate">{p.name}</p></td>
-                      <td className="px-4 py-2 text-base text-pix-butter/80">{p.memberId}</td>
-                      <td className="px-4 py-2">
+                      <td className="px-3 py-1"><p className="max-w-[240px] truncate">{p.name}</p></td>
+                      <td className="px-3 py-1 text-base text-pix-butter/80">{p.memberId}</td>
+                      <td className="px-3 py-1">
                         <input
                           type="email"
                           value={emails[p.memberId] ?? p.email ?? ""}
@@ -1250,11 +1134,11 @@ function ProvisionTab() {
 
       {/* Result of the last batch */}
       {outcome && (
-        <div className="mt-10 border-4 border-pix-butter p-6 shadow-pixel-green-8">
+        <div className="mt-4 border-4 border-pix-butter p-3 shadow-pixel-green-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className={`${hd} text-4xl`}>Batch result</h3>
-              <p className="mt-2 text-lg text-pix-butter/70">
+              <h3 className={`${hd} text-3xl`}>Batch result</h3>
+              <p className="mt-1 text-base text-pix-butter/70">
                 {outcome.rows.length} created · {outcome.errors.length} failed
                 {outcome.mailRequested && ` · ${outcome.rows.filter((r) => r.mail === "sent").length} emailed`}
               </p>
@@ -1272,9 +1156,9 @@ function ProvisionTab() {
               <p className="mt-4 text-base text-pix-coral">
                 Temporary passwords are shown only now. Copy or download them before leaving this page.
               </p>
-              <div className={`${BOX} mt-4 overflow-x-auto`}>
+              <div className={`${BOX} mt-3 ${SCROLL_AREA}`}>
                 <table className="w-full min-w-[640px] text-base">
-                  <thead>
+                  <thead className={THEAD_STICKY}>
                     <tr className="border-b-4 border-pix-teal">
                       {["Member", "Email", "Temporary password", "Email"].map((h) => (
                         <th key={h} scope="col" className={TH}>{h}</th>
@@ -1284,13 +1168,13 @@ function ProvisionTab() {
                   <tbody>
                     {outcome.rows.map((r) => (
                       <tr key={r.memberId} className="border-b-2 border-pix-butter/15 last:border-0">
-                        <td className="px-4 py-2">
+                        <td className="px-3 py-1">
                           <p className="max-w-[200px] truncate">{r.name || r.memberId}</p>
                           <p className="text-sm text-pix-butter/55">{r.memberId}</p>
                         </td>
-                        <td className="px-4 py-2">{r.email}</td>
-                        <td className="select-all px-4 py-2 text-lg">{r.temporaryPassword}</td>
-                        <td className="px-4 py-2">
+                        <td className="px-3 py-1">{r.email}</td>
+                        <td className="select-all px-4 py-2 text-base">{r.temporaryPassword}</td>
+                        <td className="px-3 py-1">
                           <Pill text={MAIL_PILL[r.mail].text} colorClass={MAIL_PILL[r.mail].cls} />
                           {r.mail === "failed" && r.mailReason && (
                             <p className="mt-1 max-w-[220px] text-sm text-pix-coral">{r.mailReason}</p>
@@ -1305,8 +1189,8 @@ function ProvisionTab() {
           )}
 
           {outcome.errors.length > 0 && (
-            <div className="mt-6 border-4 border-pix-rust p-4" role="alert">
-              <p className="flex items-center gap-2 text-lg"><AlertTriangle size={18} /> Couldn&apos;t provision</p>
+            <div className="mt-3 border-4 border-pix-rust p-4" role="alert">
+              <p className="flex items-center gap-2 text-base"><AlertTriangle size={18} /> Couldn&apos;t provision</p>
               <ul className="mt-2 space-y-1 text-base">
                 {outcome.errors.map((er) => (
                   <li key={er.memberId}>
@@ -1321,8 +1205,8 @@ function ProvisionTab() {
       )}
 
       {/* One-off: for a member not in the list above */}
-      <div className="mt-16 border-t-4 border-pix-butter/20 pt-10">
-        <ManualProvision onDone={load} />
+      <div className="mt-8 border-t-4 border-pix-butter/20 pt-6">
+        <ManualProvision />
       </div>
     </div>
   );
@@ -1330,7 +1214,8 @@ function ProvisionTab() {
 
 // ─── Single-ID provisioning (members not in the pending list) ──────────────────
 
-function ManualProvision({ onDone }: { onDone: () => void }) {
+function ManualProvision() {
+  const invalidateAfterProvision = useInvalidateAfterProvision();
   const [memberId, setMemberId] = useState("");
   const [email, setEmail]       = useState("");
   const [saving, setSaving]     = useState(false);
@@ -1363,7 +1248,7 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
       }
       setResult({ success: true, temporaryPassword: data.result.temporaryPassword, authUserId: data.result.authUserId });
       setMemberId(""); setEmail("");
-      onDone();
+      invalidateAfterProvision();
     } catch {
       setResult({ success: false, error: "Network error. Please try again." });
     } finally {
@@ -1373,10 +1258,10 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="max-w-xl">
-      <h3 className={`${hd} text-4xl`}>Provision by member ID</h3>
-      <p className="mt-2 text-xl text-pix-butter/70">For a single member who isn&apos;t in the list above.</p>
+      <h3 className={`${hd} text-3xl`}>Provision by member ID</h3>
+      <p className="mt-1 text-sm text-pix-butter/70">For a single member who isn&apos;t in the list above.</p>
 
-      <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-5">
+      <form onSubmit={handleSubmit} noValidate className="mt-3 flex flex-col gap-3">
         <Field label="Member ID *" error={errors.memberId} hint="Must already exist in the member roster.">
           <input
             value={memberId}
@@ -1403,9 +1288,9 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
 
       {result && (
         <div
-          className={`mt-8 border-4 p-5 ${
+          className={`mt-4 border-4 p-5 ${
             result.success
-              ? "border-pix-green shadow-pixel-green-6"
+              ? "border-pix-green shadow-pixel-green-4"
               : "border-pix-rust bg-pix-rust"
           }`}
         >
@@ -1413,19 +1298,19 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
             <>
               <div className="mb-3 flex items-center gap-2 text-pix-green">
                 <Check size={18} />
-                <p className="text-xl">Account provisioned</p>
+                <p className="text-base">Account provisioned</p>
               </div>
               <p className="mb-2 text-base text-pix-butter/70">Share these credentials securely:</p>
               <div className="flex items-center justify-between gap-3 border-4 border-pix-butter/40 px-4 py-2.5">
                 <span className="text-base text-pix-butter/60">Temporary password</span>
-                <span className="select-all text-lg">{result.temporaryPassword}</span>
+                <span className="select-all text-base">{result.temporaryPassword}</span>
               </div>
               <p className="mt-3 text-base text-pix-butter/55">The member must change their password on first login.</p>
             </>
           ) : (
             <div className="flex items-start gap-2.5" role="alert">
               <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-              <p className="text-lg">{result.error}</p>
+              <p className="text-base">{result.error}</p>
             </div>
           )}
         </div>
@@ -1437,35 +1322,21 @@ function ManualProvision({ onDone }: { onDone: () => void }) {
 // ─── Tab: Roles ───────────────────────────────────────────────────────────────
 
 function RolesTab({ callerParticipantId }: { callerParticipantId: string }) {
-  const [search, setSearch]   = useState("");
-  const [members, setMembers] = useState<MemberRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast]     = useState<ToastState>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [search, setSearch] = useState("");
+  const [toast, setToast]   = useState<ToastState>(null);
 
-  function handleSearch(v: string) {
-    setSearch(v);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      if (!v.trim()) { setMembers([]); return; }
-      setLoading(true);
-      const res = await fetch(`/api/admin/members?q=${encodeURIComponent(v)}&page=1`);
-      if (res.ok) { const d = await res.json(); setMembers(d.members.filter((m: MemberRow) => !!m.user_id)); }
-      setLoading(false);
-    }, 350);
-  }
+  const debounced = useDebounced(search).trim();
+  const { data: members = [], isLoading: loading } = useRoleSearch(debounced);
+  const toggle = useToggleRole();
 
-  async function toggleRole(participantId: string, role: string, hasRole: boolean) {
-    const res = await fetch("/api/admin/roles", {
-      method: hasRole ? "DELETE" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participant_id: participantId, role }),
-    });
-    const data = await res.json();
-    if (!res.ok) { setToast({ message: data.error ?? "Failed", type: "error" }); return; }
-    setToast({ message: `${hasRole ? "Revoked" : "Granted"}: ${role}`, type: "success" });
-    const updated = await fetch(`/api/admin/members?q=${encodeURIComponent(search)}&page=1`);
-    if (updated.ok) { const d = await updated.json(); setMembers(d.members.filter((m: MemberRow) => !!m.user_id)); }
+  function toggleRole(participantId: string, role: string, hasRole: boolean) {
+    toggle.mutate(
+      { participantId, role, has: hasRole },
+      {
+        onSuccess: () => setToast({ message: `${hasRole ? "Revoked" : "Granted"}: ${role}`, type: "success" }),
+        onError: (e) => setToast({ message: e.message || "Failed", type: "error" }),
+      },
+    );
   }
 
   return (
@@ -1475,25 +1346,25 @@ function RolesTab({ callerParticipantId }: { callerParticipantId: string }) {
 
       <SearchInput
         value={search}
-        onChange={handleSearch}
+        onChange={setSearch}
         placeholder="Search by name, username, or email…"
-        className="mt-8 max-w-md"
+        className="mt-3 max-w-md"
       />
 
       {loading && <div className="py-8"><Spinner /></div>}
 
-      {!loading && search && members.length === 0 && (
-        <p className="mt-6 text-lg text-pix-butter/60">No accounts found.</p>
+      {!loading && debounced && members.length === 0 && (
+        <p className="mt-3 text-base text-pix-butter/60">No accounts found.</p>
       )}
 
-      <ul className="mt-6 space-y-5">
+      <ul className={`mt-3 space-y-2 ${members.length > 6 ? `${SCROLL_AREA} pr-2` : ""}`}>
         {members.map((m) => {
           const roles = m.participant_roles.map((r) => r.role);
           const handle = m.profiles?.username ?? m.display_name;
           return (
-            <li key={m.participant_id} className={`${BOX} flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between`}>
+            <li key={m.participant_id} className={`${BOX} flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between`}>
               <div className="min-w-0">
-                <p className="truncate text-xl">{handle}</p>
+                <p className="truncate text-base">{handle}</p>
                 <p className="truncate text-base text-pix-butter/55">{m.email ?? m.supplied_name}</p>
                 {m.member_roster_id && <p className="mt-0.5 text-sm text-pix-butter/45">{m.member_roster_id}</p>}
               </div>
@@ -1512,70 +1383,328 @@ function RolesTab({ callerParticipantId }: { callerParticipantId: string }) {
   );
 }
 
+// ─── Tab: Requests (student data change requests) ─────────────────────────────
+
+const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected",
+  cancelled: "Withdrawn",
+};
+
+const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
+  pending: "border-pix-mustard text-pix-mustard",
+  approved: "border-pix-green bg-pix-green text-black",
+  rejected: "border-pix-rust bg-pix-rust text-pix-butter",
+  cancelled: "border-pix-butter/50 text-pix-butter/70",
+};
+
+function RequestsTab() {
+  const [filter, setFilter]     = useState<"pending" | "all">("pending");
+  const [toast, setToast]       = useState<ToastState>(null);
+  const [notes, setNotes]       = useState<Record<string, string>>({});
+
+  const query = useRequests(filter);
+  const requests = query.data?.requests ?? [];
+  const loading = query.isLoading;
+  const reviewMutation = useReviewRequest();
+
+  function review(id: string, decision: "approve" | "reject") {
+    const note = (notes[id] ?? "").trim();
+    if (decision === "reject" && note.length < 3) {
+      setToast({ message: "Add a short note so the member knows why.", type: "error" });
+      return;
+    }
+    reviewMutation.mutate(
+      { id, decision, note },
+      {
+        onSuccess: () => {
+          setToast({ message: decision === "approve" ? "Approved — student record updated" : "Rejected", type: "success" });
+          setNotes((n) => { const next = { ...n }; delete next[id]; return next; });
+        },
+        onError: (e) => setToast({ message: e.message || "Failed", type: "error" }),
+      },
+    );
+  }
+
+  const showValue = (v: string | null | undefined) => (v && v !== "" ? v : "—");
+
+  return (
+    <div>
+      {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <SectionHeader
+          title="Requests"
+          sub="Corrections members have asked for on their student data."
+        />
+        <div className="flex flex-wrap gap-3">
+          {(["pending", "all"] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={filter === f}
+              onClick={() => setFilter(f)}
+              className={`border-4 px-3 py-0.5 text-base transition-colors ${focus} ${
+                filter === f
+                  ? "border-black bg-pix-butter text-black shadow-pixel-teal-2"
+                  : "border-pix-teal text-pix-butter hover:bg-pix-teal hover:text-black"
+              }`}
+            >
+              {f === "pending" ? "Pending" : "History"}
+            </button>
+          ))}
+          <RefreshButton onClick={() => query.refetch()} loading={query.isFetching} />
+        </div>
+      </div>
+
+      <div className={`mt-3 flex flex-col gap-2 ${requests.length > 3 ? `${SCROLL_AREA} pr-2` : ""}`}>
+        {loading && requests.length === 0 && <div className="py-5"><Spinner /></div>}
+        {query.error && requests.length === 0 && (
+          <p role="alert" className="inline-block self-start border-4 border-pix-rust bg-pix-rust px-3 py-1 text-base">{query.error.message}</p>
+        )}
+        {!loading && requests.length === 0 && (
+          <div className={`${BOX} py-5 text-center text-pix-butter/60`}>
+            {filter === "pending" ? "No requests waiting for review." : "No requests yet."}
+          </div>
+        )}
+
+        {requests.map((r) => {
+          const fields = EDITABLE_FIELDS.filter((f) => f in r.requested_values);
+          const name = r.participant?.display_name ?? r.participant?.supplied_name ?? "Unknown participant";
+          const isPending = r.status === "pending";
+          const busy = reviewMutation.isPending && reviewMutation.variables?.id === r.request_id;
+          return (
+            <article key={r.request_id} className={`${BOX} p-3`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="break-words text-base">{name}</p>
+                  <p className="break-words text-base text-pix-butter/60">
+                    {[r.participant?.member_id, `Student no. ${r.student_number}`, r.participant?.email]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Pill text={REQUEST_STATUS_LABELS[r.status]} colorClass={REQUEST_STATUS_COLORS[r.status]} />
+                  <span className="text-sm text-pix-butter/55">{fmt(r.created_at)}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[420px] text-base">
+                  <thead>
+                    <tr className="border-b-2 border-pix-butter/20">
+                      <th scope="col" className="py-1 pr-4 text-left font-normal text-pix-butter/60">Field</th>
+                      <th scope="col" className="py-1 pr-4 text-left font-normal text-pix-butter/60">Was</th>
+                      <th scope="col" className="py-1 text-left font-normal text-pix-butter/60">Requested</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fields.map((f) => {
+                      const was = r.current_values[f];
+                      const live = r.live_values?.[f];
+                      // The record may have been edited (by an admin, or an earlier approval) since this was filed.
+                      const drifted = isPending && r.live_values !== null && (live ?? "") !== (was ?? "");
+                      return (
+                        <tr key={f} className="border-b border-pix-butter/10 align-top last:border-0">
+                          <td className="py-1 pr-4 text-pix-butter/80">{FIELD_LABELS[f]}</td>
+                          <td className="py-1 pr-4 break-words text-pix-butter/60 line-through">{showValue(was)}</td>
+                          <td className="py-1 break-words">
+                            {showValue(r.requested_values[f])}
+                            {drifted && (
+                              <span className="mt-1 flex items-center gap-1.5 text-sm text-pix-mustard">
+                                <AlertTriangle size={13} aria-hidden="true" />
+                                Record now reads &ldquo;{showValue(live)}&rdquo;
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="mt-2 break-words text-base">
+                <span className="text-pix-butter/60">Reason: </span>{r.reason}
+              </p>
+
+              {isPending ? (
+                <div className="mt-3 flex flex-col gap-2">
+                  <label htmlFor={`note-${r.request_id}`} className="text-base text-pix-butter/80">
+                    Note to the member <span className="text-pix-butter/50">(required to reject)</span>
+                  </label>
+                  <input
+                    id={`note-${r.request_id}`}
+                    type="text"
+                    maxLength={500}
+                    value={notes[r.request_id] ?? ""}
+                    disabled={busy}
+                    onChange={(e) => setNotes((n) => ({ ...n, [r.request_id]: e.target.value }))}
+                    className={inputCls()}
+                    placeholder="e.g. Please bring your COR to the officers so we can verify."
+                  />
+                  <div className="flex flex-wrap gap-3">
+                    <button type="button" disabled={busy} onClick={() => review(r.request_id, "approve")} className={BTN_PRIMARY}>
+                      <Check size={14} /> {busy ? "Saving…" : "Approve & apply"}
+                    </button>
+                    <button type="button" disabled={busy} onClick={() => review(r.request_id, "reject")} className={BTN_SECONDARY}>
+                      <X size={14} /> Reject
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                (r.review_note || r.reviewed_at) && (
+                  <p className="mt-4 break-words text-base text-pix-butter/70">
+                    {r.reviewed_at && <>Reviewed {fmt(r.reviewed_at)}{r.reviewer_name ? ` by ${r.reviewer_name}` : ""}. </>}
+                    {r.review_note && <>Note: {r.review_note}</>}
+                  </p>
+                )
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "overview",  label: "Overview",  icon: LayoutDashboard },
   { id: "members",   label: "Members",   icon: Users },
   { id: "events",    label: "Events",    icon: CalendarDays },
+  { id: "requests",  label: "Requests",  icon: ClipboardList },
   { id: "provision", label: "Provision", icon: UserCog },
   { id: "roles",     label: "Roles",     icon: ShieldCheck },
 ];
 
+/** Public entry point: scopes the TanStack Query cache + polling to the admin area. */
 export function AdminDashboard({ callerParticipantId }: { callerParticipantId: string }) {
+  return (
+    <QueryProvider>
+      <AdminShell callerParticipantId={callerParticipantId} />
+    </QueryProvider>
+  );
+}
+
+function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
+  // Badge on the Requests tab so pending student-data changes don't go unnoticed (polled).
+  const { data: pendingRequests = 0 } = usePendingRequestCount();
+
+  // Layout: the page itself scrolls normally (only the admin nav is pinned). Individual long lists
+  // — members, events, roles, requests, provisioning rows — scroll inside their own bounded areas.
+  const [showTop, setShowTop] = useState(false);
+
+  // Height of the pinned admin nav, so the content area can fill exactly the rest of the viewport.
+  const navRef = useRef<HTMLDivElement>(null);
+  const [adminNavH, setAdminNavH] = useState(0);
+
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const measure = () => setAdminNavH(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 160);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  function selectTab(id: Tab) {
+    setTab(id);
+    window.scrollTo({ top: 0 });
+  }
 
   return (
     <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
-      <SidePixels side="left" />
-      <SidePixels side="right" />
+      <SidePixels side="left" contentWidth={1680} />
+      <SidePixels side="right" contentWidth={1680} />
 
       <div className="relative z-10">
-        {/* Header */}
-        <section className={`${wrap} pb-10 pt-10 sm:pb-12 sm:pt-14`}>
-          <p className="text-xl">AWSSBG-UC</p>
-          <h1 className={`${hd} mt-3 text-[clamp(5rem,13vw,10rem)]`}>Admin</h1>
-          <p className="mt-6 max-w-2xl text-2xl leading-snug">
-            Manage members, events, accounts, and roles.
-          </p>
+        {/* Admin nav — stays pinned just under the site navbar */}
+        <div
+          ref={navRef}
+          className="sticky z-10 bg-black"
+          style={{ top: "var(--site-nav-h, 56px)" }}
+        >
+          <div className={`${wrap} flex items-start gap-3 py-2`}>
+            <h1 className="sr-only">Admin</h1>
+            {/* Tabs — same shape as the Terms / Privacy switcher */}
+            <div role="tablist" aria-label="Admin sections" className="flex min-w-0 flex-1 flex-wrap gap-2">
+              {TABS.map(({ id, label, icon: Icon }) => {
+                const active = tab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => selectTab(id)}
+                    className={`flex items-center gap-1.5 border-4 px-2.5 py-0.5 text-base transition-transform ${focus} ${
+                      active
+                        ? "border-black bg-pix-butter text-black shadow-pixel-teal-2"
+                        : "border-pix-teal text-pix-butter hover:bg-pix-teal hover:text-black"
+                    }`}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    {label}
+                    {id === "requests" && pendingRequests > 0 && (
+                      <span
+                        className="border-2 border-pix-rust bg-pix-rust px-1.5 text-sm leading-tight text-pix-butter"
+                        aria-label={`${pendingRequests} pending`}
+                      >
+                        {pendingRequests}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Tabs — same shape as the Terms / Privacy switcher */}
-          <div role="tablist" aria-label="Admin sections" className="mt-10 flex w-full flex-wrap gap-4">
-            {TABS.map(({ id, label, icon: Icon }) => {
-              const active = tab === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setTab(id)}
-                  className={`flex items-center gap-2 border-4 px-5 py-2 text-lg transition-transform ${focus} ${
-                    active
-                      ? "border-black bg-pix-butter text-black shadow-pixel-teal-4"
-                      : "border-pix-teal text-pix-butter hover:bg-pix-teal hover:text-black"
-                  }`}
-                >
-                  <Icon size={16} aria-hidden="true" />
-                  {label}
-                </button>
-              );
-            })}
+            {/* Back to top — fades in once the content below has been scrolled */}
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              aria-label="Back to top"
+              title="Back to top"
+              tabIndex={showTop ? 0 : -1}
+              className={`flex shrink-0 items-center gap-1.5 border-4 border-pix-butter px-2.5 py-0.5 text-base text-pix-butter transition-all hover:bg-pix-butter hover:text-black ${focus} ${
+                showTop ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            >
+              <ArrowUp size={16} aria-hidden="true" />
+              <span className="hidden sm:inline">Top</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content — flows with the page; no scrollbar of its own */}
+        <section
+          role="tabpanel"
+          style={{ minHeight: `calc(100dvh - var(--site-nav-h, 56px) - ${adminNavH}px)` }}
+        >
+          <div className={`${wrap} py-3 sm:py-4`}>
+            {tab === "overview"  && <OverviewTab />}
+            {tab === "members"   && <MembersTab callerParticipantId={callerParticipantId} />}
+            {tab === "events"    && <EventsTab />}
+            {tab === "requests"  && <RequestsTab />}
+            {tab === "provision" && <ProvisionTab />}
+            {tab === "roles"     && <RolesTab callerParticipantId={callerParticipantId} />}
           </div>
         </section>
 
-        <Stripes className="h-4" />
-
-        <section role="tabpanel" className={`${wrap} py-12 sm:py-16`}>
-          {tab === "overview"  && <OverviewTab />}
-          {tab === "members"   && <MembersTab callerParticipantId={callerParticipantId} />}
-          {tab === "events"    && <EventsTab />}
-          {tab === "provision" && <ProvisionTab />}
-          {tab === "roles"     && <RolesTab callerParticipantId={callerParticipantId} />}
-        </section>
-
-        <Stripes className="h-4" />
+        {/* Closes the admin block so the footer reads as its own section */}
+        <Stripes className="h-2" />
       </div>
     </div>
   );
