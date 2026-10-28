@@ -39,7 +39,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-body), "JetBrains Mono", ui-monospace, monospace;
     letter-spacing: -0.03em;
     font-weight: 700;
     line-height: 1.1;

@@ -1,6 +1,5 @@
 export {
   default as HomeClient,
-  pixel,
   hd,
   wrap,
   focus,

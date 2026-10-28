@@ -1,12 +1,9 @@
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { ConstitutionSidebar } from "@/src/widgets/constitution-sidebar";
 import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
 // Same fonts as the home page. (The shared class strings live in a client module, so they are rebuilt here
 // instead of imported: a server component can't read non-component exports from a "use client" file.)
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 
 export const metadata = {
@@ -15,7 +12,7 @@ export const metadata = {
 
 export default function ConstitutionPage() {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
     <PixelClouds />
     <SidePixels side="left" />
     <SidePixels side="right" />

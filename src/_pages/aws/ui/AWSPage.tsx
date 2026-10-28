@@ -3,20 +3,17 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { motion, useReducedMotion } from "framer-motion";
 import { SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
 import { colors } from "@/tailwind.tokens";
 
 /**
  * /aws in the pixel-art style of the home page:
- *  black ground, butter-yellow type, Jersey 10 headlines, Pixelify Sans text,
+ *  black ground, butter-yellow type, Jersey 10 headlines, JetBrains Mono text,
  *  the stripe "tunnel" as dividers, thick square borders and hard offset shadows.
  */
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
@@ -345,7 +342,7 @@ function Cta() {
 
 export function AWSPage() {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

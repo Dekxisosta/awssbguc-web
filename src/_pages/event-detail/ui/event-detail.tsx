@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { EventRegisterPanel } from "@/src/features/event-registration";
 import { Stripes, SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
 import {
@@ -26,10 +26,6 @@ import {
  * Everything here is public information; registrants are listed only when they are public members.
  */
 
-// Same fonts as the other pages (rebuilt here: this is a server component).
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 const CARD_BORDERS = ["border-pix-teal", "border-pix-mustard", "border-pix-rust", "border-pix-green"];
@@ -350,7 +346,7 @@ export function EventDetailPage({
   };
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <PixelClouds />
       <SidePixels side="left" />

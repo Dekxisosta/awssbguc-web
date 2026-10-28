@@ -22,8 +22,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        heading: ["var(--font-bricolage)", "Bricolage Grotesque", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "JetBrains Mono", "ui-monospace", "monospace"],
+        mono: ["var(--font-body)", "JetBrains Mono", "ui-monospace", "monospace"],
+        heading: ["var(--font-body)", "JetBrains Mono", "ui-monospace", "monospace"],
+        display: ["var(--font-display)", "Jersey 10", "ui-monospace", "monospace"],
       },
       letterSpacing: {
         tighter: "-0.04em",

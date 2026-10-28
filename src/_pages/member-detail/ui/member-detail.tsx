@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { Stripes, SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
 import { STATUS_COLORS, STATUS_LABELS, fmtShortDate, fmtTime, safeTimeZone } from "@/src/entities/event";
 import type { MemberEventSummary, PublicMemberDetail } from "@/src/entities/member";
@@ -10,9 +10,6 @@ import type { MemberEventSummary, PublicMemberDetail } from "@/src/entities/memb
  * appears in through `event_public_attendees`. Both are opt-in via the directory setting.
  */
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
@@ -100,7 +97,7 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
   const hasEvents = upcoming.length + past.length > 0;
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

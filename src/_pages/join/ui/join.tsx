@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { SOCIALS } from "@/src/shared/config/socials";
 
 export const joinMetadata: Metadata = {
@@ -15,11 +15,8 @@ export const joinMetadata: Metadata = {
  * black ground, butter-yellow type, Jersey 10 headlines, stripe dividers, square corners, hard offset shadows.
  */
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 
 // Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
@@ -258,7 +255,7 @@ function ClosingCta() {
 
 export default function JoinPage() {
   return (
-    <div className={`${pixel.className} bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} bg-black tracking-normal text-pix-butter`}>
       <Hero />
       <Eligibility />
       <Steps />

@@ -6,25 +6,22 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { SideGrid } from "@/src/widgets/side-grid";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
 import { colors } from "@/tailwind.tokens";
 
 /**
  * Navbar + footer in the pixel-art direction of the home page:
- *  - black ground, butter-yellow (#fff7a1) type, Jersey 10 headings, Pixelify Sans text
+ *  - black ground, butter-yellow (#fff7a1) type, Jersey 10 headings, JetBrains Mono text
  *  - the stripe "tunnel" palette reused as thin dividers
  *  - square corners, hard offset shadows, thick borders; no blur, no rounded anything
  *
  * Fonts are applied only to the header, footer and portaled overlays, so page content keeps its own fonts.
  */
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 
-const px = pixel.className;
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+const px = bodyFont.className;
 
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";

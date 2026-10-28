@@ -1,12 +1,9 @@
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { LegalTabs, type LegalTabKey } from "@/src/widgets/legal-tabs";
 import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
 // Same fonts as the home page. (Rebuilt here rather than imported: this is a server component, and non-component
 // exports from the "use client" HomeClient module arrive as client references, not strings.)
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
 export function LegalLayout({
   active,
@@ -20,7 +17,7 @@ export function LegalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${pixel.className} relative isolate min-h-full bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate min-h-full bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

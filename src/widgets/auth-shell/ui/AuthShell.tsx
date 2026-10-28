@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { Stripes, SidePixels, PixelClouds, focus } from "@/src/widgets/home-client";
 import { Footer } from "@/src/widgets/dashboard-shell";
 
@@ -12,9 +12,6 @@ import { Footer } from "@/src/widgets/dashboard-shell";
  * on the right that holds the form. The duck and its speech bubble sit under the headline on wide screens.
  */
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
 export function AuthShell({
   title,
@@ -32,7 +29,7 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${pixel.className} relative isolate min-h-screen bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate min-h-screen bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

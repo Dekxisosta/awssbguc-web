@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { JetBrains_Mono, Jersey_10, Pixelify_Sans } from "next/font/google";
+import { bodyFont, displayFont, hd } from "@/src/shared/config/fonts";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { GlobeOrbit } from "./GlobeOrbit";
 import { SOCIALS, MAILTO } from "@/src/shared/config/socials";
@@ -12,22 +12,15 @@ import type { PublicMemberProfile } from "@/src/entities/member";
 
 /**
  * Home page in the style of a pixel-art portfolio:
- *  - black ground, butter-yellow type, Jersey 10 (pixel) for headlines, JetBrains Mono for text
+ *  - black ground, butter-yellow type, Jersey 10 (pixel) for headlines, JetBrains Mono for text (both from src/shared/config/fonts.ts)
  *  - one motif: a vertical stripe "tunnel" with stepped edges, reused as thin dividers
  *  - the hero is a two-column split: text on the left, a full-colour photo with a striped panel and a butter card on the right
  *  - hard offset shadows and square corners, no blur, no gradients, no rounded anything
  *  - only the moving side pixels use the green-teal palette from the Operations poster
  */
 
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], display: "swap" });
-// Body font. Still exported as `pixel` so other pages that import it pick up JetBrains Mono too.
-export const pixel = jetbrains;
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-// Pixel face with a larger x-height than Jersey 10, so small caps lines stay readable.
-const pixelify = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-
-// Headlines: the element-level heading font in globals.css would win over inheritance, so set the class directly.
-export const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
+// Fonts live in src/shared/config/fonts.ts. Re-exported so existing imports from this widget keep working.
+export { hd };
 
 const HERO_IMAGES = ["/images/hero/1.jpg", "/images/hero/2.jpg", "/images/hero/3.jpg", "/images/hero/4.jpg"];
 
@@ -61,6 +54,7 @@ export function Stripes({ className = "h-4" }: { className?: string }) {
 function WIPBanner() {
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     setMounted(true);
@@ -74,87 +68,96 @@ function WIPBanner() {
     setVisible(false);
   }
 
+  // Escape closes the dialog.
+  useEffect(() => {
+    if (!visible) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible]);
+
   if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>
       {visible && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop: flat black, no blur, like the rest of the site */}
           <motion.div
             key="wip-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[99990] bg-black/80"
             onClick={dismiss}
             aria-hidden="true"
           />
 
-          {/* Dialog */}
+          {/* Dialog: same OS-window look as the hero (title bar, stripe divider, hard shadow) */}
           <motion.div
             key="wip-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="wip-title"
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            className="fixed inset-0 z-[99991] flex items-center justify-center pointer-events-none px-4"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+            animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="pointer-events-none fixed inset-0 z-[99991] flex items-center justify-center px-4"
           >
             <div
-              className="pointer-events-auto w-full max-w-md border border-neutral-700 bg-neutral-900 p-7 shadow-2xl"
+              className={`${bodyFont.className} pointer-events-auto relative w-full max-w-md border-4 border-[#2c8f8f] bg-black text-[#fff7a1] shadow-[8px_8px_0_#b32a0e]`}
               onClick={(e) => e.stopPropagation()}
             >
-            {/* Close button */}
-            <button
-              type="button"
-              onClick={dismiss}
-              aria-label="Dismiss"
-              className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-300"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
+              <div className="flex items-center justify-between gap-3 bg-[#2c8f8f] px-2 py-1 text-sm text-black">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span aria-hidden="true" className="h-3 w-3 shrink-0 border-2 border-black" />
+                  <span className="truncate">work_in_progress.txt</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={dismiss}
+                  aria-label="Close"
+                  className={`grid h-5 w-5 shrink-0 place-items-center border-2 border-black bg-[#b32a0e] text-[#fff7a1] ${focus}`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" aria-hidden="true">
+                    <path d="M1 1 9 9M9 1 1 9" />
+                  </svg>
+                </button>
+              </div>
+              <Stripes className="h-3" />
 
-            {/* Logo + heading */}
-            <div className="mb-4 flex items-center gap-3">
-              <Image
-                src="/icons/logo.webp"
-                alt="AWSSBG-UC logo"
-                width={36}
-                height={36}
-                className="rounded-md object-contain"
-              />
-              <h2 id="wip-title" className="text-base font-bold text-neutral-100">
-                Work in progress
-              </h2>
-            </div>
+              <div className="p-6">
+                <div className="flex items-center gap-4">
+                  <Image src="/icons/logo.webp" alt="" width={44} height={44} className="h-11 w-11 shrink-0 object-contain" />
+                  <h2 id="wip-title" className={`${hd} text-5xl`}>
+                    Work in progress
+                  </h2>
+                </div>
 
-            <p className="text-sm leading-relaxed text-neutral-400">
-              This site is still being built. Some pages or features may be incomplete, broken, or missing.
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-neutral-400">
-              Spotted something? Let us know at{" "}
-              <a
-                href={MAILTO}
-                className="font-medium text-[#00e482] hover:underline"
-              >
-                {SOCIALS.email}
-              </a>
-              {" "}and we&apos;ll get it fixed.
-            </p>
+                <p className="mt-5 leading-relaxed">
+                  This site is still being built. Some pages or features may be incomplete, broken, or missing.
+                </p>
+                <p className="mt-3 leading-relaxed">
+                  Spotted something? Let us know at{" "}
+                  <a href={MAILTO} className={`text-[#2c8f8f] underline underline-offset-4 ${focus}`}>
+                    {SOCIALS.email}
+                  </a>{" "}
+                  and we&apos;ll get it fixed.
+                </p>
 
-            <button
-              type="button"
-              onClick={dismiss}
-              className="mt-6 w-full rounded-lg bg-neutral-800 py-2.5 text-sm font-semibold text-neutral-200 transition-colors hover:bg-neutral-700"
-            >
-              Got it
-            </button>
+                <button
+                  type="button"
+                  onClick={dismiss}
+                  autoFocus
+                  className={`${displayFont.className} mt-6 w-full border-4 border-black bg-[#fff7a1] py-3 text-3xl leading-none text-black shadow-[4px_4px_0_#2c8f8f] transition-[transform,box-shadow] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#2c8f8f] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none motion-reduce:transition-none ${focus}`}
+                >
+                  Got it
+                </button>
+              </div>
             </div>
           </motion.div>
         </>
@@ -577,6 +580,25 @@ function PixelMap({ src, width = 128, height = 80 }: { src: string; width?: numb
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
+// A tiny "OS window" frame used by the hero: title bar with square window buttons, then the content.
+function TitleBar({ title, tone }: { title: string; tone: "teal" | "ink" }) {
+  const bar = tone === "teal" ? "bg-[#2c8f8f] text-black" : "bg-black text-[#fff7a1]";
+  const btn = tone === "teal" ? "border-black" : "border-[#fff7a1]";
+  return (
+    <div aria-hidden="true" className={`flex items-center justify-between gap-3 px-2 py-1 ${bar}`}>
+      <span className="flex min-w-0 items-center gap-2 text-sm">
+        <span className={`h-3 w-3 shrink-0 border-2 ${btn}`} />
+        <span className="truncate">{title}</span>
+      </span>
+      <span className="flex shrink-0 gap-1">
+        <span className={`h-3.5 w-3.5 border-2 ${btn}`} />
+        <span className={`h-3.5 w-3.5 border-2 ${btn}`} />
+        <span className={`grid h-3.5 w-3.5 place-items-center border-2 ${btn} ${tone === "teal" ? "bg-black" : "bg-[#b32a0e]"}`} />
+      </span>
+    </div>
+  );
+}
+
 function Tunnel({ registeredCount, participantCount }: { registeredCount: number; participantCount: number }) {
   const [index, setIndex] = useState(0);
   const reduce = useReducedMotion();
@@ -597,53 +619,136 @@ function Tunnel({ registeredCount, participantCount }: { registeredCount: number
     <div className="relative mx-auto w-full max-w-[780px] pb-8 lg:mr-0">
       {/* Slim striped panel peeking out behind the photo and the card. */}
       <div aria-hidden="true" className="absolute bottom-0 left-0 top-12 w-[34%]" style={{ background: STRIPE_BG }} />
-      <div className="relative ml-[10%] aspect-[4/3] overflow-hidden border-4 border-black bg-black shadow-[8px_8px_0_#000] lg:aspect-auto lg:h-[clamp(240px,calc((100svh-64px)*0.5),640px)]">
-        {HERO_IMAGES.map((src, i) => (
-          <Image
-            key={src}
-            src={src}
-            alt=""
-            fill
-            priority={i === 0}
-            sizes="(min-width: 1024px) 48vw, 92vw"
-            className={`object-cover transition-opacity duration-700 motion-reduce:transition-none ${i === index ? "opacity-100" : "opacity-0"}`}
-          />
-        ))}
-        <div className="absolute inset-x-0 bottom-2 flex justify-center">
+
+      {/* Floating logo, like a desktop icon sitting on the stripes. Hidden on phones where the card spans the width. */}
+      <motion.div
+        aria-hidden="true"
+        className="absolute bottom-14 left-[3%] z-20 hidden w-[18%] max-w-[130px] flex-col items-center gap-1 sm:flex"
+        animate={reduce ? undefined : { y: [0, -12, 0] }}
+        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <span className="block w-full border-4 border-black bg-black p-2 shadow-[6px_6px_0_#000]">
+          <Image src="/icons/logo.webp" alt="" width={120} height={120} className="h-auto w-full" />
+        </span>
+        <span className="bg-black px-1.5 py-0.5 text-xs text-[#fff7a1]">AWSSBG-UC</span>
+      </motion.div>
+
+      {/* Photo viewer window */}
+      <div className="relative ml-[10%] border-4 border-black bg-black shadow-[8px_8px_0_#000]">
+        <TitleBar title="event_highlights.jpg" tone="teal" />
+        <div className="relative aspect-[4/3] overflow-hidden lg:aspect-auto lg:h-[clamp(200px,calc((100svh-64px)*0.5-3.5rem),584px)]">
           {HERO_IMAGES.map((src, i) => (
-            <button
+            <Image
               key={src}
-              type="button"
-              onClick={() => setIndex(i)}
-              aria-label={`Show photo ${i + 1} of ${HERO_IMAGES.length}`}
-              aria-current={i === index}
-              className={`p-2 ${focus}`}
-            >
-              <span className={`block h-2.5 w-2.5 border border-black ${i === index ? "bg-[#fff7a1]" : "bg-[#fff7a1]/50"}`} />
-            </button>
+              src={src}
+              alt=""
+              fill
+              priority={i === 0}
+              sizes="(min-width: 1024px) 48vw, 92vw"
+              className={`object-cover transition-opacity duration-700 motion-reduce:transition-none ${i === index ? "opacity-100" : "opacity-0"}`}
+            />
           ))}
         </div>
-      </div>
-      <div className="relative z-10 -mt-10 ml-auto w-[92%] bg-[#fff7a1] p-5 text-center text-black shadow-[8px_8px_0_#000] sm:w-[72%]">
-        <h2 className={`${hd} text-4xl text-balance xl:text-5xl`}>Ready to build with us?</h2>
-        <p className="mt-2 leading-snug">Free for every University of Cabuyao student. No experience needed.</p>
-        {stats.length > 0 && (
-          <dl className="mt-3 flex justify-center gap-8">
-            {stats.map((s) => (
-              <div key={s.label} className="flex flex-col-reverse">
-                <dt className="text-sm">{s.label}</dt>
-                <dd className={`${hd} text-4xl tabular-nums`}>{s.value.toLocaleString()}</dd>
-              </div>
+        <div className="flex items-center justify-between border-t-4 border-[#2c8f8f] bg-black px-3 text-sm text-[#fff7a1]">
+          <span aria-live="off">
+            photo {index + 1} of {HERO_IMAGES.length}
+          </span>
+          <div className="flex">
+            {HERO_IMAGES.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`Show photo ${i + 1} of ${HERO_IMAGES.length}`}
+                aria-current={i === index}
+                className={`p-1.5 ${focus}`}
+              >
+                <span className={`block h-2.5 w-2.5 border border-[#fff7a1] ${i === index ? "bg-[#fff7a1]" : "bg-transparent"}`} />
+              </button>
             ))}
-          </dl>
-        )}
-        <Link href="/signup" className={`${btnDark} mt-4 w-full`}>
-          Join the community
-        </Link>
-        <Link href="/events" className={`mt-2 block underline underline-offset-4 ${focus}`}>
-          See upcoming events
-        </Link>
+          </div>
+        </div>
       </div>
+
+      {/* Join dialog window */}
+      <div className="relative z-10 -mt-10 ml-auto w-[92%] border-4 border-black bg-[#fff7a1] text-black shadow-[8px_8px_0_#000] sm:w-[72%]">
+        <TitleBar title="join.exe" tone="ink" />
+        <div className="p-5 text-center">
+          <h2 className={`${hd} text-4xl text-balance xl:text-5xl`}>
+            Ready to build with us?
+            <motion.span
+              aria-hidden="true"
+              className="ml-1 inline-block h-[0.8em] w-[0.45em] translate-y-[0.08em] bg-black align-baseline"
+              animate={reduce ? undefined : { opacity: [1, 1, 0, 0] }}
+              transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
+            />
+          </h2>
+          <p className="mt-2 leading-snug">Free for every University of Cabuyao student. No experience needed.</p>
+          {stats.length > 0 && (
+            <dl className="mt-3 flex justify-center gap-8">
+              {stats.map((s) => (
+                <div key={s.label} className="flex flex-col-reverse">
+                  <dt className="text-sm">{s.label}</dt>
+                  <dd className={`${hd} text-4xl tabular-nums`}>{s.value.toLocaleString()}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <Link
+            href="/signup"
+            className={`${displayFont.className} group mt-5 flex w-full items-center justify-center gap-3 border-4 border-black bg-[#b32a0e] px-4 py-3 text-3xl leading-none text-[#fff7a1] shadow-[6px_6px_0_#000] transition-[transform,box-shadow] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#000] active:translate-x-[6px] active:translate-y-[6px] active:shadow-none motion-reduce:transition-none sm:text-4xl ${focus}`}
+          >
+            <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center bg-black">
+              <span className="block h-3.5 w-3 bg-[#fff7a1] [clip-path:polygon(0_0,100%_50%,0_100%)]" />
+            </span>
+            Join the community
+          </Link>
+          <Link href="/events" className={`mt-3 inline-block underline underline-offset-4 ${focus}`}>
+            See upcoming events
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── AWS technology ticker ───────────────────────────────────────────────────
+
+// Text-only marquee under the hero tagline. No hover or click behaviour, it just scrolls.
+const AWS_TECH = [
+  "Amazon EC2", "Amazon S3", "AWS Lambda", "Amazon DynamoDB", "Amazon RDS", "Amazon VPC",
+  "AWS IAM", "Amazon CloudFront", "Amazon Route 53", "Amazon ECS", "Amazon EKS", "AWS CloudFormation",
+  "AWS CDK", "Amazon API Gateway", "Amazon SNS", "Amazon SQS", "Amazon CloudWatch", "AWS Amplify",
+  "Amazon SageMaker", "Amazon Bedrock", "Kiro",
+];
+const TICKER_DOTS = ["#b32a0e", "#2c8f8f", "#3aaa6e", "#5f9e80"];
+
+function AwsTicker() {
+  const reduce = useReducedMotion();
+  const list = (hidden: boolean) => (
+    <ul aria-hidden={hidden || undefined} className={`flex shrink-0 items-center ${reduce ? "w-full flex-wrap gap-y-1" : ""}`}>
+      {AWS_TECH.map((name, i) => (
+        <li key={name} className="flex items-center whitespace-nowrap pr-5">
+          <span aria-hidden="true" className="mr-5 h-2.5 w-2.5 shrink-0" style={{ background: TICKER_DOTS[i % TICKER_DOTS.length] }} />
+          {name}
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <div aria-label="AWS technologies we work with" role="group" className="w-full min-w-0 max-w-full overflow-hidden border-b-4 border-[#2c8f8f] py-2 text-lg">
+      {reduce ? (
+        list(false)
+      ) : (
+        <motion.div
+          className="flex w-max"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 250, repeat: Infinity, ease: "linear" }}
+        >
+          {list(false)}
+          {list(true)}
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -669,17 +774,18 @@ function Hero({ registeredCount, participantCount }: { registeredCount: number; 
         ))}
       </nav>
 
-      <div className="mt-4 grid flex-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10 xl:gap-20">
-        <div className="text-left">
+      <div className="mt-4 grid flex-1 grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10 xl:gap-20">
+        <div className="min-w-0 text-left">
           {/* Magazine-style stack: kicker, masthead, deck between rules, big statement, body + duck. */}
           <p className="text-xl">Hi, we are</p>
           <h1 className={`${hd} mt-2 whitespace-nowrap text-[length:clamp(2.75rem,15vw,6rem)] lg:text-[length:clamp(4rem,min(7vw,14vh),8.5rem)]`}>
             <span className="sr-only">Amazon Web Services Student Builder Group - University of Cabuyao</span>
             <span aria-hidden="true">AWSSBG - UC</span>
           </h1>
-          <p className={`${pixelify.className} mt-3 border-y-4 border-[#2c8f8f] py-2 text-lg uppercase leading-tight tracking-wide text-[#2c8f8f] sm:text-xl`}>
+          <p className={`${displayFont.className} mt-3 border-y-4 border-[#2c8f8f] py-2 text-2xl uppercase leading-none tracking-wide text-[#2c8f8f] sm:text-3xl`}>
             Amazon Web Services Student Builder Group - University of Cabuyao
           </p>
+          <AwsTicker />
           <p className={`${hd} mt-5 text-[length:clamp(2.75rem,min(4.4vw,8vh),5.25rem)] lg:mt-[2.5vh]`}>
             We&apos;re{" "}
             <span className="underline decoration-[#3aaa6e] decoration-4 underline-offset-8">students</span>,{" "}
@@ -718,15 +824,17 @@ export function Section({ title, intro, children, wide = false }: { title: strin
 
 // ─── Community partners ──────────────────────────────────────────────────────
 
+// isCircle: true  -> fixed square tile, logo cropped to a circle (round seals and badges).
+// isCircle: false -> same tile height, width follows the logo's own aspect ratio, no cropping (default).
 const COMMUNITY_PARTNERS: { name: string; logo: string; href?: string; isCircle?: boolean }[] = [
   { name: "TutorialsDojo",                                                              logo: "/images/logos/tutorials-dojo.png",  href: "https://tutorialsdojo.com/" },
   { name: "BayanHealth",                                                                logo: "/images/logos/bayanhealth.png",      href: "https://bayanhealth.com/" },
   { name: "DEVCON Laguna Chapter",                                                      logo: "/images/logos/devcon-laguna.png" },
-  { name: "Association of Computer Science Students - UC",                              logo: "/images/logos/acss-uc.png" },
-  { name: "Society of Information Technology Students - UC",                            logo: "/images/logos/sits-uc.png" },
-  { name: "Junior Mechatronics and Robotics Society of the Philippines - UC Chapter",   logo: "/images/logos/jmrsp-uc.png" },
-  { name: "Junior Institute of Electronics Engineers of the Philippines - UC",          logo: "/images/logos/jieep-uc.png" },
-  { name: "Association of Computer Engineering Students - UC",                          logo: "/images/logos/aces-uc.png" },
+  { name: "Association of Computer Science Students - UC",                              logo: "/images/logos/acss-uc.png",         isCircle: true },
+  { name: "Society of Information Technology Students - UC",                            logo: "/images/logos/sits-uc.png",         isCircle: true },
+  { name: "Junior Mechatronics and Robotics Society of the Philippines - UC Chapter",   logo: "/images/logos/jmrsp-uc.png",         isCircle: true },
+  { name: "Junior Institute of Electronics Engineers of the Philippines - UC",          logo: "/images/logos/jieep-uc.png",         isCircle: true },
+  { name: "Association of Computer Engineering Students - UC",                          logo: "/images/logos/aces-uc.png",         isCircle: true },
   { name: "AWS Learning Club - Polar",                                                  logo: "/images/logos/awslc-polar.png",     isCircle: true },
   { name: "AWS Student Builder Group - Aeris",                                          logo: "/images/logos/awssbg-aeris.png",    isCircle: true },
   { name: "AWS Student User Group Philippines",                                         logo: "/images/logos/awsug-ph.png",        isCircle: true },
@@ -735,19 +843,37 @@ const COMMUNITY_PARTNERS: { name: string; logo: string; href?: string; isCircle?
 function PartnerTile({ name, logo, href, isCircle }: { name: string; logo: string; href?: string; isCircle: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null; // logo file missing: drop the tile instead of showing a broken image
-  const tile = (
-    <span className="relative block h-24 w-24 border-4 border-[#2c8f8f] bg-[#fff7a1] p-2 shadow-[4px_4px_0_#2c8f8f] transition-transform group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-[2px_2px_0_#2c8f8f]">
-      <span className={`relative block h-full w-full overflow-hidden ${isCircle ? "rounded-full" : ""}`}>
+  // No background, border or padding: the logo itself is the tile.
+  const frame = "relative block h-24";
+  const tile = isCircle ? (
+    // Round seal: fixed square tile, logo cropped to a circle.
+    <span className={`${frame} w-24`}>
+      <span className="relative block h-full w-full overflow-hidden rounded-full">
         <Image src={logo} alt={name} title={name} fill sizes="80px" className="object-contain" onError={() => setFailed(true)} />
       </span>
     </span>
+  ) : (
+    // Any other logo: same tile height as the rest, width follows the image's own aspect ratio.
+    // width/height 0 + h-full/w-auto lets the browser size it from the file; max-w caps very wide logos.
+    <span className={`${frame} w-fit max-w-[18rem]`}>
+      <Image
+        src={logo}
+        alt={name}
+        title={name}
+        width={0}
+        height={0}
+        sizes="288px"
+        className="block h-full w-auto max-w-full object-contain"
+        onError={() => setFailed(true)}
+      />
+    </span>
   );
   return href ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={`group block ${focus}`}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={`group block w-fit ${focus}`}>
       {tile}
     </a>
   ) : (
-    <span className="group block">{tile}</span>
+    <span className="group block w-fit">{tile}</span>
   );
 }
 
@@ -756,7 +882,7 @@ function Partners() {
     <Section wide title="Community partners" intro="Student organizations and cloud communities that run events with us.">
       <div className="flex flex-wrap gap-6">
         {COMMUNITY_PARTNERS.map((p) => (
-          <PartnerTile key={p.name} name={p.name} logo={p.logo} href={p.href} isCircle={p.isCircle ?? true} />
+          <PartnerTile key={p.name} name={p.name} logo={p.logo} href={p.href} isCircle={p.isCircle ?? false} />
         ))}
       </div>
     </Section>
@@ -1002,7 +1128,7 @@ export default function HomeClient({
   memberCount?: number;
 }) {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-[#fff7a1]`}>
       <WIPBanner />
       <PixelClouds />
       <SidePixels side="left" contentWidth={1680} />

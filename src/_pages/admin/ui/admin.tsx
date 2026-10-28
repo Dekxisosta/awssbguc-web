@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 import {
   Users, ShieldCheck, CalendarDays, LayoutDashboard,
@@ -47,12 +47,9 @@ type Tab = "overview" | "members" | "events" | "provision" | "roles";
 type ToastState = { message: string; type: "success" | "error" } | null;
 
 // ─── Shared look — same pixel-art language as the Events page and the nav ─────
-// Black ground, butter (#fff7a1) type, Jersey 10 headings, Pixelify Sans text,
+// Black ground, butter (#fff7a1) type, Jersey 10 headings, JetBrains Mono text,
 // 4px square borders, hard offset shadows, stripe palette for accents.
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus =
   "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
@@ -155,7 +152,7 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
   return (
     <div
       role="status"
-      className={`${pixel.className} fixed bottom-6 right-6 z-[99999] flex items-center gap-3 border-4 border-pix-butter bg-black px-4 py-3 text-lg text-pix-butter ${
+      className={`${bodyFont.className} fixed bottom-6 right-6 z-[99999] flex items-center gap-3 border-4 border-pix-butter bg-black px-4 py-3 text-lg text-pix-butter ${
         type === "success" ? "shadow-pixel-green-6" : "shadow-pixel-rust-6"
       }`}
     >
@@ -446,7 +443,7 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
   return (
     <div className="fixed inset-0 z-[9998] flex justify-end" role="dialog" aria-modal="true" aria-label="Person details">
       <button type="button" aria-label="Close details" onClick={onClose} className="absolute inset-0 cursor-default bg-black/70" />
-      <div className={`${pixel.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l-4 border-pix-teal bg-black text-pix-butter`}>
+      <div className={`${bodyFont.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l-4 border-pix-teal bg-black text-pix-butter`}>
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-pix-teal bg-black px-5 py-4">
           <div className="flex min-w-0 items-center gap-4">
             {avatar && (
@@ -1517,7 +1514,7 @@ export function AdminDashboard({ callerParticipantId }: { callerParticipantId: s
   const [tab, setTab] = useState<Tab>("overview");
 
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

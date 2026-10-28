@@ -1,19 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, Bricolage_Grotesque } from "next/font/google";
+import { fontVariables } from "@/src/shared/config/fonts";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-bricolage",
-  display: "swap",
-  axes: ["opsz", "wdth"],
-});
 
 export const metadata: Metadata = {
   title: "AWSSBG-UC",
@@ -29,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${bricolage.variable}`}>
+    <html lang="en" className={fontVariables}>
       <body className="min-h-screen bg-neutral-900 font-sans text-neutral-100 antialiased">
         {children}
       </body>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { Pixelify_Sans } from "next/font/google";
+import { bodyFont } from "@/src/shared/config/fonts";
 import {
   motion,
   AnimatePresence,
@@ -13,7 +13,6 @@ import {
 } from "framer-motion";
 import { colors } from "@/tailwind.tokens";
 
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
 
 /**
  * Pixel cloud silhouette: every edge is axis-aligned and every step is a fixed 6px, so the bumps
@@ -169,7 +168,7 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         whileHover={{ zIndex: 30 }}
-        className={`${pixel.className} cursor-[inherit] select-none whitespace-nowrap bg-pix-green px-5 py-3 text-sm leading-none text-black transition-colors hover:bg-pix-mustard`}
+        className={`${bodyFont.className} cursor-[inherit] select-none whitespace-nowrap bg-pix-green px-5 py-3 text-sm leading-none text-black transition-colors hover:bg-pix-mustard`}
       >
         {tag.label}
       </motion.span>
@@ -183,7 +182,7 @@ function DriftTag({ tag, index }: { tag: TagDef; index: number }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-            className={`${pixel.className} pointer-events-none fixed w-56 border-4 border-black bg-pix-butter px-3 py-2 shadow-pixel-mustard-4`}
+            className={`${bodyFont.className} pointer-events-none fixed w-56 border-4 border-black bg-pix-butter px-3 py-2 shadow-pixel-mustard-4`}
             style={{
               zIndex: 9999,
               left: pillRect.left + pillRect.width / 2 - 112,

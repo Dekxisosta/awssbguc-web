@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  pixel,
   hd,
   wrap,
   focus,
@@ -15,10 +14,11 @@ import {
   PixelClouds,
 } from "@/src/widgets/home-client";
 import { colors } from "@/tailwind.tokens";
+import { bodyFont } from "@/src/shared/config/fonts";
 
 /**
  * About page in the same pixel-art direction as the home page (see HomeClient):
- *  black ground, butter-yellow type, Jersey 10 headlines + Pixelify Sans text,
+ *  black ground, butter-yellow type, Jersey 10 headlines + JetBrains Mono text,
  *  stripe dividers, thick square borders with hard offset shadows, no blur / gradients / rounding.
  * Motion is limited to a short reveal on scroll, and is skipped when reduced motion is on.
  */
@@ -362,7 +362,7 @@ function Mission() {
 
 export default function AboutClient() {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

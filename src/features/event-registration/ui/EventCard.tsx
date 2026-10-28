@@ -7,7 +7,7 @@ import { STATUS_COLORS, STATUS_LABELS, type EventRow, type RegistrationRow } fro
 /**
  * Event card in the pixel-art direction of the home page: thick colored border + hard offset shadow,
  * a date block on the left, status badge in the stripe palette, square buttons, no rounded corners.
- * Inherits Pixelify Sans from the page; the Jersey 10 headline class is passed in as `headingClass`.
+ * Inherits JetBrains Mono from the page; the Jersey 10 headline class is passed in as `headingClass`.
  */
 
 interface EventCardProps {

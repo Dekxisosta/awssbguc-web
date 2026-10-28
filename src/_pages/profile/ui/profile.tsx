@@ -1,4 +1,4 @@
-import { Pixelify_Sans, Jersey_10 } from "next/font/google";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { ProfileCard } from "@/src/features/profile-edit";
 import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
@@ -12,11 +12,8 @@ export const profileMetadata = { title: "Profile — AWSSBG-UC" };
 
 // Same fonts as the home page. (Rebuilt here: this is a server component, and non-component exports
 // from the "use client" HomeClient module arrive as client references, not strings.)
-const pixel = Pixelify_Sans({ subsets: ["latin"], display: "swap" });
-const jersey = Jersey_10({ subsets: ["latin"], weight: "400", display: "swap" });
 
 // Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
-const hd = `${jersey.className} font-normal leading-[0.9] tracking-normal`;
 
 const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 
@@ -45,7 +42,7 @@ export interface ProfilePageProps {
 
 export function ProfilePage(props: ProfilePageProps) {
   return (
-    <div className={`${pixel.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />
@@ -59,7 +56,7 @@ export function ProfilePage(props: ProfilePageProps) {
           </p>
         </section>
 
-        <ProfileCard {...props} bodyClass={pixel.className} headingClass={hd} />
+        <ProfileCard {...props} bodyClass={bodyFont.className} headingClass={hd} />
       </div>
     </div>
   );
