@@ -386,36 +386,24 @@ export function PixelClouds() {
   );
 }
 
-// ─── Pixelated photo ─────────────────────────────────────────────────────────
-// No longer used by the members section (avatars are now plain images). Kept because it is exported.
+// ─── Photo ───────────────────────────────────────────────────────────────────
+// Plain, smoothly scaled photo (no pixelation). Name and props are kept so existing callers still work;
+// width/height only set the aspect ratio now.
 
 const PW = 40;
 const PH = 50;
 
 export function PixelPhoto({ src, width = PW, height = PH }: { src: string; width?: number; height?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    const img = new window.Image();
-    img.onload = () => {
-      const k = Math.max(width / img.width, height / img.height); // cover
-      const w = img.width * k;
-      const h = img.height * k;
-      ctx.clearRect(0, 0, width, height);
-      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
-    };
-    img.src = src;
-  }, [src, width, height]);
   return (
-    <canvas
-      ref={ref}
-      width={width}
-      height={height}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
       aria-hidden="true"
+      loading="lazy"
+      decoding="async"
       style={{ aspectRatio: `${width} / ${height}` }}
-      className="block w-full [image-rendering:pixelated]"
+      className="block w-full object-cover"
     />
   );
 }
@@ -445,7 +433,6 @@ function DuckSprite({ frame }: { frame: number }) {
         backgroundRepeat: "no-repeat",
         backgroundSize: `${DUCK_FRAME_COUNT * 100}% 100%`,
         backgroundPosition: `${DUCK_FRAME_COUNT > 1 ? (frame / (DUCK_FRAME_COUNT - 1)) * 100 : 0}% 0`,
-        imageRendering: "pixelated",
       }}
     />
   );
@@ -543,37 +530,19 @@ function WanderingDuck() {
   );
 }
 
-// ─── Pixelated map ───────────────────────────────────────────────────────────
+// ─── Map ─────────────────────────────────────────────────────────────────────
 
-/**
- * Draws a transparent PNG (the world map) at a tiny resolution and scales it up with hard edges.
- * Alpha is thresholded afterwards, so every cell is either solid or empty (no blurry anti-aliased fringe).
- */
+/** The world map, drawn as-is (no downscaling, alpha thresholding or hard-edge scaling). */
 function PixelMap({ src, width = 128, height = 80 }: { src: string; width?: number; height?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d", { willReadFrequently: true });
-    if (!canvas || !ctx) return;
-    const img = new window.Image();
-    img.onload = () => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.imageSmoothingEnabled = true; // averaging while shrinking gives clean coverage per cell
-      ctx.drawImage(img, 0, 0, width, height);
-      const data = ctx.getImageData(0, 0, width, height);
-      for (let i = 3; i < data.data.length; i += 4) data.data[i] = data.data[i] > 100 ? 255 : 0;
-      ctx.putImageData(data, 0, 0);
-    };
-    img.src = src;
-  }, [src, width, height]);
   return (
-    <canvas
-      ref={ref}
-      width={width}
-      height={height}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
       aria-hidden="true"
+      decoding="async"
       style={{ aspectRatio: `${width} / ${height}` }}
-      className="block h-auto w-full [image-rendering:pixelated]"
+      className="block h-auto w-full object-contain"
     />
   );
 }
@@ -930,7 +899,7 @@ function About() {
               width={368}
               height={472}
               unoptimized
-              className="relative z-10 h-auto w-full [image-rendering:pixelated]"
+              className="relative z-10 h-auto w-full"
             />
           </div>
         </div>
@@ -1102,7 +1071,7 @@ function JoinCta() {
                   width={384}
                   height={472}
                   unoptimized
-                  className="h-auto w-48 [image-rendering:pixelated] sm:w-60 lg:w-72"
+                  className="h-auto w-48 sm:w-60 lg:w-72"
                 />
               </motion.div>
             </div>

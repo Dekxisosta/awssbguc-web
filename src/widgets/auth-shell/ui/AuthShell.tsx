@@ -71,7 +71,7 @@ export function AuthShell({
                 width={368}
                 height={472}
                 unoptimized
-                className="h-auto w-44 [image-rendering:pixelated]"
+                className="h-auto w-44"
               />
             </div>
           </div>

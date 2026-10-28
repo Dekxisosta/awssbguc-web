@@ -81,7 +81,6 @@ const config: Config = {
   plugins: [
     plugin(({ addUtilities }) => {
       addUtilities({
-        ".img-pixelated": { imageRendering: "pixelated" },
         ".clip-flare": { clipPath: FLARE },
         ".pixel-fade-mascot": fade("50% 45%", 75),
         ".pixel-fade-globe": fade("50% 50%", 80),

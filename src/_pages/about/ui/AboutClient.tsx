@@ -175,7 +175,7 @@ function Hero() {
             width={368}
             height={472}
             unoptimized
-            className="relative z-10 h-auto w-full [image-rendering:pixelated]"
+            className="relative z-10 h-auto w-full"
           />
         </div>
       </div>
@@ -347,7 +347,7 @@ function Mission() {
                 width={368}
                 height={472}
                 unoptimized
-                className="h-auto w-48 [image-rendering:pixelated] sm:w-60 lg:w-72"
+                className="h-auto w-48 sm:w-60 lg:w-72"
               />
             </motion.div>
           </div>
