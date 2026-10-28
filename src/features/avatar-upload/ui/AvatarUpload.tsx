@@ -17,6 +17,7 @@
  */
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import ReactCrop, {
   centerCrop,
   makeAspectCrop,
@@ -41,6 +42,25 @@ interface AvatarUploadProps {
   onAvatarChange: (url: string | null) => void;
   /** "pixel" matches the home-page pixel-art style (used by the profile editor). Default look is unchanged. */
   variant?: "default" | "pixel";
+  /**
+   * Render the crop dialog into <body>. Needed on pages whose content sits in a stacking context (the
+   * site's `isolate` / `z-10` page frame), where an in-place `fixed` dialog ends up beneath the sticky
+   * navbar. Leave off inside a modal that is already portaled: there it must stay within that modal.
+   */
+  portal?: boolean;
+}
+
+/** Wraps the crop dialog; lifts it above the navbar and other page chrome when `portal` is set. */
+function DialogHost({ portal, children }: { portal: boolean; children: React.ReactNode }) {
+  if (portal && typeof document !== "undefined") {
+    return createPortal(
+      <div style={{ zIndex: 99995 }} className="fixed inset-0">
+        {children}
+      </div>,
+      document.body,
+    );
+  }
+  return <>{children}</>;
 }
 
 const PX_FOCUS =
@@ -143,7 +163,7 @@ async function compressCrop(
   return fallback;
 }
 
-export function AvatarUpload({ avatarUrl, username, onAvatarChange, variant = "default" }: AvatarUploadProps) {
+export function AvatarUpload({ avatarUrl, username, onAvatarChange, variant = "default", portal = false }: AvatarUploadProps) {
   const s = STYLES[variant];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -349,6 +369,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange, variant = "d
       />
 
       {phase === "cropping" && srcUrl && (
+        <DialogHost portal={portal}>
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           role="dialog"
@@ -402,6 +423,7 @@ export function AvatarUpload({ avatarUrl, username, onAvatarChange, variant = "d
             </div>
           </div>
         </div>
+        </DialogHost>
       )}
     </div>
   );
