@@ -1069,7 +1069,10 @@ export function DashboardShell({
     .join("");
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div
+      className="flex min-h-screen flex-col"
+      style={{ "--site-nav-h": `${headerHeight}px` } as React.CSSProperties}
+    >
 
       {/* ── Side grid decorations (behind all content, z-index -1) ── */}
       <SideGrid />
