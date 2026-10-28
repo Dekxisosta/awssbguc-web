@@ -1,13 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { AvatarUpload } from "@/src/features/avatar-upload";
+import { bodyFont, hd } from "@/src/shared/config/fonts";
+import {
+  darkBanner,
+  darkErr,
+  darkHint,
+  darkInput,
+  darkLabel,
+  darkOutline,
+  darkSubmit,
+} from "@/src/shared/ui/pixel-form-dark";
+import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
 export const profileSetupMetadata = { title: "Set up your profile — AWSSBG-UC" };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
+
+const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 
 interface ProfileSetupPageProps {
   initialUsername: string | null;
@@ -79,169 +91,219 @@ export function ProfileSetupPage({
     }
   }
 
-  if (done) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-16">
-        <div className="w-full max-w-sm flex flex-col gap-5">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <Image src="/icons/logo.webp" alt="" width={44} height={44} className="rounded-md object-contain" />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-neutral-100">Profile saved</h1>
-              <p className="mt-1 text-sm text-neutral-500">Ready to register your membership?</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
-            <Link
-              href="/member"
-              className="flex items-center justify-center gap-2 rounded-lg bg-brand-dark px-4 py-3 text-sm font-semibold text-brand-green transition-opacity hover:opacity-90"
-            >
-              Register membership
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-            </Link>
-            <Link
-              href="/"
-              className="flex items-center justify-center rounded-lg border border-neutral-800 px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300"
-            >
-              Skip — go to home
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const saving = saveState === "saving";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-16">
-      <div className="w-full max-w-sm">
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+      <PixelClouds />
+      <SidePixels side="left" />
+      <SidePixels side="right" />
 
-        {/* Header */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <Image src="/icons/logo.webp" alt="AWSSBG-UC logo" width={44} height={44} className="rounded-md object-contain" />
-          <div className="text-center">
-            <h1 className="text-xl font-bold tracking-tight text-neutral-100">Set up your profile</h1>
-            <p className="mt-1 text-sm text-neutral-500">All fields are optional — you can update these anytime.</p>
+      <div className="relative z-10">
+        <section className={`${wrap} pb-10 pt-10 sm:pb-14 sm:pt-14`}>
+          <p className="text-xl">AWSSBG-UC</p>
+          <h1 className={`${hd} mt-3 text-[clamp(4rem,11vw,8rem)]`}>
+            {done ? "Profile saved" : "Your profile"}
+          </h1>
+          <p className="mt-6 max-w-2xl text-2xl leading-snug">
+            {done
+              ? "Ready to register your membership?"
+              : "All fields are optional. You can update these anytime."}
+          </p>
+          <div className="mt-8">
+            <Steps />
           </div>
-        </div>
+        </section>
 
-        {/* Step indicator context */}
-        <div className="mb-6 flex items-center justify-center gap-2 text-xs text-neutral-600">
-          <span className="text-brand-green">✓ Account</span>
-          <span>→</span>
-          <span className="font-semibold text-neutral-300">Profile</span>
-          <span>→</span>
-          <span>Membership</span>
-        </div>
+        <Stripes className="h-4" />
 
-        <form onSubmit={handleSave} noValidate className="flex flex-col gap-5">
-
-          {/* Avatar */}
-          <div className="flex flex-col items-center gap-2">
-            <AvatarUpload
-              avatarUrl={avatarUrl}
-              username={username || null}
-              onAvatarChange={setAvatarUrl}
-            />
-            <p className="text-xs text-neutral-600">Click to upload a photo</p>
-          </div>
-
-          {/* Username */}
-          {!usernameAlreadyChanged ? (
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="username" className="text-sm font-medium text-neutral-300">
-                Username
-                <span className="ml-2 text-[10px] font-normal text-brand-green uppercase tracking-wider">one-time</span>
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); setFieldError((f) => ({ ...f, username: "" })); }}
-                placeholder="e.g. cloudbuilder"
-                autoComplete="username"
-                className={inputClass(!!fieldError.username)}
-              />
-              {fieldError.username ? (
-                <p className="text-xs text-red-400">{fieldError.username}</p>
-              ) : (
-                <p className="text-xs text-neutral-600">6–24 characters, letters/numbers/underscores. You can only set this once.</p>
-              )}
+        <section className={`${wrap} py-12 sm:py-16`}>
+          {done ? (
+            <div className="mx-auto max-w-xl border-4 border-pix-teal p-8 text-center shadow-pixel-teal-6">
+              <p className={`${hd} text-5xl`}>All set</p>
+              <p className="mt-3 text-lg">Your profile is saved. Next up: your SBG membership.</p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <Link href="/member" className={darkSubmit}>
+                  Register membership
+                  <ChevronIcon />
+                </Link>
+                <Link href="/" className={darkOutline}>
+                  Skip, go to home
+                </Link>
+              </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-3">
-              <p className="text-xs font-medium text-neutral-500">Username</p>
-              <p className="mt-0.5 text-sm text-neutral-400 font-mono">{initialUsername ?? "—"}</p>
-              <p className="mt-1 text-xs text-neutral-700">Username has already been set and cannot be changed here.</p>
-            </div>
-          )}
-
-          {/* Bio */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="bio" className="text-sm font-medium text-neutral-300">Bio</label>
-            <textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="e.g. AWS enthusiast, studying cloud security."
-              rows={3}
-              maxLength={280}
-              className={inputClass(false) + " resize-none"}
-            />
-            <p className="text-right text-[10px] text-neutral-700">{bio.length}/280</p>
-          </div>
-
-          {/* Skills */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="skills" className="text-sm font-medium text-neutral-300">Skills</label>
-            <input
-              id="skills"
-              type="text"
-              value={skills}
-              onChange={(e) => setSkills(e.target.value)}
-              placeholder="e.g. Python, AWS, React"
-              className={inputClass(!!fieldError.skills)}
-            />
-            {fieldError.skills ? (
-              <p className="text-xs text-red-400">{fieldError.skills}</p>
-            ) : (
-              <p className="text-xs text-neutral-600">Comma-separated, up to 20 tags.</p>
-            )}
-          </div>
-
-          {error && (
-            <p className="rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-2.5 text-sm text-red-400">{error}</p>
-          )}
-
-          <div className="flex flex-col gap-2.5 pt-1">
-            <button
-              type="submit"
-              disabled={saveState === "saving"}
-              className="flex items-center justify-center gap-2 rounded-lg bg-brand-dark px-4 py-3 text-sm font-semibold text-brand-green transition-opacity hover:opacity-90 disabled:opacity-50"
+            <form
+              onSubmit={handleSave}
+              noValidate
+              className="mx-auto flex max-w-2xl flex-col gap-6 border-4 border-pix-teal p-6 shadow-pixel-teal-6 sm:p-8"
             >
-              {saveState === "saving" ? "Saving…" : "Save and continue"}
-              {saveState !== "saving" && (
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+              {/* Avatar */}
+              <div className="flex flex-col items-center gap-2">
+                <AvatarUpload
+                  variant="pixel"
+                  avatarUrl={avatarUrl}
+                  username={username || null}
+                  onAvatarChange={setAvatarUrl}
+                />
+                <p className={darkHint}>Click the photo to upload one.</p>
+              </div>
+
+              {/* Username */}
+              {!usernameAlreadyChanged ? (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="username" className={darkLabel}>
+                    Username{" "}
+                    <span className="ml-1 border-2 border-pix-green px-1.5 text-xs text-pix-green">one-time</span>
+                  </label>
+                  <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setFieldError((f) => ({ ...f, username: "" }));
+                    }}
+                    placeholder="e.g. cloudbuilder"
+                    autoComplete="username"
+                    aria-invalid={!!fieldError.username}
+                    aria-describedby={fieldError.username ? "username-error" : "username-hint"}
+                    className={darkInput(!!fieldError.username)}
+                  />
+                  {fieldError.username ? (
+                    <p id="username-error" role="alert" className={darkErr}>
+                      <AlertIcon />
+                      {fieldError.username}
+                    </p>
+                  ) : (
+                    <p id="username-hint" className={darkHint}>
+                      6–24 characters, letters, numbers and underscores. You can only set this once.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="border-4 border-pix-butter/40 px-4 py-3">
+                  <p className="text-sm uppercase tracking-wide text-pix-butter/70">Username</p>
+                  <p className="mt-1 text-lg">{initialUsername ?? "—"}</p>
+                  <p className={`mt-1 ${darkHint}`}>Your username is already set and can&apos;t be changed here.</p>
+                </div>
               )}
-            </button>
-            <Link
-              href="/member"
-              className="flex items-center justify-center rounded-lg border border-neutral-800 px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:border-neutral-700 hover:text-neutral-300"
-            >
-              Skip for now
-            </Link>
-          </div>
-        </form>
+
+              {/* Bio */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="bio" className={darkLabel}>Bio</label>
+                <textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="e.g. AWS enthusiast, studying cloud security."
+                  rows={3}
+                  maxLength={280}
+                  aria-describedby="bio-count"
+                  className={`${darkInput(false)} resize-none`}
+                />
+                <p id="bio-count" className="text-right text-sm text-pix-butter/60">{bio.length}/280</p>
+              </div>
+
+              {/* Skills */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="skills" className={darkLabel}>Skills</label>
+                <input
+                  id="skills"
+                  type="text"
+                  value={skills}
+                  onChange={(e) => {
+                    setSkills(e.target.value);
+                    setFieldError((f) => ({ ...f, skills: "" }));
+                  }}
+                  placeholder="e.g. Python, AWS, React"
+                  aria-invalid={!!fieldError.skills}
+                  aria-describedby={fieldError.skills ? "skills-error" : "skills-hint"}
+                  className={darkInput(!!fieldError.skills)}
+                />
+                {fieldError.skills ? (
+                  <p id="skills-error" role="alert" className={darkErr}>
+                    <AlertIcon />
+                    {fieldError.skills}
+                  </p>
+                ) : (
+                  <p id="skills-hint" className={darkHint}>Comma-separated, up to 20 tags.</p>
+                )}
+              </div>
+
+              {error && (
+                <div role="alert" className={darkBanner}>
+                  <AlertIcon />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-end">
+                <Link href="/member" className={darkOutline}>
+                  Skip for now
+                </Link>
+                <button type="submit" disabled={saving} className={darkSubmit}>
+                  {saving ? "Saving…" : "Save and continue"}
+                  {!saving && <ChevronIcon />}
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
       </div>
     </div>
   );
 }
 
-function inputClass(hasError: boolean): string {
-  return [
-    "w-full rounded-lg border bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100",
-    "placeholder:text-neutral-600 focus:outline-none focus:ring-2 transition-colors",
-    hasError
-      ? "border-red-700 focus:ring-red-600/30"
-      : "border-neutral-700 focus:ring-brand-green/20 focus:border-brand-green/30",
-  ].join(" ");
+/* ── Pieces ──────────────────────────────────────────────────────────────── */
+
+/** Account → Profile → Membership. Square markers, like the rest of the site's chrome. */
+function Steps() {
+  const items = [
+    { label: "Account", state: "done" },
+    { label: "Profile", state: "current" },
+    { label: "Membership", state: "todo" },
+  ] as const;
+
+  const marker = {
+    done: "border-pix-green bg-pix-green text-black",
+    current: "border-pix-butter bg-pix-butter text-black",
+    todo: "border-pix-butter/40 text-pix-butter/60",
+  } as const;
+
+  return (
+    <ol aria-label="Registration progress" className="flex flex-wrap items-center gap-3 text-base">
+      {items.map((it, i) => (
+        <li
+          key={it.label}
+          aria-current={it.state === "current" ? "step" : undefined}
+          className="flex items-center gap-3"
+        >
+          <span className={`flex h-8 w-8 items-center justify-center border-4 text-sm ${marker[it.state]}`}>
+            {it.state === "done" ? "✓" : i + 1}
+          </span>
+          <span className={it.state === "todo" ? "text-pix-butter/60" : ""}>{it.label}</span>
+          {i < items.length - 1 && <span aria-hidden="true" className="h-1 w-6 bg-pix-butter/40" />}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter" aria-hidden="true">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 shrink-0">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
 }

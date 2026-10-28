@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import {
+  darkBanner,
+  darkErr,
+  darkHint,
+  darkInput,
+  darkLabel,
+  darkSubmit,
+} from "@/src/shared/ui/pixel-form-dark";
 
 type FormField =
   | "studentNumber"
@@ -19,12 +27,29 @@ type FormState =
 const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"];
 
 function inputClass(hasError: boolean): string {
-  const base =
-    "w-full rounded-md border bg-neutral-900 px-3 py-2 text-sm text-neutral-100 " +
-    "placeholder:text-neutral-600 focus:outline-none focus:ring-2 disabled:opacity-50 transition-colors";
-  return hasError
-    ? `${base} border-red-700 focus:ring-red-600`
-    : `${base} border-neutral-700 focus:ring-neutral-500`;
+  return darkInput(hasError);
+}
+
+/** Native <select> popups ignore our colours unless the options are styled too. */
+const selectExtra = " [&>option]:bg-black [&>option]:text-pix-butter";
+
+function AlertIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 shrink-0">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function FieldError({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p id={id} role="alert" className={darkErr}>
+      <AlertIcon />
+      {children}
+    </p>
+  );
 }
 
 export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
@@ -91,10 +116,10 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
 
   if (state.status === "success") {
     return (
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-6 py-8 text-center">
-        <p className="text-sm font-medium text-green-400">Membership registered</p>
-        <p className="mt-2 font-mono text-sm text-neutral-300">{state.memberId}</p>
-        <p className="mt-2 text-xs text-neutral-500">Reloading your dashboard…</p>
+      <div className="border-4 border-pix-green px-6 py-8 text-center shadow-pixel-green-6">
+        <p className="text-2xl text-pix-green">Membership registered</p>
+        <p className="mt-2 text-lg">{state.memberId}</p>
+        <p className={`mt-2 ${darkHint}`}>Reloading your dashboard…</p>
       </div>
     );
   }
@@ -102,17 +127,15 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
       {globalError && (
-        <div
-          role="alert"
-          className="rounded-md border border-red-800 bg-red-950/50 px-4 py-3 text-sm text-red-400"
-        >
-          {globalError}
+        <div role="alert" className={darkBanner}>
+          <AlertIcon />
+          <span>{globalError}</span>
         </div>
       )}
 
       {/* Student number */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="studentNumber" className="text-sm font-medium text-neutral-300">
+        <label htmlFor="studentNumber" className={darkLabel}>
           Student number
         </label>
         <input
@@ -131,11 +154,9 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
           placeholder="e.g. 2403962"
         />
         {fieldError("studentNumber") ? (
-          <p id="studentNumber-error" role="alert" className="text-xs text-red-400">
-            {fieldError("studentNumber")}
-          </p>
+          <FieldError id="studentNumber-error">{fieldError("studentNumber")}</FieldError>
         ) : (
-          <p id="studentNumber-hint" className="text-xs text-neutral-500">
+          <p id="studentNumber-hint" className={darkHint}>
             Your university student number.
           </p>
         )}
@@ -144,7 +165,7 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
       {/* Name */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="firstName" className="text-sm font-medium text-neutral-300">
+          <label htmlFor="firstName" className={darkLabel}>
             First name
           </label>
           <input
@@ -161,13 +182,13 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             placeholder="Juan"
           />
           {fieldError("firstName") && (
-            <p role="alert" className="text-xs text-red-400">{fieldError("firstName")}</p>
+            <FieldError>{fieldError("firstName")}</FieldError>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="middleName" className="text-sm font-medium text-neutral-300">
-            Middle name <span className="font-normal text-neutral-500">(optional)</span>
+          <label htmlFor="middleName" className={darkLabel}>
+            Middle name <span className="text-pix-butter/60">(optional)</span>
           </label>
           <input
             id="middleName"
@@ -183,7 +204,7 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="lastName" className="text-sm font-medium text-neutral-300">
+          <label htmlFor="lastName" className={darkLabel}>
             Last name
           </label>
           <input
@@ -200,7 +221,7 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             placeholder="Dela Cruz"
           />
           {fieldError("lastName") && (
-            <p role="alert" className="text-xs text-red-400">{fieldError("lastName")}</p>
+            <FieldError>{fieldError("lastName")}</FieldError>
           )}
         </div>
       </div>
@@ -208,7 +229,7 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
       {/* Academic details */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="yearLevel" className="text-sm font-medium text-neutral-300">
+          <label htmlFor="yearLevel" className={darkLabel}>
             Year level
           </label>
           <select
@@ -219,7 +240,7 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             value={yearLevel}
             onChange={(e) => { setYearLevel(e.target.value); clearError(); }}
             aria-invalid={!!fieldError("yearLevel")}
-            className={inputClass(!!fieldError("yearLevel"))}
+            className={inputClass(!!fieldError("yearLevel")) + selectExtra}
           >
             <option value="" disabled>Select year level</option>
             {YEAR_LEVELS.map((level) => (
@@ -227,12 +248,12 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             ))}
           </select>
           {fieldError("yearLevel") && (
-            <p role="alert" className="text-xs text-red-400">{fieldError("yearLevel")}</p>
+            <FieldError>{fieldError("yearLevel")}</FieldError>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="program" className="text-sm font-medium text-neutral-300">
+          <label htmlFor="program" className={darkLabel}>
             Program
           </label>
           <input
@@ -248,12 +269,12 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             placeholder="CCS - BS Computer Science"
           />
           {fieldError("program") && (
-            <p role="alert" className="text-xs text-red-400">{fieldError("program")}</p>
+            <FieldError>{fieldError("program")}</FieldError>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="section" className="text-sm font-medium text-neutral-300">
+          <label htmlFor="section" className={darkLabel}>
             Section
           </label>
           <input
@@ -269,19 +290,19 @@ export function MemberLinkForm({ onSuccess }: { onSuccess?: () => void } = {}) {
             placeholder="A"
           />
           {fieldError("section") && (
-            <p role="alert" className="text-xs text-red-400">{fieldError("section")}</p>
+            <FieldError>{fieldError("section")}</FieldError>
           )}
         </div>
       </div>
 
-      <p className="text-xs text-neutral-500">
+      <p className={darkHint}>
         This information is self-reported and used to generate your SBG membership record.
       </p>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-1 rounded-md bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-50"
+        className={`${darkSubmit} mt-1`}
       >
         {isSubmitting ? "Registering…" : "Register membership"}
       </button>
