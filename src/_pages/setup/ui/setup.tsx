@@ -1,5 +1,6 @@
-import Image from "next/image";
 import { SetupForm } from "@/src/features/auth";
+import { linkBtn } from "@/src/features/auth/ui/pixel-form";
+import { AuthShell } from "@/src/widgets/auth-shell";
 
 export const setupMetadata = {
   title: "Set up your account — AWSSBG-UC",
@@ -9,36 +10,34 @@ interface SetupPageProps {
   memberId?: string | null;
 }
 
+/**
+ * First sign-in for a provisioned account: swap the temporary password for a permanent one.
+ * Same frame as sign-in / sign-up (AuthShell), so it reads as part of the same flow.
+ */
 export function SetupPage({ memberId }: SetupPageProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-8">
-          <div className="mb-4 flex items-center gap-2.5">
-            <Image src="/icons/logo.webp" alt="AWSSBG-UC logo" width={32} height={32} className="rounded-sm object-contain" />
-            <span className="text-sm font-semibold tracking-tight">AWSSBG-UC</span>
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">Set your password</h1>
-          <p className="mt-1.5 text-sm text-neutral-400">
-            Your account has been pre-provisioned with a temporary password.
-            Choose a permanent password to continue.
-          </p>
-          {memberId && (
-            <p className="mt-2 font-mono text-xs text-neutral-500">
-              Member ID: {memberId}
-            </p>
-          )}
-        </div>
-        <SetupForm />
-        <form action="/api/auth/logout" method="POST" className="mt-6 text-center">
-          <button
-            type="submit"
-            className="text-xs text-neutral-500 underline-offset-2 hover:text-neutral-400 hover:underline"
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
-    </main>
+    <AuthShell
+      title="Set password"
+      sub="Your account was pre-provisioned with a temporary password. Choose a permanent one to continue."
+      bubble="Make it a good one"
+    >
+      {memberId && (
+        <p className="mb-6 flex flex-wrap items-center gap-2 text-base">
+          <span className="border-4 border-black bg-black px-2 py-0.5 text-sm uppercase tracking-wide text-pix-butter">
+            Member ID
+          </span>
+          <span className="break-all">{memberId}</span>
+        </p>
+      )}
+
+      <SetupForm />
+
+      <form action="/api/auth/logout" method="POST" className="mt-6 text-center text-base">
+        Wrong account?{" "}
+        <button type="submit" className={linkBtn}>
+          Sign out
+        </button>
+      </form>
+    </AuthShell>
   );
 }
