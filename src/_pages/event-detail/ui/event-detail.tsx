@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { EventRegisterPanel } from "@/src/features/event-registration";
+import { SharePanel } from "./share-panel";
 import { Stripes, SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
 import {
   FORMAT_LABELS,
@@ -61,6 +62,35 @@ function PinIcon() {
       <circle cx="12" cy="10" r="3" />
     </svg>
   );
+}
+
+// ─── Share text ───────────────────────────────────────────────────────────────
+
+/** Default post text for sharing (the link is appended by the share panel). */
+function buildShareText(event: EventRow): string {
+  const tz = safeTimeZone(event.timezone);
+  const zone = fmtZone(event.starts_at, tz);
+  const when = isSameDay(event.starts_at, event.ends_at, tz)
+    ? `${fmtDay(event.starts_at, tz)}, ${fmtTime(event.starts_at, tz)} – ${fmtTime(event.ends_at, tz)} ${zone}`
+    : `${fmtShortDate(event.starts_at, tz)}, ${fmtTime(event.starts_at, tz)} – ${fmtShortDate(event.ends_at, tz)}, ${fmtTime(event.ends_at, tz)} ${zone}`;
+  const where = event.location || (event.format === "online" ? "Online" : "");
+  const tags = (event.tags ?? [])
+    .map((t) => t.replace(/[^a-z0-9]/gi, ""))
+    .filter(Boolean)
+    .slice(0, 4)
+    .map((t) => `#${t}`);
+
+  return [
+    event.name,
+    `When: ${when}`,
+    where && `Where: ${where}`,
+    event.summary && `\n${event.summary}`,
+    "\nThis is an AWSSBG-UC event, open to students and AWS enthusiasts.",
+    `\n${["#AWS", "#AWSSBGUC", ...tags].join(" ")}`,
+    "\nDetails and registration:",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 // ─── When ─────────────────────────────────────────────────────────────────────
@@ -129,6 +159,44 @@ function WhenPanel({ event, pageUrl, color }: { event: EventRow; pageUrl: string
 }
 
 // ─── Schedule ─────────────────────────────────────────────────────────────────
+
+/**
+ * Cover image as a stacked-card: two tilted sheets peek out behind a rounded image card,
+ * with a small logo badge overlapping the top-right corner.
+ */
+function CoverCard({ src, name, color }: { src: string; name: string; color: string }) {
+  return (
+    <div className="relative px-3 pb-3 pt-5 sm:px-5">
+      {/* Sheets behind the card */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-4 bottom-1 top-2 -rotate-3 rounded-3xl opacity-40 sm:inset-x-6"
+        style={{ background: color }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-4 bottom-0 top-3 rotate-2 rounded-3xl opacity-70 sm:inset-x-6"
+        style={{ background: color }}
+      />
+
+      {/* Image card */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
+        {/* Plain <img>: cover URLs may point at any https host, which next/image would reject. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={`Cover image for ${name}`} className="absolute inset-0 h-full w-full object-cover" />
+      </div>
+
+      {/* Badge overlapping the top-right corner */}
+      <div
+        aria-hidden="true"
+        className="absolute right-0 top-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] sm:h-16 sm:w-16"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icons/logo.webp" alt="" className="h-9 w-9 object-contain sm:h-10 sm:w-10" />
+      </div>
+    </div>
+  );
+}
 
 function Schedule({ event, color }: { event: EventRow; color: string }) {
   const items = event.schedule;
@@ -353,39 +421,49 @@ export function EventDetailPage({
       <SidePixels side="right" />
 
       <div className="relative z-10">
-        {/* ── Header ── */}
+        {/* ── Hero: text and cover share one section (side by side on desktop, text above image on mobile) ── */}
         <header className={`${wrap} pb-10 pt-8 sm:pb-14 sm:pt-10`}>
           <Link href="/events" className={`inline-block text-lg underline underline-offset-4 ${focus}`}>
             ← All events
           </Link>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <span className="px-2 py-0.5 text-base text-black" style={{ background: color }}>
-              {STATUS_LABELS[event.status]}
-            </span>
-            <span className="border-2 border-pix-butter/60 px-2 py-0.5 text-base">{FORMAT_LABELS[event.format]}</span>
-            {event.host_name && <span className="text-base text-pix-butter/70">Hosted by {event.host_name}</span>}
+          <div
+            className={`mt-8 grid gap-10 ${
+              event.cover_image_url ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-12" : ""
+            }`}
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="px-2 py-0.5 text-base text-black" style={{ background: color }}>
+                  {STATUS_LABELS[event.status]}
+                </span>
+                <span className="border-2 border-pix-butter/60 px-2 py-0.5 text-base">{FORMAT_LABELS[event.format]}</span>
+                {event.host_name && <span className="text-base text-pix-butter/70">Hosted by {event.host_name}</span>}
+              </div>
+
+              <h1 className={`${hd} mt-5 break-words text-[clamp(2.25rem,5vw,4rem)] leading-[1.05]`}>{event.name}</h1>
+
+              {event.summary && <p className="mt-5 max-w-2xl text-xl leading-snug sm:text-2xl">{event.summary}</p>}
+
+              {event.tags.length > 0 && (
+                <ul className="mt-6 flex flex-wrap gap-2" aria-label="Topics">
+                  {event.tags.map((tag) => (
+                    <li key={tag} className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">
+                      {tag}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {event.status === "cancelled" && (
+                <p role="status" className="mt-6 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-2 text-lg">
+                  This event was cancelled.
+                </p>
+              )}
+            </div>
+
+            {event.cover_image_url && <CoverCard src={event.cover_image_url} name={event.name} color={color} />}
           </div>
-
-          <h1 className={`${hd} mt-5 break-words text-[clamp(3.5rem,10vw,8rem)]`}>{event.name}</h1>
-
-          {event.summary && <p className="mt-6 max-w-2xl text-2xl leading-snug">{event.summary}</p>}
-
-          {event.tags.length > 0 && (
-            <ul className="mt-6 flex flex-wrap gap-2" aria-label="Topics">
-              {event.tags.map((tag) => (
-                <li key={tag} className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">
-                  {tag}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {event.status === "cancelled" && (
-            <p role="status" className="mt-6 inline-block border-4 border-pix-rust bg-pix-rust px-4 py-2 text-lg">
-              This event was cancelled.
-            </p>
-          )}
         </header>
 
         <Stripes className="h-4" />
@@ -394,7 +472,7 @@ export function EventDetailPage({
         <div className={`${wrap} py-12 sm:py-16`}>
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-14">
             {/* Registration and time come first on small screens. */}
-            <aside className="order-first space-y-8 lg:sticky lg:top-6 lg:order-last">
+            <aside className="order-first space-y-8 lg:sticky lg:top-[calc(var(--site-nav-h,3.75rem)+1.5rem)] lg:order-last">
               <WhenPanel event={event} pageUrl={pageUrl} color={color} />
               <EventRegisterPanel
                 eventId={event.event_id}
@@ -411,20 +489,12 @@ export function EventDetailPage({
                 opensLabel={opensLabel}
                 closesLabel={closesLabel}
               />
+              {pageUrl && (
+                <SharePanel title={event.name} body={buildShareText(event)} pageUrl={pageUrl} color={color} headingClass={hd} />
+              )}
             </aside>
 
             <div className="min-w-0 space-y-16">
-              {event.cover_image_url && (
-                // Plain <img>: cover URLs may point at any https host, which next/image would reject.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={event.cover_image_url}
-                  alt={`Cover image for ${event.name}`}
-                  className="aspect-[16/9] w-full border-4 object-cover"
-                  style={{ borderColor: color, boxShadow: `8px 8px 0 ${color}` }}
-                />
-              )}
-
               {event.description && (
                 <section aria-labelledby="about-heading">
                   <SectionTitle id="about-heading">About this event</SectionTitle>

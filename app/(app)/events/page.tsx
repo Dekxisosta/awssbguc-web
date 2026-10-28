@@ -27,6 +27,7 @@ export default async function EventsRoute() {
         .from("event_registrations")
         .select("event_id, status")
         .eq("participant_id", participant.participant_id)
+        .neq("status", "unregistered")
     : { data: [] };
 
   const registrationMap = new Map<string, RegistrationRow["status"]>(
