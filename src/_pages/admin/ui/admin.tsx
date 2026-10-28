@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 import {
@@ -149,10 +150,14 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
     const t = setTimeout(onDismiss, 3500);
     return () => clearTimeout(t);
   }, [onDismiss]);
-  return (
+  // Rendered into <body>: the admin page sits inside `isolate` / `z-10` stacking contexts, so a fixed
+  // element rendered in place can never rise above the site's navbar (z-20) or other portaled overlays.
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
       role="status"
-      className={`${bodyFont.className} fixed bottom-6 right-6 z-[99999] flex items-center gap-3 border-4 border-pix-butter bg-black px-4 py-3 text-lg text-pix-butter ${
+      style={{ zIndex: 99999 }}
+      className={`${bodyFont.className} fixed bottom-6 right-6 flex items-center gap-3 border-4 border-pix-butter bg-black px-4 py-3 text-lg text-pix-butter ${
         type === "success" ? "shadow-pixel-green-6" : "shadow-pixel-rust-6"
       }`}
     >
@@ -161,7 +166,8 @@ function Toast({ message, type, onDismiss }: { message: string; type: "success" 
       <button type="button" onClick={onDismiss} aria-label="Dismiss" className={`ml-1 opacity-70 hover:opacity-100 ${focus}`}>
         <X size={14} />
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -440,10 +446,15 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
   const roleNames = detail?.roles.map((r) => r.role) ?? [];
   const avatar = detail?.profile && typeof detail.profile.avatar_url === "string" ? detail.profile.avatar_url : null;
 
-  return (
-    <div className="fixed inset-0 z-[9998] flex justify-end" role="dialog" aria-modal="true" aria-label="Person details">
+  // Rendered into <body>, not in place. In place, this `fixed` panel is trapped inside the admin page's
+  // stacking context (z-10), which sits below the sticky navbar (z-20), so the navbar covered the top of
+  // the panel. In <body> it can sit above the navbar; 99990 stays under the toast (99999) and the
+  // site-wide search modal (100000).
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div style={{ zIndex: 99990 }} className="fixed inset-0 flex justify-end" role="dialog" aria-modal="true" aria-label="Person details">
       <button type="button" aria-label="Close details" onClick={onClose} className="absolute inset-0 cursor-default bg-black/70" />
-      <div className={`${bodyFont.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l-4 border-pix-teal bg-black text-pix-butter`}>
+      <div className={`${bodyFont.className} relative flex h-full w-full max-w-2xl flex-col overflow-y-auto overscroll-contain border-l-4 border-pix-teal bg-black text-pix-butter`}>
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-4 border-pix-teal bg-black px-5 py-4">
           <div className="flex min-w-0 items-center gap-4">
             {avatar && (
@@ -528,7 +539,8 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, onChanged, 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

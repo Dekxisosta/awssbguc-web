@@ -142,6 +142,7 @@ export function ProfileSetupPage({
               <div className="flex flex-col items-center gap-2">
                 <AvatarUpload
                   variant="pixel"
+                  portal
                   avatarUrl={avatarUrl}
                   username={username || null}
                   onAvatarChange={setAvatarUrl}
