@@ -2,7 +2,16 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { STATUS_COLORS, STATUS_LABELS, type EventRow, type RegistrationRow } from "@/src/entities/event";
+import {
+  FORMAT_LABELS,
+  STATUS_COLORS,
+  STATUS_LABELS,
+  fmtTime,
+  getRegistrationAvailability,
+  safeTimeZone,
+  type EventRow,
+  type RegistrationRow,
+} from "@/src/entities/event";
 
 /**
  * Event card in the pixel-art direction of the home page: thick colored border + hard offset shadow,
@@ -26,21 +35,15 @@ const REG_LABELS: Record<RegistrationRow["status"], string> = {
 
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
-// Fixed to Philippine time so server and browser render the same text.
-const TZ = "Asia/Manila";
+// Dates are shown in the event's own timezone (default Asia/Manila), so server and browser render the same text.
+const dateOnly = (iso: string, tz: string) =>
+  new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: tz });
 
-const dateOnly = (d: Date) =>
-  d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: TZ });
-const timeOnly = (d: Date) =>
-  d.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: TZ });
-
-function formatDateRange(starts: string, ends: string): string {
-  const s = new Date(starts);
-  const e = new Date(ends);
-  if (dateOnly(s) === dateOnly(e)) {
-    return `${dateOnly(s)} · ${timeOnly(s)} – ${timeOnly(e)}`;
+function formatDateRange(starts: string, ends: string, tz: string): string {
+  if (dateOnly(starts, tz) === dateOnly(ends, tz)) {
+    return `${dateOnly(starts, tz)} · ${fmtTime(starts, tz)} – ${fmtTime(ends, tz)}`;
   }
-  return `${dateOnly(s)} ${timeOnly(s)} – ${dateOnly(e)} ${timeOnly(e)}`;
+  return `${dateOnly(starts, tz)} ${fmtTime(starts, tz)} – ${dateOnly(ends, tz)} ${fmtTime(ends, tz)}`;
 }
 
 export function EventCard({ event, registrationStatus, participantId, headingClass = "" }: EventCardProps) {
@@ -49,15 +52,21 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
   const [isPending, startTransition] = useTransition();
 
   const color = STATUS_COLORS[event.status];
+  const tz = safeTimeZone(event.timezone);
   const start = new Date(event.starts_at);
-  const day = start.toLocaleDateString("en-PH", { day: "numeric", timeZone: TZ });
-  const month = start.toLocaleDateString("en-PH", { month: "short", timeZone: TZ });
-  const year = start.toLocaleDateString("en-PH", { year: "numeric", timeZone: TZ });
+  const day = start.toLocaleDateString("en-PH", { day: "numeric", timeZone: tz });
+  const month = start.toLocaleDateString("en-PH", { month: "short", timeZone: tz });
+  const year = start.toLocaleDateString("en-PH", { year: "numeric", timeZone: tz });
+
+  // Seat count isn't loaded on the list, so "full" is left to the server; the window is checked here.
+  const availability = getRegistrationAvailability(event, 0);
+  const eventOpen = event.status === "not_started" || event.status === "ongoing";
 
   const canRegister =
     participantId !== null &&
-    (event.status === "not_started" || event.status === "ongoing") &&
-    regStatus === null;
+    eventOpen &&
+    regStatus === null &&
+    availability === "open";
 
   const canUnregister =
     participantId !== null &&
@@ -102,50 +111,72 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
 
   return (
     <article
-      className="flex flex-col gap-5 border-4 bg-black p-5 sm:flex-row sm:gap-6"
-      style={{ borderColor: color, boxShadow: `6px 6px 0 ${color}` }}
+      className="flex gap-4 border-4 bg-black p-3 sm:p-4"
+      style={{ borderColor: color, boxShadow: `4px 4px 0 ${color}` }}
     >
       {/* Date block */}
       <div
         aria-hidden="true"
-        className="flex h-24 w-24 shrink-0 flex-col items-center justify-center self-start text-black"
+        className="flex h-16 w-16 shrink-0 flex-col items-center justify-center self-start text-black sm:h-20 sm:w-20"
         style={{ background: color }}
       >
-        <span className={`${headingClass} text-5xl`}>{day}</span>
-        <span className="text-base uppercase leading-none">{month}</span>
+        <span className={`${headingClass} text-3xl sm:text-4xl`}>{day}</span>
+        <span className="text-sm uppercase leading-none">{month}</span>
         <span className="text-xs leading-none opacity-80">{year}</span>
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-start gap-3">
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
           <div className="min-w-0 flex-1">
-            <h2 className={`${headingClass} break-words text-4xl`}>
+            <h2 className={`${headingClass} break-words text-3xl leading-none`}>
               <Link href={`/events/${event.slug}`} className={`underline-offset-4 hover:underline ${focus}`}>
                 {event.name}
               </Link>
             </h2>
-            <p className="mt-2 text-base text-pix-butter/70">{formatDateRange(event.starts_at, event.ends_at)}</p>
+            <p className="mt-1 text-sm text-pix-butter/70">{formatDateRange(event.starts_at, event.ends_at, tz)}</p>
           </div>
 
-          <span className="shrink-0 px-2 py-0.5 text-base text-black" style={{ background: color }}>
-            {STATUS_LABELS[event.status]}
-          </span>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <span className="border-2 border-pix-butter/60 px-2 text-sm">{FORMAT_LABELS[event.format]}</span>
+            <span className="px-2 text-sm text-black" style={{ background: color }}>
+              {STATUS_LABELS[event.status]}
+            </span>
+          </div>
         </div>
 
-        {event.location && (
-          <p className="mt-3 flex items-center gap-2 text-base">
-            <LocationIcon />
-            {event.location}
-          </p>
+        {(event.host_name || event.location || event.location_address) && (
+          <div className="mt-1.5 flex flex-wrap items-start gap-x-4 gap-y-1 text-sm">
+            {event.host_name && <p className="text-pix-butter/70">Hosted by {event.host_name}</p>}
+            {(event.location || event.location_address) && (
+              <p className="flex min-w-0 items-start gap-1.5">
+                <span className="mt-0.5"><LocationIcon /></span>
+                <span className="min-w-0 break-words">
+                  {event.location}
+                  {event.location && event.location_address && <span className="text-pix-butter/60"> · </span>}
+                  {event.location_address && <span className="text-pix-butter/75">{event.location_address}</span>}
+                </span>
+              </p>
+            )}
+          </div>
         )}
 
-        {event.description && (
-          <p className="mt-3 text-lg leading-snug text-pix-butter/85">{event.description}</p>
+        {(event.summary || event.description) && (
+          <p className="mt-2 line-clamp-2 text-base leading-snug text-pix-butter/85">{event.summary ?? event.description}</p>
         )}
 
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        {event.tags.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Topics">
+            {event.tags.slice(0, 4).map((tag) => (
+              <li key={tag} className="border-2 border-pix-butter/60 px-1.5 text-xs">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {regStatus !== null && (
-            <span className="border-4 border-pix-butter px-2 py-0.5 text-base">{REG_LABELS[regStatus]}</span>
+            <span className="border-2 border-pix-butter px-2 py-0.5 text-sm">{REG_LABELS[regStatus]}</span>
           )}
 
           {canRegister && (
@@ -153,7 +184,7 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
               type="button"
               onClick={handleRegister}
               disabled={isPending}
-              className={`border-4 border-pix-butter bg-pix-butter px-5 py-2 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 disabled:opacity-50 ${focus}`}
+              className={`border-2 border-pix-butter bg-pix-butter px-4 py-1 text-base text-black shadow-pixel-rust-2 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-50 ${focus}`}
             >
               {isPending ? "Registering…" : "Register"}
             </button>
@@ -164,7 +195,7 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
               type="button"
               onClick={handleUnregister}
               disabled={isPending}
-              className={`border-4 border-pix-teal px-5 py-2 text-lg transition-colors hover:bg-pix-teal hover:text-black disabled:opacity-50 ${focus}`}
+              className={`border-2 border-pix-teal px-4 py-1 text-base transition-colors hover:bg-pix-teal hover:text-black disabled:opacity-50 ${focus}`}
             >
               {isPending ? "Removing…" : "Unregister"}
             </button>
@@ -172,22 +203,41 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
 
           <Link
             href={`/events/${event.slug}`}
-            className={`border-4 border-pix-butter/60 px-5 py-2 text-lg transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
+            className={`border-2 border-pix-butter/60 px-4 py-1 text-base transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
           >
             Details
           </Link>
 
-          {!participantId && (event.status === "not_started" || event.status === "ongoing") && (
-            <span className="text-base text-pix-butter/70">Complete your profile to register for events.</span>
+          {!participantId && eventOpen && availability === "open" && (
+            <span className="text-sm text-pix-butter/70">Complete your profile to register for events.</span>
+          )}
+
+          {regStatus === null && eventOpen && availability === "not_open" && (
+            <span className="text-sm text-pix-butter/70">Registration has not opened yet.</span>
+          )}
+          {regStatus === null && eventOpen && availability === "closed" && (
+            <span className="text-sm text-pix-butter/70">Registration is closed.</span>
           )}
         </div>
 
         {error && (
-          <p role="alert" className="mt-3 inline-block bg-pix-rust px-3 py-1 text-base text-pix-butter">
+          <p role="alert" className="mt-2 inline-block bg-pix-rust px-3 py-0.5 text-sm text-pix-butter">
             {error}
           </p>
         )}
       </div>
+
+      {event.cover_image_url && (
+        // Plain <img>: cover URLs may point at any https host, which next/image would reject.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={event.cover_image_url}
+          alt=""
+          loading="lazy"
+          className="hidden w-56 shrink-0 self-stretch border-2 object-cover md:block lg:w-72"
+          style={{ borderColor: color }}
+        />
+      )}
     </article>
   );
 }
