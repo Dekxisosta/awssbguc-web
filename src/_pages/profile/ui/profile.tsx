@@ -15,8 +15,6 @@ export const profileMetadata = { title: "Profile — AWSSBG-UC" };
 
 // Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
 
-const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
-
 export interface ProfilePageProps {
   fullName: string;
   memberId: string | null;
@@ -47,14 +45,8 @@ export function ProfilePage(props: ProfilePageProps) {
       <SidePixels side="left" />
       <SidePixels side="right" />
 
-      <div className="relative z-10">
-        <section className={`${wrap} pb-10 pt-10 sm:pb-14 sm:pt-14`}>
-          <p className="text-xl">AWSSBG-UC</p>
-          <h1 className={`${hd} mt-3 text-[clamp(5rem,13vw,10rem)]`}>Profile</h1>
-          <p className="mt-6 max-w-2xl text-2xl leading-snug">
-            Your member pass, and what other members see about you.
-          </p>
-        </section>
+      <div className="relative z-10 pt-10 sm:pt-14">
+        <h1 className="sr-only">Profile</h1>
 
         <ProfileCard {...props} bodyClass={bodyFont.className} headingClass={hd} />
       </div>

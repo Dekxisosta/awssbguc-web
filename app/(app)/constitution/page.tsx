@@ -1,6 +1,6 @@
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { ConstitutionSidebar } from "@/src/widgets/constitution-sidebar";
-import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
+import { Stripes, PixelClouds } from "@/src/widgets/home-client";
 
 // Same fonts as the home page. (The shared class strings live in a client module, so they are rebuilt here
 // instead of imported: a server component can't read non-component exports from a "use client" file.)
@@ -14,8 +14,6 @@ export default function ConstitutionPage() {
   return (
     <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
     <PixelClouds />
-    <SidePixels side="left" />
-    <SidePixels side="right" />
     <div className="relative z-10">
     <div className={`${wrap} pb-14 pt-10 sm:pt-14`}>
       {/* Page header */}
