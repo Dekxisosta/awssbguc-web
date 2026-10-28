@@ -18,7 +18,6 @@ export const membersMetadata = { title: "Community — AWSSBG-UC" };
 
 // Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
 
-const wrap = "mx-auto w-full max-w-page px-5 sm:px-8";
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
 const btnPrimary = `inline-flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-6 py-3 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
@@ -63,16 +62,6 @@ function FacebookIcon({ size = 20, className = "" }: { size?: number; className?
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-    </svg>
-  );
-}
-
-// ─── GitHub SVG ───────────────────────────────────────────────────────────────
-
-function GitHubIcon({ size = 12, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
-      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
     </svg>
   );
 }
@@ -312,21 +301,21 @@ function MemberCard({ member, border }: { member: PublicMemberProfile; border: s
   const isMemberId = /^SBG-UC-\d{6}$/.test(member.member_id);
 
   return (
-    <div className={`relative flex h-full w-full flex-col border-4 ${border} transition-colors focus-within:bg-pix-butter/5 hover:bg-pix-butter/5`}>
-      <div className="flex items-center gap-4 p-4">
+    <div className={`relative flex h-full w-full flex-col border-2 ${border} transition-colors focus-within:bg-pix-butter/5 hover:bg-pix-butter/5`}>
+      <div className="flex items-center gap-3 p-3">
         {member.avatar_url ? (
-          <div className="h-16 w-16 shrink-0 border-4 border-pix-butter">
+          <div className="h-12 w-12 shrink-0 border-2 border-pix-butter">
             <PixelPhoto src={member.avatar_url} width={24} height={24} />
           </div>
         ) : (
-          <span className={`${hd} flex h-16 w-16 shrink-0 items-center justify-center border-4 border-pix-butter bg-pix-butter text-4xl text-black`}>
+          <span className={`${hd} flex h-12 w-12 shrink-0 items-center justify-center border-2 border-pix-butter bg-pix-butter text-3xl text-black`}>
             {handle.slice(0, 1).toUpperCase()}
           </span>
         )}
         <div className="min-w-0">
-          <h3 className={`${hd} truncate text-3xl`}>
+          <h3 className={`${hd} truncate text-2xl leading-none`}>
             {member.username ? (
-              // Stretched link: the whole card opens the profile; the GitHub link below sits above it.
+              // Stretched link: the whole card opens the profile.
               <Link href={`/members/${encodeURIComponent(member.username)}`} className={`after:absolute after:inset-0 ${focus}`}>
                 {member.display_name ?? member.username}
               </Link>
@@ -334,45 +323,9 @@ function MemberCard({ member, border }: { member: PublicMemberProfile; border: s
               member.display_name ?? "—"
             )}
           </h3>
-          {member.username && <p className="truncate text-sm text-pix-butter/70">@{member.username}</p>}
-          {isMemberId && <p className="truncate text-xs text-pix-butter/50">{member.member_id}</p>}
+          {member.username && <p className="truncate text-xs text-pix-butter/70">@{member.username}</p>}
+          {isMemberId && <p className="truncate text-[11px] text-pix-butter/50">{member.member_id}</p>}
         </div>
-      </div>
-
-      {member.bio ? (
-        <p className="line-clamp-2 px-4 pb-3 text-sm leading-snug text-pix-butter/85">{member.bio}</p>
-      ) : (
-        <p className="px-4 pb-3 text-sm italic text-pix-butter/40">No bio added.</p>
-      )}
-
-      {member.skills && member.skills.length > 0 && (
-        <ul className="flex flex-wrap gap-2 px-4 pb-4" aria-label="Skills">
-          {member.skills.slice(0, 5).map((skill) => (
-            <li key={skill} className="border-2 border-pix-butter/60 px-2 py-0.5 text-xs">
-              {skill}
-            </li>
-          ))}
-          {member.skills.length > 5 && (
-            <li className="border-2 border-pix-butter/30 px-2 py-0.5 text-xs text-pix-butter/60">+{member.skills.length - 5}</li>
-          )}
-        </ul>
-      )}
-
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t-4 border-dashed border-pix-butter/20 px-4 py-3">
-        {member.github_username ? (
-          <a
-            href={`https://github.com/${member.github_username}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${handle} on GitHub`}
-            className={`relative z-10 inline-flex items-center gap-2 border-2 border-pix-butter/60 px-2.5 py-1 text-sm transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
-          >
-            <GitHubIcon size={12} />
-            GitHub
-          </a>
-        ) : (
-          <span className="text-sm italic text-pix-butter/40">No socials added.</span>
-        )}
       </div>
     </div>
   );
@@ -447,75 +400,83 @@ interface MembersPageProps {
 
 export function MembersPage({ members, page, totalPages, totalCount }: MembersPageProps) {
   const shared = totalCount ?? 0;
+  // Section padding inside the 80% column. The outer container supplies the side margin: the same gutter the pixel sides used to occupy.
+  const pad = "px-5 sm:px-8 lg:px-8";
   return (
     <div className={`${bodyFont.className} bg-black tracking-normal text-pix-butter`}>
-
-      {/* ── Discord ── */}
-      <section className={`${wrap} py-14 sm:py-20`}>
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-          <DiscordCTA />
-          <DiscordMock />
-        </div>
-      </section>
-
-      {/* ── Facebook (butter panel) ── */}
-      <Stripes />
-      <section className="bg-pix-butter text-black">
-        <div className={`${wrap} py-14 sm:py-20`}>
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-            <div className="order-2 border-4 border-black bg-black shadow-pixel-rust-8 lg:order-1">
-              <Image
-                src="/images/facebook/facebook_image.png"
-                alt="AWSSBG-UC Facebook page"
-                width={800}
-                height={600}
-                className="w-full object-cover"
-              />
+      {/* Desktop: 80% Discord + Facebook CTAs, 20% member directory. Stacked on smaller screens. */}
+      <div className="px-3 sm:px-4 lg:grid lg:grid-cols-[80fr_20fr] lg:items-start lg:px-[clamp(16px,calc((100%_-_1300px)/2),320px)]">
+        <div className="min-w-0">
+          {/* ── Discord ── */}
+          <section className={`${pad} py-14 sm:py-20`}>
+            <div className="grid gap-12 xl:grid-cols-2 xl:items-center xl:gap-12">
+              <DiscordCTA />
+              <DiscordMock />
             </div>
-            <FacebookCTA />
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* ── Member directory ── */}
-      <Stripes />
-      <section className={`${wrap} py-14 sm:py-20`}>
-        <h2 className={`${hd} text-6xl sm:text-8xl`}>Member directory</h2>
-        <p className="mt-5 max-w-xl text-lg leading-relaxed">
-          Members who have opted into the public directory.
-          {shared > 0 && (
-            <span className="ml-1 text-pix-butter/70">
-              {shared} {shared !== 1 ? "profiles" : "profile"} shared.
-            </span>
-          )}
-        </p>
-
-        <div className="mt-10">
-          {members.length === 0 ? (
-            <div className="flex flex-col items-center justify-center border-4 border-dashed border-pix-teal/60 px-6 py-20 text-center">
-              <p className={`${hd} text-4xl`}>No public profiles yet</p>
-              <p className="mt-3 text-pix-butter/70">Members who opt into the directory will appear here.</p>
+          {/* ── Facebook (butter panel) ── */}
+          <Stripes />
+          <section className="bg-pix-butter text-black">
+            <div className={`${pad} py-14 sm:py-20`}>
+              <div className="grid gap-12 xl:grid-cols-2 xl:items-center xl:gap-12">
+                <div className="order-2 border-4 border-black bg-black shadow-pixel-rust-8 xl:order-1">
+                  <Image
+                    src="/images/facebook/facebook_image.png"
+                    alt="AWSSBG-UC Facebook page"
+                    width={800}
+                    height={600}
+                    className="w-full object-cover"
+                  />
+                </div>
+                <FacebookCTA />
+              </div>
             </div>
-          ) : (
-            <>
-              <ul
-                className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3"
-                aria-label={`Members, page ${page} of ${totalPages}`}
-              >
-                {members.map((member, i) => (
-                  <li key={member.member_id} className="flex">
-                    <MemberCard member={member} border={CARD_BORDERS[i % CARD_BORDERS.length]} />
-                  </li>
-                ))}
-              </ul>
-              <Pagination page={page} totalPages={totalPages} />
-              {totalPages > 1 && (
-                <p className="mt-4 text-center text-sm text-pix-butter/60">Page {page} of {totalPages}</p>
+          </section>
+        </div>
+
+        {/* ── Member directory (20% sidebar on desktop; scrolls on its own beneath the navbar) ── */}
+        <div className="lg:sticky lg:top-[var(--site-nav-h,3.75rem)] lg:max-h-[calc(100vh-var(--site-nav-h,3.75rem))] lg:overflow-y-auto lg:border-l-4 lg:border-pix-teal">
+          <Stripes className="h-4 lg:hidden" />
+          <section className="px-5 py-14 sm:px-8 sm:py-20 lg:px-4 lg:py-8">
+            <h2 className={`${hd} text-6xl sm:text-8xl lg:text-5xl`}>Member directory</h2>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed lg:mt-3 lg:text-sm lg:leading-snug">
+              Members who have opted into the public directory.
+              {shared > 0 && (
+                <span className="ml-1 text-pix-butter/70">
+                  {shared} {shared !== 1 ? "profiles" : "profile"} shared.
+                </span>
               )}
-            </>
-          )}
+            </p>
+
+            <div className="mt-10 lg:mt-5">
+              {members.length === 0 ? (
+                <div className="flex flex-col items-center justify-center border-4 border-dashed border-pix-teal/60 px-6 py-20 text-center lg:px-3 lg:py-10">
+                  <p className={`${hd} text-4xl`}>No public profiles yet</p>
+                  <p className="mt-3 text-pix-butter/70 lg:text-sm">Members who opt into the directory will appear here.</p>
+                </div>
+              ) : (
+                <>
+                  <ul
+                    className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:gap-3"
+                    aria-label={`Members, page ${page} of ${totalPages}`}
+                  >
+                    {members.map((member, i) => (
+                      <li key={member.member_id} className="flex">
+                        <MemberCard member={member} border={CARD_BORDERS[i % CARD_BORDERS.length]} />
+                      </li>
+                    ))}
+                  </ul>
+                  <Pagination page={page} totalPages={totalPages} />
+                  {totalPages > 1 && (
+                    <p className="mt-4 text-center text-sm text-pix-butter/60">Page {page} of {totalPages}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
