@@ -2,6 +2,7 @@ import { MemberLinkForm } from "@/src/features/member-link";
 import { StudentDataPanel } from "@/src/features/student-data-request";
 import type { MembershipRow } from "@/src/entities/member";
 import type { ChangeRequest, StudentExtras } from "@/src/entities/student-data";
+import type { ShowcaseRepo } from "@/src/entities/showcase";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
@@ -13,9 +14,11 @@ interface MemberPageProps {
   membership: MembershipRow | null;
   extras: StudentExtras | null;
   requests: ChangeRequest[];
+  githubUsername: string | null;
+  repos: ShowcaseRepo[];
 }
 
-export function MemberPage({ membership, extras, requests }: MemberPageProps) {
+export function MemberPage({ membership, extras, requests, githubUsername, repos }: MemberPageProps) {
   const isLinked = !!membership;
 
   return (
