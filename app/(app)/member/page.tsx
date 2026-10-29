@@ -4,6 +4,9 @@ import { loadOwnStudentRecord } from "@/src/shared/lib/student-data/service";
 import { MemberPage, memberMetadata } from "@/src/_pages/member";
 import type { MembershipRow } from "@/src/entities/member";
 import type { ChangeRequest } from "@/src/entities/student-data";
+import type { ShowcaseRepo } from "@/src/entities/showcase";
+import { createAdminClient } from "@/src/shared/supabase/admin";
+import { loadOwnShowcase } from "@/src/shared/lib/showcase/service";
 
 export const metadata = memberMetadata;
 export const dynamic = "force-dynamic";
@@ -34,11 +37,32 @@ export default async function MemberRoute() {
         .limit(10)
     : { data: null };
 
+  // Same showcase data as /profile (migration 20260018). Never blocks the membership page.
+  let githubUsername: string | null = null;
+  let repos: ShowcaseRepo[] = [];
+  try {
+    const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("github_username")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    githubUsername = (profile?.github_username as string | null | undefined) ?? null;
+    if (githubUsername) {
+      const gh = githubUsername.toLowerCase();
+      repos = (await loadOwnShowcase(admin, user.id)).filter((r) => r.owner.toLowerCase() === gh);
+    }
+  } catch (err) {
+    console.error("[member] showcase load failed:", err);
+  }
+
   return (
     <MemberPage
       membership={membership}
       extras={record?.extras ?? null}
       requests={(requests ?? []) as ChangeRequest[]}
+      githubUsername={githubUsername}
+      repos={repos}
     />
   );
 }

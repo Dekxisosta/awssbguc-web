@@ -2,7 +2,7 @@ import { createAdminClient } from "@/src/shared/supabase/admin";
 import { MembersPage } from "@/src/_pages/members";
 import type { PublicMemberProfile } from "@/src/entities/member";
 
-export const metadata = { title: "Community — AWSSBG-UC" };
+export const metadata = { title: "Members — AWSSBG-UC" };
 
 /**
  * Cache the directory listing for 60 seconds.
@@ -14,11 +14,13 @@ export const revalidate = 60;
 const PAGE_SIZE = 20;
 
 interface Props {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }
 
 export default async function MembersRoute({ searchParams }: Props) {
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: qParam } = await searchParams;
+  // Keep only characters that are safe inside a PostgREST filter (no commas, parens, wildcards or quotes).
+  const query = (qParam ?? "").replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 40);
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -28,19 +30,24 @@ export default async function MembersRoute({ searchParams }: Props) {
   // Fetch the opted-in count via the dedicated function (no row data exposed).
   const { data: countRow } = await admin.rpc("count_public_members");
   const totalCount: number = Number(countRow ?? 0);
-  const totalPages = totalCount > 0 ? Math.ceil(totalCount / PAGE_SIZE) : 1;
 
-  // Fetch one page from the public view.
-  // The view already filters on opt-in + at least one social, and orders by display_name.
-  const { data: rows, error } = await admin
+  // Fetch one page from the public view (opt-in only), optionally filtered by name or username.
+  let listQuery = admin
     .from("public_member_profiles")
-    .select("member_id, display_name, username, avatar_url, github_username, bio, skills")
-    .range(from, to);
+    .select("member_id, display_name, username, avatar_url, github_username, bio, skills", { count: "exact" });
+  if (query) {
+    listQuery = listQuery.or(`display_name.ilike.%${query}%,username.ilike.%${query}%`);
+  }
+  const { data: rows, error, count } = await listQuery.range(from, to);
 
   if (error) {
     console.error("[MembersRoute] view query error:", error.message);
-    return <MembersPage members={[]} page={page} totalPages={1} totalCount={0} />;
+    return <MembersPage members={[]} page={page} totalPages={1} totalCount={0} query={query} matchCount={0} />;
   }
+
+  // `count` is the number of rows matching the search (exact, from the same query).
+  const matchCount = query ? (count ?? 0) : totalCount;
+  const totalPages = matchCount > 0 ? Math.ceil(matchCount / PAGE_SIZE) : 1;
 
   const members: PublicMemberProfile[] = (rows ?? []).map((r) => ({
     member_id:       r.member_id       as string,
@@ -58,6 +65,8 @@ export default async function MembersRoute({ searchParams }: Props) {
       page={page}
       totalPages={totalPages}
       totalCount={totalCount}
+      query={query}
+      matchCount={matchCount}
     />
   );
 }

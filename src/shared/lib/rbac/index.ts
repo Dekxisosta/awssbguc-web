@@ -44,6 +44,7 @@ export const PERMISSIONS = {
   CONTENT_MANAGE:      "content.manage",
   SETTINGS_MANAGE:     "settings.manage",
   STUDENT_DATA_REVIEW: "student_data.review",
+  AUDIT_READ:          "audit.read",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

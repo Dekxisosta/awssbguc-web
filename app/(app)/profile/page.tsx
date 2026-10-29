@@ -2,6 +2,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/src/shared/supabase/server";
 import { createAdminClient } from "@/src/shared/supabase/admin";
 import { ProfilePage, profileMetadata } from "@/src/_pages/profile";
+import { loadOwnShowcase } from "@/src/shared/lib/showcase/service";
+import type { ShowcaseRepo } from "@/src/entities/showcase";
+import type { MembershipRow } from "@/src/entities/member";
+import { loadOwnStudentRecord } from "@/src/shared/lib/student-data/service";
 
 export const metadata = profileMetadata;
 
@@ -44,6 +48,31 @@ export default async function ProfileRoute() {
     .eq("profile_id", user.id)
     .maybeSingle();
 
+  // Repo showcase (migration 20260018). If that migration is not applied yet, the page still loads
+  // with an empty showcase instead of failing.
+  let initialRepos: ShowcaseRepo[] = [];
+  try {
+    initialRepos = await loadOwnShowcase(admin, user.id);
+  } catch (err) {
+    console.error("[profile] showcase load failed:", err);
+  }
+
+  // Student data, so members see their membership record right on the profile. Change requests and their
+  // history stay on /membership. A failure only hides the tile's contents; it never blocks the profile.
+  let membership: MembershipRow | null = null;
+  let extras: { contact_number: string | null; email: string | null; date_of_birth: string | null } | null = null;
+  let membershipUnavailable = false;
+  try {
+    const record = await loadOwnStudentRecord(user.id);
+    if (record) {
+      membership = { member_id: record.memberId, student_number: record.studentNumber, student_data: record.values };
+      extras = record.extras;
+    }
+  } catch (err) {
+    console.error("[profile] student data load failed:", err);
+    membershipUnavailable = true;
+  }
+
   return (
     <ProfilePage
       fullName={participant?.supplied_name?.trim() || "—"}
@@ -61,6 +90,10 @@ export default async function ProfileRoute() {
       bio={dirProfile?.bio ?? null}
       skills={(dirProfile?.skills as string[] | null | undefined) ?? null}
       usernameChangedAt={dirProfile?.username_changed_at ?? null}
+      initialRepos={initialRepos}
+      membership={membership}
+      extras={extras}
+      membershipUnavailable={membershipUnavailable}
     />
   );
 }

@@ -39,6 +39,8 @@ export interface RegistrationProfileInput {
   bio?: string;
   /** Comma-separated string or a pre-split array. */
   skills?: string | string[];
+  /** Show the profile in the public member directory. Defaults to true when omitted. */
+  directoryVisible?: boolean;
 }
 
 /** Self-reported membership details. Supplying these is what makes someone a member. */

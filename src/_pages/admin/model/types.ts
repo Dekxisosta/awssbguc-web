@@ -155,3 +155,15 @@ export interface PersonHit {
   email: string | null;
   memberId: string | null;
 }
+
+/** One row of the audit log (migration 20260017). */
+export interface AuditEntry {
+  id: string;
+  createdAt: string;
+  action: string;
+  outcome: "success" | "denied" | "failed";
+  via: "session" | "api_secret" | "system";
+  actorLabel: string | null;
+  targetLabel: string | null;
+  details: Record<string, unknown>;
+}

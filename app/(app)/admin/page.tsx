@@ -5,7 +5,12 @@ import { AdminDashboard } from "@/src/_pages/admin";
 
 export const metadata = { title: "Admin — AWSSBG-UC" };
 
-export default async function AdminPage() {
+interface Props {
+  searchParams: Promise<{ tab?: string | string[] }>;
+}
+
+export default async function AdminPage({ searchParams }: Props) {
+  const { tab } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -30,5 +35,10 @@ export default async function AdminPage() {
 
   if (!adminRole) redirect("/");
 
-  return <AdminDashboard callerParticipantId={participant.participant_id} />;
+  return (
+    <AdminDashboard
+      callerParticipantId={participant.participant_id}
+      initialTab={Array.isArray(tab) ? tab[0] : tab}
+    />
+  );
 }

@@ -67,7 +67,7 @@ Body: `{ email, fullName, password, profile?, membership? }`. The server re-vali
 2. Creates the `profiles` row (`initial_setup_completed = true`, plus any profile details). A chosen username sets `username_changed_at` (uses up the one-time change); otherwise a username is auto-generated.
 3. Creates the `participants` row (`user_id` = the new `auth.users.id`).
 4. Steps 1-3 are the **account**. If any of them fails, the auth user is deleted and nothing is left behind.
-5. If membership fields were supplied, calls `register_member_self_reported()` and links the result to the participant. **This is what makes the person a member.** A failure here does not undo the account; it is returned as `membership: { status: "failed", ... }` and the user can retry from `/member`.
+5. If membership fields were supplied, calls `register_member_self_reported()` and links the result to the participant. **This is what makes the person a member.** A failure here does not undo the account; it is returned as `membership: { status: "failed", ... }` and the user can retry from `/membership`.
 
 The browser then signs the user in and, if a photo was chosen, uploads it to `/api/profile/avatar` (it needs a signed-in user). A failed upload is reported but does not affect the account.
 
@@ -161,7 +161,7 @@ Members who are already in `member_roster` (seeded from the spreadsheet) but hav
 
 - The temporary password is **never stored** in the database, logs, or any application table.
 - It exists only in the API response at the moment of provisioning.
-- If a member loses their temporary password before completing setup, an admin must reset it manually via the Supabase dashboard or a password reset operation.
+- If a member loses their temporary password, or an admin wants to replace a password, use **Reissue temporary password** in the member's details panel (Members tab) or the API below.
 
 ---
 
@@ -200,3 +200,22 @@ Passwords chosen by the member (at `/signup` or `/setup`) must meet the followin
 - At least one number
 
 Passwords are never stored in `participants`, `profiles`, `member_roster`, `student_data`, or any application table. They are managed entirely by Supabase Auth.
+
+---
+
+## Reissuing a Temporary Password
+
+`POST /api/admin/provision/reissue` with `{ "participantId": "<uuid>", "sendEmail": true }` replaces an existing account's password with a new temporary one and sends the member back through `/setup` (`profiles.initial_setup_completed = false`).
+
+```bash
+curl -X POST https://your-site/api/admin/provision/reissue \
+  -H "Authorization: Bearer $ADMIN_API_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{ "participantId": "<participant uuid>", "sendEmail": true }'
+```
+
+- Allowed for an admin's browser session or the `ADMIN_API_SECRET` bearer token. **Accounts that hold the admin role can only be reissued with the secret.**
+- The new password goes to the email on the auth account. It is returned in the response only when it was not emailed successfully.
+- Existing signed-in sessions are **not** ended; the old password simply stops working for new sign-ins.
+- A 60-second per-member cooldown applies (best effort, per server instance). Each reissue is logged on the server.
+- You can't reissue your own password from a browser session.

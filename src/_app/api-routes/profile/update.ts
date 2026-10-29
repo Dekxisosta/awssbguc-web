@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/src/shared/supabase/server";
 import { createAdminClient } from "@/src/shared/supabase/admin";
 import { validateDisplayName } from "@/src/shared/lib/account/service";
+import { purgeShowcaseExcept } from "@/src/shared/lib/showcase/service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -263,6 +264,16 @@ export async function handleProfileUpdate(request: NextRequest) {
           return json({ success: false, error: "That GitHub username is already linked to another account.", field: "github_username" }, 409);
         console.error("[PATCH /api/profile] profiles update failed:", error.message);
         return json({ success: false, error: "Failed to update profile." }, 500);
+      }
+
+      // Showcased repos belong to the linked GitHub account: when the link changes or is removed,
+      // drop the ones the new account doesn't own (and their picture files).
+      if ("github_username" in profileUpdate) {
+        try {
+          await purgeShowcaseExcept(admin, user.id, profileUpdate.github_username as string | null);
+        } catch (err) {
+          console.error("[PATCH /api/profile] showcase cleanup failed:", err);
+        }
       }
     }
   }

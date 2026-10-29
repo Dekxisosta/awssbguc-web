@@ -23,6 +23,8 @@ export interface WizardData {
   githubUsername: string;
   bio: string;
   skills: string;
+  /** Show the profile in the public member directory (on by default). */
+  directoryVisible: boolean;
   // Membership (optional, all-or-nothing)
   studentNumber: string;
   firstName: string;
@@ -37,7 +39,7 @@ export interface WizardData {
 
 export const EMPTY_DATA: WizardData = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  avatar: null, username: "", discordId: "", githubUsername: "", bio: "", skills: "",
+  avatar: null, username: "", discordId: "", githubUsername: "", bio: "", skills: "", directoryVisible: true,
   studentNumber: "", firstName: "", middleName: "", lastName: "", yearLevel: "", program: "", section: "",
   agreedToTerms: false,
 };

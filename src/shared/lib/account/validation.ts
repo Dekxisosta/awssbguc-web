@@ -121,6 +121,8 @@ export interface NormalizedProfile {
   githubUsername?: string;
   bio?: string;
   skills?: string[];
+  /** Only set when the client sent a boolean; the service defaults to public. */
+  directoryVisible?: boolean;
 }
 
 /** Profile step: every field is optional; blanks are dropped. */
@@ -162,6 +164,8 @@ export function normalizeProfileInput(
   const { tags, error } = parseSkills(input.skills);
   if (error) errors.skills = error;
   else if (tags.length > 0) value.skills = tags;
+
+  if (typeof input.directoryVisible === "boolean") value.directoryVisible = input.directoryVisible;
 
   return { value, errors };
 }

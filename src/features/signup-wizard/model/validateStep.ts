@@ -29,6 +29,7 @@ export function profileInput(d: WizardData) {
     githubUsername: d.githubUsername,
     bio: d.bio,
     skills: d.skills,
+    directoryVisible: d.directoryVisible,
   };
 }
 
