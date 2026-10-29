@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { createClient } from "@/src/shared/supabase/server";
 import { createAdminClient } from "@/src/shared/supabase/admin";
-import { provisionMemberWithEmail, provisionMembersWithEmail } from "@/src/shared/lib/account/service";
+import { provisionMemberWithEmail, provisionMembersWithEmail, reissueTemporaryPassword } from "@/src/shared/lib/account/service";
 import { isMailConfigured, sendCredentialEmails } from "@/src/shared/lib/mail";
+import { logAudit } from "@/src/shared/lib/audit";
 
 function adminSecretValid(request: NextRequest): boolean {
   const secret = process.env.ADMIN_API_SECRET;
@@ -23,12 +24,12 @@ function adminSecretValid(request: NextRequest): boolean {
   } catch { return false; }
 }
 
-/** True when the request carries a signed-in session whose participant has the admin role. */
-async function callerIsAdmin(): Promise<boolean> {
+/** The auth user id of the signed-in caller when their participant has the admin role, else null. */
+async function adminSessionUserId(): Promise<string | null> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    if (!user) return null;
 
     const admin = await createAdminClient();
     const { data: participant } = await admin
@@ -36,7 +37,7 @@ async function callerIsAdmin(): Promise<boolean> {
       .select("participant_id")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (!participant) return false;
+    if (!participant) return null;
 
     const { data: role } = await admin
       .from("participant_roles")
@@ -44,11 +45,16 @@ async function callerIsAdmin(): Promise<boolean> {
       .eq("participant_id", participant.participant_id)
       .eq("role", "admin")
       .maybeSingle();
-    return !!role;
+    return role ? user.id : null;
   } catch (err) {
     console.error("[provision] admin session check failed:", err);
-    return false;
+    return null;
   }
+}
+
+/** True when the request carries a signed-in session whose participant has the admin role. */
+async function callerIsAdmin(): Promise<boolean> {
+  return (await adminSessionUserId()) !== null;
 }
 
 /**
@@ -151,6 +157,8 @@ export async function handlePending(request: NextRequest) {
 export async function handleProvision(request: NextRequest) {
   if (!(await isAuthorized(request)))
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const sessionUserId = await adminSessionUserId();
+  const via = sessionUserId ? "session" : "api_secret";
 
   let body: unknown;
   try { body = await request.json(); }
@@ -167,6 +175,10 @@ export async function handleProvision(request: NextRequest) {
       return NextResponse.json({ error: "email must be a valid email address." }, { status: 400 });
     try {
       const result = await provisionMemberWithEmail({ memberId, email });
+      await logAudit({
+        action: "account.provision", via, actorUserId: sessionUserId,
+        targetLabel: memberId, details: { memberId, email, emailed: false },
+      });
       return NextResponse.json({ success: true, result }, { status: 201 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -211,6 +223,20 @@ export async function handleProvision(request: NextRequest) {
       mail = { ...mail, ...outcome };
     }
 
+    const names = new Map(entries.map((m) => [m.memberId, typeof m.name === "string" ? m.name.trim().slice(0, 100) : ""]));
+    const labelFor = (id: string) => (names.get(id) ? `${names.get(id)} (${id})` : id);
+    await logAudit([
+      ...result.credentials.map((c) => ({
+        action: "account.provision", via: via as "session" | "api_secret", actorUserId: sessionUserId,
+        targetLabel: labelFor(c.memberId),
+        details: { memberId: c.memberId, email: c.email, emailed: mail.sent.includes(c.memberId) },
+      })),
+      ...result.errors.map((er) => ({
+        action: "account.provision", outcome: "failed" as const, via: via as "session" | "api_secret", actorUserId: sessionUserId,
+        targetLabel: labelFor(er.memberId), details: { memberId: er.memberId, reason: er.reason },
+      })),
+    ]);
+
     return NextResponse.json({ success: true, ...result, mail }, { status: 201 });
   }
 
@@ -218,4 +244,130 @@ export async function handleProvision(request: NextRequest) {
     { error: "Provide either { memberId, email } (single) or { members: [...] } (bulk)." },
     { status: 400 }
   );
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/admin/provision/reissue — new temporary password for an existing account
+//
+// Body: { participantId: string, sendEmail?: boolean }
+// Accounts that hold the admin role can only be reissued with the ADMIN_API_SECRET
+// bearer token, never from a browser session alone.
+// ---------------------------------------------------------------------------
+
+const REISSUE_COOLDOWN_MS = 60_000;
+// Best effort: lives in this server instance's memory, so it resets on restart / other instances.
+const lastReissue = new Map<string, number>();
+
+export async function handleReissue(request: NextRequest) {
+  const sessionUserId = await adminSessionUserId();
+  const viaSecret = adminSecretValid(request);
+  if (!sessionUserId && !viaSecret)
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  let body: unknown;
+  try { body = await request.json(); }
+  catch { return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }); }
+
+  const { participantId, sendEmail } = (body ?? {}) as { participantId?: unknown; sendEmail?: unknown };
+  if (typeof participantId !== "string" || participantId.length === 0 || participantId.length > 100)
+    return NextResponse.json({ error: "participantId is required." }, { status: 400 });
+
+  const admin = await createAdminClient();
+
+  const { data: partData, error: partError } = await admin
+    .from("participants")
+    .select("participant_id, user_id, supplied_name")
+    .eq("participant_id", participantId)
+    .maybeSingle();
+  if (partError) {
+    console.error("[reissue] participant lookup failed:", partError.message);
+    return NextResponse.json({ error: "Failed to look up the member." }, { status: 500 });
+  }
+  const part = partData as { participant_id: string; user_id: string | null; supplied_name: string | null } | null;
+  if (!part)
+    return NextResponse.json({ error: "Member not found." }, { status: 404 });
+  if (!part.user_id)
+    return NextResponse.json({ error: "This member has no login account yet. Provision them instead." }, { status: 400 });
+  if (sessionUserId && part.user_id === sessionUserId)
+    return NextResponse.json({ error: "You can't reissue your own password here." }, { status: 400 });
+
+  const { data: adminRole } = await admin
+    .from("participant_roles")
+    .select("role")
+    .eq("participant_id", part.participant_id)
+    .eq("role", "admin")
+    .maybeSingle();
+  const reissueVia = sessionUserId ? "session" : "api_secret";
+  const reissueTarget = { targetParticipantId: part.participant_id, targetLabel: part.supplied_name };
+  if (adminRole && !viaSecret) {
+    await logAudit({
+      action: "password.reissue", outcome: "denied", via: reissueVia, actorUserId: sessionUserId, ...reissueTarget,
+      details: { reason: "Target holds the admin role; ADMIN_API_SECRET required." },
+    });
+    return NextResponse.json(
+      { error: "Admin accounts can only be reissued with the ADMIN_API_SECRET (API), not from the dashboard." },
+      { status: 403 }
+    );
+  }
+
+  const now = Date.now();
+  const last = lastReissue.get(part.participant_id);
+  if (last && now - last < REISSUE_COOLDOWN_MS) {
+    const wait = Math.ceil((REISSUE_COOLDOWN_MS - (now - last)) / 1000);
+    return NextResponse.json({ error: `A password was just reissued for this member. Try again in ${wait}s.` }, { status: 429 });
+  }
+
+  let issued: { temporaryPassword: string; email: string | null };
+  try {
+    issued = await reissueTemporaryPassword(part.user_id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[reissue] failed for participant ${part.participant_id}:`, message);
+    await logAudit({
+      action: "password.reissue", outcome: "failed", via: reissueVia, actorUserId: sessionUserId, ...reissueTarget,
+      details: { error: message },
+    });
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
+
+  lastReissue.set(part.participant_id, now);
+  console.info(`[reissue] temporary password reissued for participant ${part.participant_id} by ${sessionUserId ? `admin session ${sessionUserId}` : "ADMIN_API_SECRET"}`);
+
+  const wantsMail = sendEmail === true;
+  let mail: { requested: boolean; configured: boolean; sent: string[]; failed: { memberId: string; reason: string }[] } = {
+    requested: wantsMail,
+    configured: isMailConfigured(),
+    sent: [],
+    failed: [],
+  };
+
+  if (wantsMail) {
+    if (!issued.email) {
+      mail.failed.push({ memberId: part.participant_id, reason: "This account has no email address." });
+    } else {
+      const outcome = await sendCredentialEmails([
+        {
+          memberId: part.participant_id,
+          to: issued.email,
+          name: (part.supplied_name ?? "").trim().slice(0, 100),
+          temporaryPassword: issued.temporaryPassword,
+          reset: true,
+        },
+      ]);
+      mail = { ...mail, ...outcome };
+    }
+  }
+
+  // The password is only returned when it was NOT successfully emailed.
+  const emailed = mail.sent.length > 0;
+  await logAudit({
+    action: "password.reissue", via: reissueVia, actorUserId: sessionUserId, ...reissueTarget,
+    details: { emailRequested: wantsMail, emailed, ...(wantsMail && !emailed ? { emailFailure: mail.failed[0]?.reason ?? "Not sent." } : {}) },
+  });
+  return NextResponse.json({
+    success: true,
+    email: issued.email,
+    temporaryPassword: emailed ? null : issued.temporaryPassword,
+    mail,
+  });
 }

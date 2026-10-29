@@ -68,6 +68,7 @@ export function ReviewStep({
         <Row label="GitHub" value={data.githubUsername.trim()} />
         <Row label="Skills" value={skills} />
         <Row label="Bio" value={data.bio.trim()} />
+        <Row label="Public profile" value={data.directoryVisible ? "Shown in the member directory" : "Hidden"} />
       </Section>
 
       <Section title="Membership" step="membership" onEdit={onEdit} disabled={disabled}>

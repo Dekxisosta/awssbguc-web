@@ -8,7 +8,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import type {
-  ChangeRequestRow, EventRow, MemberRow, PendingMembersResponse,
+  AuditEntry, ChangeRequestRow, EventRow, MemberRow, PendingMembersResponse,
   PersonDetail, PersonHit, PersonRow, RegistrationRow, RegistrationSheetData, RegistrationStatus, Stats,
 } from "./types";
 
@@ -40,6 +40,7 @@ export const POLL = {
   provision: 60_000,
   roles: 30_000,
   registrations: 15_000,
+  audit: 30_000,
 } as const;
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export const adminKeys = {
   requestCount: () => ["admin", "requests", "count"] as const,
   provision: () => ["admin", "provision", "pending"] as const,
   roleSearch: (q: string) => ["admin", "role-search", q] as const,
+  audit: (page: number, filter: string, q: string) => ["admin", "audit", { page, filter, q }] as const,
 };
 
 // ─── Small utilities ──────────────────────────────────────────────────────────
@@ -101,6 +103,21 @@ export function usePerson(participantId: string) {
     queryKey: adminKeys.person(participantId),
     queryFn: () => api<PersonDetail>(`/api/admin/people/${participantId}`),
     refetchInterval: POLL.person,
+  });
+}
+
+interface AuditResponse { entries: AuditEntry[]; total: number; totalPages: number }
+
+export function useAuditLog(page: number, filter: string, q: string) {
+  return useQuery({
+    queryKey: adminKeys.audit(page, filter, q),
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page), filter });
+      if (q) params.set("q", q);
+      return api<AuditResponse>(`/api/admin/audit?${params}`);
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: POLL.audit,
   });
 }
 
@@ -168,6 +185,29 @@ export function useToggleRole() {
       qc.invalidateQueries({ queryKey: adminKeys.person(participantId) });
       qc.invalidateQueries({ queryKey: adminKeys.people() });
       qc.invalidateQueries({ queryKey: ["admin", "role-search"] });
+    },
+  });
+}
+
+export interface ReissueResponse {
+  success: true;
+  email: string | null;
+  /** null when the password was emailed; shown to the admin only when it wasn't */
+  temporaryPassword: string | null;
+  mail: { requested: boolean; configured: boolean; sent: string[]; failed: { memberId: string; reason: string }[] };
+}
+
+export function useReissuePassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ participantId, sendEmail }: { participantId: string; sendEmail: boolean }) =>
+      api<ReissueResponse>("/api/admin/provision/reissue", {
+        method: "POST",
+        body: JSON.stringify({ participantId, sendEmail }),
+      }),
+    onSuccess: (_d, { participantId }) => {
+      qc.invalidateQueries({ queryKey: adminKeys.person(participantId) });
+      qc.invalidateQueries({ queryKey: adminKeys.people() });
     },
   });
 }

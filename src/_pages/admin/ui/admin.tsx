@@ -14,22 +14,22 @@ import { DeleteEventDialog, EventForm } from "./event-form";
 import {
   useDebounced, useEvents, useInvalidateAfterProvision, usePeople,
   usePendingRequestCount, usePerson, useProvisionPending, useRequests, useReviewRequest,
-  useRoleSearch, useStats, useToggleRole, useUpdateEventStatus,
+  useAuditLog, useReissuePassword, useRoleSearch, useStats, useToggleRole, useUpdateEventStatus,
 } from "../model/queries";
 import type {
-  EventRow, PendingMember, PersonRow, RequestStatus,
+  AuditEntry, EventRow, PendingMember, PersonRow, RequestStatus,
 } from "../model/types";
 import {
   Users, ShieldCheck, CalendarDays, LayoutDashboard,
   UserCog, Megaphone, Plus, Search, ChevronLeft,
   ChevronRight, RefreshCw, Check, X, AlertTriangle,
-  BadgeCheck, Loader2, ClipboardList, ArrowUp,
+  BadgeCheck, Loader2, ClipboardList, ArrowUp, History,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Row = Record<string, unknown>;
-type Tab = "overview" | "members" | "events" | "requests" | "provision" | "roles";
+type Tab = "overview" | "members" | "events" | "requests" | "provision" | "roles" | "audit";
 type ToastState = { message: string; type: "success" | "error" } | null;
 
 // ─── Shared look — same pixel-art language as the Events page and the nav ─────
@@ -371,6 +371,10 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, setToast }:
   const { data: detail, error: loadError } = usePerson(participantId);
   const error = !detail && loadError ? loadError.message : null;
   const toggle = useToggleRole();
+  const reissue = useReissuePassword();
+  const [confirming, setConfirming] = useState(false);
+  const [emailIt, setEmailIt] = useState(true);
+  const [issued, setIssued] = useState<{ email: string | null; password: string | null; emailFailure?: string } | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -384,6 +388,20 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, setToast }:
       {
         onSuccess: () => setToast({ message: `Role ${has ? "revoked" : "granted"}: ${role}`, type: "success" }),
         onError: (e) => setToast({ message: e.message || "Failed to update role", type: "error" }),
+      },
+    );
+  }
+
+  function reissuePassword(pid: string) {
+    reissue.mutate(
+      { participantId: pid, sendEmail: emailIt },
+      {
+        onSuccess: (d) => {
+          setConfirming(false);
+          setIssued({ email: d.email, password: d.temporaryPassword, emailFailure: d.mail.requested ? d.mail.failed[0]?.reason : undefined });
+          setToast({ message: d.temporaryPassword ? "Temporary password issued" : "Temporary password emailed", type: "success" });
+        },
+        onError: (e) => setToast({ message: e.message || "Failed to reissue password", type: "error" }),
       },
     );
   }
@@ -456,6 +474,52 @@ function PersonDrawer({ participantId, callerParticipantId, onClose, setToast }:
                   )}
                 </div>
               </TableCard>
+
+              {detail.participant.user_id && String(p.participant_id) !== callerParticipantId && (
+                <TableCard table="account_access" note="temporary password">
+                  <div className="space-y-3 px-3 py-2 text-base">
+                    {roleNames.includes("admin") ? (
+                      <p className="text-sm text-pix-butter/55">
+                        Admin accounts can&apos;t be reissued from the dashboard. Use the API with ADMIN_API_SECRET (see docs/account-creation.md).
+                      </p>
+                    ) : issued ? (
+                      <div className="space-y-2">
+                        {issued.password ? (
+                          <>
+                            <p className="text-pix-coral">Shown only now. Copy it before closing this panel.</p>
+                            <p className="select-all border-2 border-pix-butter/40 px-3 py-1">{issued.password}</p>
+                            {issued.emailFailure && <p className="text-sm text-pix-coral">Not emailed: {issued.emailFailure}</p>}
+                          </>
+                        ) : (
+                          <p>Emailed to {issued.email}.</p>
+                        )}
+                        <p className="text-sm text-pix-butter/55">They&apos;ll be asked to set a new password the next time they sign in.</p>
+                        <button type="button" onClick={() => setIssued(null)} className={BTN_SECONDARY}>Done</button>
+                      </div>
+                    ) : confirming ? (
+                      <div className="space-y-3">
+                        <p>
+                          Replace this member&apos;s password with a new temporary one? Their current password stops working and they&apos;ll
+                          be asked to choose a new one at next sign-in. Anyone already signed in stays signed in.
+                        </p>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" checked={emailIt} onChange={(e) => setEmailIt(e.target.checked)} className="h-5 w-5 accent-pix-teal" />
+                          Email it to them
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                          <button type="button" onClick={() => setConfirming(false)} disabled={reissue.isPending} className={BTN_SECONDARY}>Cancel</button>
+                          <button type="button" onClick={() => reissuePassword(String(p.participant_id))} disabled={reissue.isPending} className={BTN_SUBMIT}>
+                            {reissue.isPending && <Loader2 size={16} className="animate-spin" />}
+                            Reissue password
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => setConfirming(true)} className={BTN_SECONDARY}>Reissue temporary password</button>
+                    )}
+                  </div>
+                </TableCard>
+              )}
 
               <TableCard table="event_registrations" note={`${detail.registrations.length} event${detail.registrations.length !== 1 ? "s" : ""}`}>
                 {detail.registrations.length === 0 ? (
@@ -1054,7 +1118,7 @@ function ProvisionTab() {
 
           {!mailConfigured && !loading && (
             <p className="mt-3 text-base text-pix-butter/60">
-              Email isn&apos;t set up on the server yet (needs RESEND_API_KEY and MAIL_FROM), so passwords will only be shown here after provisioning.
+              Email isn&apos;t set up on the server yet (needs the Gmail API credentials and MAIL_FROM), so passwords will only be shown here after provisioning.
             </p>
           )}
 
@@ -1160,7 +1224,7 @@ function ProvisionTab() {
                 <table className="w-full min-w-[640px] text-base">
                   <thead className={THEAD_STICKY}>
                     <tr className="border-b-4 border-pix-teal">
-                      {["Member", "Email", "Temporary password", "Email"].map((h) => (
+                      {["Member", "Email", "Temporary password", "Mail status"].map((h) => (
                         <th key={h} scope="col" className={TH}>{h}</th>
                       ))}
                     </tr>
@@ -1569,6 +1633,168 @@ function RequestsTab() {
   );
 }
 
+// ─── Tab: Audit ───────────────────────────────────────────────────────────────
+
+const AUDIT_FILTERS = [
+  { id: "all", label: "All" },
+  { id: "passwords", label: "Passwords" },
+  { id: "accounts", label: "Accounts" },
+  { id: "roles", label: "Roles" },
+  { id: "problems", label: "Problems" },
+] as const;
+
+const AUDIT_ACTIONS: Record<string, string> = {
+  "password.reissue": "Password reissued",
+  "account.provision": "Account provisioned",
+  "role.grant": "Role granted",
+  "role.revoke": "Role revoked",
+  "role.create": "Role created",
+  "role.delete": "Role deleted",
+  "role.permissions_set": "Role permissions changed",
+};
+
+const AUDIT_OUTCOME: Record<AuditEntry["outcome"], { text: string; cls: string }> = {
+  success: { text: "OK",     cls: "border-pix-green bg-pix-green text-black" },
+  denied:  { text: "Denied", cls: "border-pix-mustard text-pix-mustard" },
+  failed:  { text: "Failed", cls: "border-pix-rust bg-pix-rust text-pix-butter" },
+};
+
+const AUDIT_VIA: Record<AuditEntry["via"], string> = {
+  session: "dashboard",
+  api_secret: "API secret",
+  system: "system",
+};
+
+/** A short human line from an entry's details. Never contains secrets (none are stored). */
+function auditSummary(e: AuditEntry): string {
+  const d = e.details;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  switch (e.action) {
+    case "password.reissue":
+      if (e.outcome === "denied") return str(d.reason);
+      if (e.outcome === "failed") return str(d.error);
+      return d.emailed ? "Emailed to the member" : d.emailRequested ? `Not emailed: ${str(d.emailFailure) || "unknown"}` : "Shown to the admin";
+    case "account.provision":
+      if (e.outcome === "failed") return str(d.reason);
+      return [str(d.email), d.emailed ? "emailed" : "not emailed"].filter(Boolean).join(" · ");
+    case "role.grant":
+    case "role.revoke":
+      return [str(d.role), e.outcome === "denied" ? str(d.reason) : ""].filter(Boolean).join(" · ");
+    case "role.permissions_set":
+      return Array.isArray(d.permissions) ? `${d.permissions.length} permission${d.permissions.length !== 1 ? "s" : ""}` : "";
+    default:
+      return "";
+  }
+}
+
+function AuditTab() {
+  const [filter, setFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const q = useDebounced(search.trim());
+
+  const query = useAuditLog(page, filter, q);
+  const entries = query.data?.entries ?? [];
+  const total = query.data?.total ?? 0;
+  const totalPages = query.data?.totalPages ?? 1;
+  const loading = query.isLoading;
+  const loadError = !query.data && query.error ? query.error.message : null;
+
+  function pickFilter(id: string) { setFilter(id); setPage(1); }
+
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-3">
+        <SectionHeader
+          title="Audit log"
+          sub={loading ? "Loading…" : `${total} entr${total !== 1 ? "ies" : "y"} · newest first · entries can't be edited or deleted`}
+        />
+        <RefreshButton onClick={() => query.refetch()} loading={query.isFetching} />
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div role="group" aria-label="Filter the audit log" className="flex flex-wrap gap-2">
+          {AUDIT_FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={filter === f.id}
+              onClick={() => pickFilter(f.id)}
+              className={`border-4 px-2.5 py-0.5 text-base ${focus} ${
+                filter === f.id
+                  ? "border-black bg-pix-butter text-black shadow-pixel-teal-2"
+                  : "border-pix-teal text-pix-butter hover:bg-pix-teal hover:text-black"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <SearchInput
+          value={search}
+          onChange={(v) => { setSearch(v); setPage(1); }}
+          placeholder="Search who, whom, or action…"
+          className="w-full lg:w-80"
+        />
+      </div>
+
+      {loadError && (
+        <p role="alert" className="mt-3 inline-block border-4 border-pix-rust bg-pix-rust px-3 py-1 text-base">{loadError}</p>
+      )}
+
+      {!loadError && (
+        <div className={`${BOX} mt-3 ${SCROLL_AREA}`}>
+          <table className="w-full min-w-[820px] text-base">
+            <thead className={THEAD_STICKY}>
+              <tr className="border-b-4 border-pix-teal">
+                {["When", "Who", "Action", "Target", "Result", "Details"].map((h) => (
+                  <th key={h} scope="col" className={TH}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading && <tr><td colSpan={6} className="py-5"><Spinner /></td></tr>}
+              {!loading && entries.length === 0 && (
+                <tr><td colSpan={6} className="py-5 text-center text-pix-butter/60">
+                  {q || filter !== "all" ? "No matching entries." : "Nothing has been logged yet."}
+                </td></tr>
+              )}
+              {!loading && entries.map((e) => (
+                <tr key={e.id} className="border-b-2 border-pix-butter/15 align-top last:border-0 hover:bg-pix-butter/5">
+                  <td className="whitespace-nowrap px-3 py-1 text-pix-butter/80">{fmtDateTime(e.createdAt)}</td>
+                  <td className="px-3 py-1">
+                    <p className="max-w-[180px] truncate">{e.actorLabel ?? "Unknown"}</p>
+                    <p className="text-sm text-pix-butter/55">via {AUDIT_VIA[e.via]}</p>
+                  </td>
+                  <td className="px-3 py-1">{AUDIT_ACTIONS[e.action] ?? e.action}</td>
+                  <td className="px-3 py-1"><p className="max-w-[200px] truncate">{e.targetLabel ?? "—"}</p></td>
+                  <td className="px-3 py-1"><Pill text={AUDIT_OUTCOME[e.outcome].text} colorClass={AUDIT_OUTCOME[e.outcome].cls} /></td>
+                  <td className="px-3 py-1 text-sm text-pix-butter/70"><p className="max-w-[300px]">{auditSummary(e)}</p></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-3 flex items-center justify-between text-base">
+          <span className="text-pix-butter/70">Page {page} of {totalPages}</span>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setPage((n) => Math.max(1, n - 1))} disabled={page <= 1} className={BTN_SECONDARY}>
+              <ChevronLeft size={14} /> Prev
+            </button>
+            <button type="button" onClick={() => setPage((n) => Math.min(totalPages, n + 1))} disabled={page >= totalPages} className={BTN_SECONDARY}>
+              Next <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
@@ -1578,19 +1804,33 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "requests",  label: "Requests",  icon: ClipboardList },
   { id: "provision", label: "Provision", icon: UserCog },
   { id: "roles",     label: "Roles",     icon: ShieldCheck },
+  { id: "audit",     label: "Audit",     icon: History },
 ];
 
 /** Public entry point: scopes the TanStack Query cache + polling to the admin area. */
-export function AdminDashboard({ callerParticipantId }: { callerParticipantId: string }) {
+export function AdminDashboard({ callerParticipantId, initialTab }: { callerParticipantId: string; initialTab?: string }) {
   return (
     <QueryProvider>
-      <AdminShell callerParticipantId={callerParticipantId} />
+      <AdminShell callerParticipantId={callerParticipantId} initialTab={initialTab} />
     </QueryProvider>
   );
 }
 
-function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
-  const [tab, setTab] = useState<Tab>("overview");
+/** Unknown or missing values fall back to Overview. */
+function parseTab(value: string | null | undefined): Tab {
+  return TABS.some((t) => t.id === value) ? (value as Tab) : "overview";
+}
+
+function AdminShell({ callerParticipantId, initialTab }: { callerParticipantId: string; initialTab?: string }) {
+  // The open tab lives in the URL (/admin?tab=audit) so a refresh, a shared link and the
+  // browser's back/forward buttons all land on the right tab. Overview keeps the bare /admin URL.
+  const [tab, setTab] = useState<Tab>(() => parseTab(initialTab));
+
+  useEffect(() => {
+    const onPop = () => setTab(parseTab(new URLSearchParams(window.location.search).get("tab")));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   // Badge on the Requests tab so pending student-data changes don't go unnoticed (polled).
   const { data: pendingRequests = 0 } = usePendingRequestCount();
 
@@ -1620,7 +1860,12 @@ function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
   }, []);
 
   function selectTab(id: Tab) {
+    if (id === tab) return;
     setTab(id);
+    const url = new URL(window.location.href);
+    if (id === "overview") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", id);
+    window.history.pushState(null, "", `${url.pathname}${url.search}${url.hash}`);
     window.scrollTo({ top: 0 });
   }
 
@@ -1700,6 +1945,7 @@ function AdminShell({ callerParticipantId }: { callerParticipantId: string }) {
             {tab === "requests"  && <RequestsTab />}
             {tab === "provision" && <ProvisionTab />}
             {tab === "roles"     && <RolesTab callerParticipantId={callerParticipantId} />}
+            {tab === "audit"     && <AuditTab />}
           </div>
         </section>
 

@@ -7,6 +7,7 @@ import {
   loadPermissions,
   PERMISSIONS,
 } from "@/src/shared/lib/rbac";
+import { logAudit } from "@/src/shared/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,10 @@ export async function POST(req: NextRequest) {
 
   // Privilege escalation guard: caller must hold all permissions of the target role.
   if (user?.id && !await callerCanGrantRole(user.id, targetRole.id)) {
+    await logAudit({
+      action: "role.grant", outcome: "denied", via: "session", actorUserId: user.id,
+      targetParticipantId: participant_id, details: { role: role_name, reason: "Role exceeds the caller's own permissions." },
+    });
     return NextResponse.json(
       { error: "You cannot grant a role whose permissions exceed your own." },
       { status: 403 }
@@ -113,6 +118,10 @@ export async function POST(req: NextRequest) {
   );
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await logAudit({
+    action: "role.grant", via: "session", actorUserId: user?.id ?? null,
+    targetParticipantId: participant_id, details: { role: role_name },
+  });
   return NextResponse.json({ success: true });
 }
 
@@ -158,6 +167,10 @@ export async function DELETE(req: NextRequest) {
     .eq("role", role_name);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await logAudit({
+    action: "role.revoke", via: "session", actorUserId: user?.id ?? null,
+    targetParticipantId: participant_id, details: { role: role_name },
+  });
   return NextResponse.json({ success: true });
 }
 
@@ -212,6 +225,10 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    await logAudit({
+      action: "role.create", via: "session", actorUserId: user?.id ?? null,
+      targetLabel: newRole.name, details: { name: newRole.name, permissions: permission_names ?? [] },
+    });
     return NextResponse.json({ success: true, role: newRole }, { status: 201 });
   }
 
@@ -225,6 +242,10 @@ export async function PUT(req: NextRequest) {
 
     const { error } = await admin.from("roles").delete().eq("id", role_id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await logAudit({
+      action: "role.delete", via: "session", actorUserId: user?.id ?? null,
+      targetLabel: existing.name, details: { name: existing.name },
+    });
     return NextResponse.json({ success: true });
   }
 
@@ -253,6 +274,10 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    await logAudit({
+      action: "role.permissions_set", via: "session", actorUserId: user?.id ?? null,
+      targetLabel: existing.name, details: { name: existing.name, permissions: permission_names },
+    });
     return NextResponse.json({ success: true });
   }
 

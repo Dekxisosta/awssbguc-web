@@ -27,6 +27,21 @@ const AUTH_ONLY_PREFIXES = ["/login", "/signup"];
  */
 const CRON_PREFIXES = ["/api/cron/"];
 
+/**
+ * True for /members/<username> when <username> is the signed-in user's own. Handled here, before anything
+ * renders, so the owner never sees a flash of the public page on the way to /profile.
+ */
+function isOwnMemberPath(pathname: string, ownUsername: string | null): boolean {
+  if (!ownUsername) return false;
+  const m = pathname.match(/^\/members\/([^/]+)\/?$/);
+  if (!m) return false;
+  try {
+    return decodeURIComponent(m[1]).toLowerCase() === ownUsername.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
 /** Constant-time string comparison. */
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -96,11 +111,12 @@ export async function proxy(request: NextRequest) {
     // The "profiles: owner select" RLS policy allows this.
     const { data: profile } = await supabase
       .from("profiles")
-      .select("initial_setup_completed")
+      .select("initial_setup_completed, username")
       .eq("profile_id", user.id)
       .single();
 
     const setupComplete = profile?.initial_setup_completed ?? true;
+    const ownUsername = (profile?.username as string | null | undefined) ?? null;
 
     // If setup is not complete, the only allowed destination is /setup.
     if (
@@ -113,6 +129,11 @@ export async function proxy(request: NextRequest) {
     }
 
     if (setupComplete) {
+      // --- Your own public member page is /profile ---
+      if (isOwnMemberPath(pathname, ownUsername)) {
+        return NextResponse.redirect(new URL("/profile", request.url));
+      }
+
       // --- Admin role guard ---
       const isAdminRoute = ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
       if (isAdminRoute) {

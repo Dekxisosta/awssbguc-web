@@ -127,7 +127,7 @@ export function EventCard({ event, registrationStatus, participantId, headingCla
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[min(100%,14rem)] flex-1">
             <h2 className={`${headingClass} break-words text-3xl leading-none`}>
               <Link href={`/events/${event.slug}`} className={`underline-offset-4 hover:underline ${focus}`}>
                 {event.name}

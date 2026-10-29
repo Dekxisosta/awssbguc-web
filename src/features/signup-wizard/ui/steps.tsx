@@ -92,6 +92,33 @@ export function ProfileStep({ data, errors, checking, disabled, set, onBlurCheck
         {errors.bio && <p role="alert" className={errTxt}>{errors.bio}</p>}
         <p className="text-right text-sm text-black/70">{data.bio.length}/280</p>
       </div>
+
+      <div className="flex items-start justify-between gap-4 border-4 border-black p-3">
+        <div className="min-w-0">
+          <p id="directoryVisible-label" className={labelCls}>Show my profile publicly</p>
+          <p id="directoryVisible-desc" className={hintTxt}>
+            Lets anyone see your name, username, photo, bio and skills in the member directory. You can change this anytime from your profile.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={data.directoryVisible}
+          aria-labelledby="directoryVisible-label"
+          aria-describedby="directoryVisible-desc"
+          disabled={disabled}
+          onClick={() => set("directoryVisible", !data.directoryVisible)}
+          className="flex shrink-0 items-center gap-2 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal disabled:opacity-50"
+        >
+          <span className="w-8 text-sm font-bold">{data.directoryVisible ? "On" : "Off"}</span>
+          <span
+            aria-hidden="true"
+            className={`relative h-8 w-14 border-4 border-black transition-colors ${data.directoryVisible ? "bg-pix-green" : "bg-white"}`}
+          >
+            <span className={`absolute top-0 h-full w-5 bg-black transition-all ${data.directoryVisible ? "left-[calc(100%-1.25rem)]" : "left-0"}`} />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

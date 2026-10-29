@@ -1,8 +1,16 @@
+import Image from "next/image";
 import Link from "next/link";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
-import { Stripes, SidePixels, PixelClouds, PixelPhoto } from "@/src/widgets/home-client";
+import { Stripes, SidePixels, PixelClouds } from "@/src/widgets/home-client";
+import { PixelAvatar } from "@/src/features/profile-edit/ui/PixelAvatar";
+import { ExternalLinkIcon, NOTCH, linkCls, pillOnButter } from "@/src/features/profile-edit/ui/pixel";
 import { STATUS_COLORS, STATUS_LABELS, fmtShortDate, fmtTime, safeTimeZone } from "@/src/entities/event";
 import type { MemberEventSummary, PublicMemberDetail } from "@/src/entities/member";
+import type { ShowcaseRepo } from "@/src/entities/showcase";
+import { RepoCard } from "@/src/features/repo-showcase/ui/RepoCard";
+import { GithubContributions } from "@/src/features/github-graph";
+import { Tile } from "@/src/features/profile-edit/ui/Tile";
+import { MemberTabs } from "./member-tabs";
 
 /**
  * Public member profile at /members/[username], in the pixel-art direction of the site.
@@ -19,15 +27,28 @@ export interface MemberDetailPageProps {
   upcoming: MemberEventSummary[];
   /** Finished or cancelled events, most recent first. */
   past: MemberEventSummary[];
+  /** Showcased GitHub repos (up to 3) with their pictures. Empty when none. */
+  repos?: ShowcaseRepo[];
 }
 
-function GitHubIcon({ size = 16 }: { size?: number }) {
+/** SBG-UC-YYXXXX → the four-digit-plus-year badge number, and the year the member joined. */
+function memberSinceYear(memberId: string): string | null {
+  const m = memberId.match(/^SBG-UC-(\d{2})\d{4}$/);
+  if (!m) return null;
+  const yy = parseInt(m[1], 10);
+  return String(yy < 50 ? 2000 + yy : 1900 + yy);
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-    </svg>
+    <div className="min-w-0">
+      <dt className="text-xs uppercase tracking-wide text-pix-butter/60">{label}</dt>
+      <dd className="break-words text-lg leading-tight">{children}</dd>
+    </div>
   );
 }
+
+const notSet = <span className="text-pix-butter/50">Not set</span>;
 
 // ─── Event row ────────────────────────────────────────────────────────────────
 
@@ -90,10 +111,13 @@ function EventGroup({ title, id, events }: { title: string; id: string; events: 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export function MemberDetailPage({ member, upcoming, past }: MemberDetailPageProps) {
+export function MemberDetailPage({ member, upcoming, past, repos = [] }: MemberDetailPageProps) {
   const name = member.display_name ?? member.username ?? "Member";
   const isMemberId = /^SBG-UC-\d{6}$/.test(member.member_id);
   const skills = member.skills ?? [];
+  const role = isMemberId ? "SBG Member" : "Participant";
+  const sinceYear = isMemberId ? memberSinceYear(member.member_id) : null;
+  const memberIdDisplay = isMemberId ? member.member_id.replace(/^SBG-UC-(\d{2})(\d{4})$/, "$1$2") : null;
   const hasEvents = upcoming.length + past.length > 0;
 
   return (
@@ -103,75 +127,161 @@ export function MemberDetailPage({ member, upcoming, past }: MemberDetailPagePro
       <SidePixels side="right" />
 
       <div className="relative z-10">
-        {/* ── Profile header ── */}
-        <header className={`${wrap} pb-12 pt-8 sm:pb-16 sm:pt-10`}>
-          <Link href="/members" className={`inline-block text-lg underline underline-offset-4 ${focus}`}>
-            ← Community
+        <div className={`${wrap} pt-8 sm:pt-10`}>
+          <Link href="/members" className={`inline-block pb-6 text-lg underline underline-offset-4 ${focus}`}>
+            ← Members
           </Link>
-
-          <div className="mt-10 grid gap-10 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-12">
-            {member.avatar_url ? (
-              <div className="h-44 w-44 border-4 border-pix-butter shadow-pixel-teal-8 sm:h-52 sm:w-52">
-                <PixelPhoto src={member.avatar_url} width={48} height={48} />
-              </div>
-            ) : (
-              <span
-                className={`${hd} flex h-44 w-44 items-center justify-center border-4 border-pix-butter bg-pix-butter text-8xl text-black shadow-pixel-teal-8 sm:h-52 sm:w-52`}
-                aria-hidden="true"
-              >
-                {name.slice(0, 1).toUpperCase()}
-              </span>
-            )}
-
-            <div className="min-w-0">
-              <h1 className={`${hd} break-words text-[clamp(3.5rem,9vw,7.5rem)]`}>{name}</h1>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                {member.username && <p className="text-xl text-pix-butter/80">@{member.username}</p>}
-                {isMemberId && <span className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">{member.member_id}</span>}
-              </div>
-
-              {member.bio ? (
-                <p className="mt-6 max-w-xl whitespace-pre-line text-xl leading-snug">{member.bio}</p>
-              ) : (
-                <p className="mt-6 text-lg italic text-pix-butter/50">No bio added.</p>
-              )}
-
-              {member.github_username && (
-                <a
-                  href={`https://github.com/${encodeURIComponent(member.github_username)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`mt-6 inline-flex items-center gap-2 border-4 border-pix-butter px-4 py-2 text-lg transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
-                >
-                  <GitHubIcon />
-                  {member.github_username} on GitHub
-                </a>
-              )}
-            </div>
-          </div>
-        </header>
+        </div>
 
         <Stripes className="h-4" />
 
-        {/* ── Skills ── */}
-        {skills.length > 0 && (
-          <>
-            <section aria-labelledby="skills-heading" className={`${wrap} py-12 sm:py-16`}>
-              <h2 id="skills-heading" className={`${hd} text-5xl sm:text-6xl`}>
-                Skills
-              </h2>
-              <ul className="mt-6 flex flex-wrap gap-3">
-                {skills.map((skill) => (
-                  <li key={skill} className="border-4 border-pix-mustard px-3 py-1 text-lg">
-                    {skill}
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <Stripes className="h-4" />
-          </>
-        )}
+        {/* ── Member pass + details (same layout as /profile) ── */}
+        <section className={`${wrap} pb-16 sm:pb-24`}>
+          <h1 className="sr-only">{name}</h1>
+
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-12 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-14">
+            {/* The pass */}
+            <div className="mx-auto flex w-full min-w-0 max-w-[400px] flex-col items-center">
+              {/* Lanyard strap hanging from the stripe divider, and the clip that holds the badge. */}
+              <div aria-hidden="true" className="h-12 w-16 bg-stripes sm:h-16" />
+              <div
+                aria-hidden="true"
+                className="relative z-10 -mb-3 h-6 w-24 border-4 border-black bg-pix-mustard shadow-pixel-ink-3"
+              />
+
+              <article
+                aria-label="Member pass"
+                className="relative w-full border-4 border-black bg-pix-butter text-black shadow-pixel-teal-8"
+              >
+                <Stripes className="h-4" />
+
+                <div className="p-5 sm:p-6">
+                  <div className="flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <Image src="/icons/logo.webp" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
+                    <span>AWSSBG-UC member pass</span>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-4">
+                    <div className="relative block h-28 w-28 shrink-0 border-4 border-black bg-black sm:h-32 sm:w-32">
+                      {member.avatar_url ? (
+                        <PixelAvatar src={member.avatar_url} size={32} />
+                      ) : (
+                        <span className={`${hd} flex h-full w-full items-center justify-center text-6xl text-pix-butter`} aria-hidden="true">
+                          {name.slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className={`${hd} break-words text-4xl sm:text-5xl`}>{name}</p>
+                      {member.username && <p className="mt-2 break-all text-lg leading-tight">@{member.username}</p>}
+                      <p className="text-sm text-black/70">
+                        {role}
+                        {sinceYear ? ` · since ${sinceYear}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    {memberIdDisplay ? (
+                      <span
+                        className={`${hd} inline-block bg-pix-rust px-6 py-2 text-3xl text-pix-butter sm:text-4xl`}
+                        style={{ clipPath: NOTCH }}
+                      >
+                        ID: {memberIdDisplay}
+                      </span>
+                    ) : (
+                      <span className="inline-block bg-pix-mustard px-6 py-2 text-lg text-black" style={{ clipPath: NOTCH }}>
+                        No member ID yet
+                      </span>
+                    )}
+                  </div>
+
+                  {member.github_username && (
+                    <div className="mt-6 flex flex-wrap items-center gap-2 border-t-4 border-dashed border-black/30 pt-5">
+                      <a
+                        href={`https://github.com/${encodeURIComponent(member.github_username)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={pillOnButter}
+                      >
+                        GitHub <ExternalLinkIcon />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </article>
+            </div>
+
+            {/* Detail tiles: About stays on top, then Showcase / Details tabs (same as /profile) */}
+            <div className="flex min-w-0 flex-col gap-5 lg:pt-12">
+              <Tile id="tile-about" title="About" border="border-pix-teal" headingClass={hd}>
+                {member.bio ? (
+                  <p className="whitespace-pre-line break-words text-xl leading-snug">{member.bio}</p>
+                ) : (
+                  <p className="text-xl italic leading-snug text-pix-butter/50">No bio added.</p>
+                )}
+                {skills.length > 0 && (
+                  <ul aria-label="Skills" className={`flex flex-wrap gap-2 ${member.bio ? "mt-4" : "mt-3"}`}>
+                    {skills.map((skill) => (
+                      <li key={skill} className="border-2 border-pix-butter/60 px-2 py-0.5 text-sm">
+                        {skill}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Tile>
+
+              <MemberTabs
+                headingClass={hd}
+                defaultTab={repos.length > 0 || member.github_username ? "showcase" : "details"}
+                showcase={
+                  <div className="flex flex-col gap-5">
+                    {member.github_username && (
+                      <GithubContributions username={member.github_username} headingClass={hd} />
+                    )}
+                    <Tile id="tile-showcase" title="Showcase" border="border-pix-rust" headingClass={hd}>
+                      {repos.length > 0 ? (
+                        <ul className="grid gap-3">
+                          {repos.map((repo) => (
+                            <RepoCard key={repo.repo_id} repo={repo} headingClass={hd} />
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-lg leading-snug text-pix-butter/60">No repos showcased yet.</p>
+                      )}
+                    </Tile>
+                  </div>
+                }
+                details={
+                  <Tile id="tile-details" title="Details" border="border-pix-mustard" headingClass={hd}>
+                    <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                      <Field label="Display name">{member.display_name ?? notSet}</Field>
+                      <Field label="Username">{member.username ? `@${member.username}` : notSet}</Field>
+                      <Field label="GitHub">
+                        {member.github_username ? (
+                          <a
+                            href={`https://github.com/${encodeURIComponent(member.github_username)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={linkCls}
+                          >
+                            {member.github_username}
+                          </a>
+                        ) : (
+                          notSet
+                        )}
+                      </Field>
+                      <Field label="Member ID">{isMemberId ? member.member_id : notSet}</Field>
+                    </dl>
+                  </Tile>
+                }
+              />
+            </div>
+          </div>
+        </section>
+
+        <Stripes className="h-4" />
 
         {/* ── Events ── */}
         <section aria-labelledby="events-heading" className={`${wrap} py-12 sm:py-16`}>

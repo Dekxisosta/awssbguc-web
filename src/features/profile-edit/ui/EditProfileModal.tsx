@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AvatarUpload } from "@/src/features/avatar-upload";
 import { SOCIALS } from "@/src/shared/config/socials";
+import { RepoShowcaseEditor, type RepoShowcaseApi } from "@/src/features/repo-showcase";
 import type { ProfileApi } from "../model/useProfile";
 import { EditableField } from "./EditableField";
 import { Modal } from "./Modal";
@@ -10,6 +11,7 @@ import { btnSmDanger, btnSmDangerGhost, btnSmGhost, focus, linkCls } from "./pix
 
 interface EditProfileModalProps {
   api: ProfileApi;
+  showcase: RepoShowcaseApi;
   memberId: string | null;
   participantId: string | null;
   /** ISO timestamp of the one-time username change; null means it hasn't been used */
@@ -34,6 +36,7 @@ const mutedText = "text-sm text-pix-butter/60";
 
 export function EditProfileModal({
   api,
+  showcase,
   memberId,
   participantId,
   usernameChangedAt,
@@ -240,6 +243,14 @@ export function EditProfileModal({
               onSave={save.skills}
             />
           </dl>
+        </section>
+
+        {/* ── Showcase ──────────────────────────────────────────────────── */}
+        <section className={group} aria-labelledby="edit-showcase">
+          <h3 id="edit-showcase" className={groupTitle}>Showcase</h3>
+          <div className="mt-4">
+            <RepoShowcaseEditor showcase={showcase} githubUsername={profile.githubUsername} />
+          </div>
         </section>
 
         {/* ── Read-only IDs ─────────────────────────────────────────────── */}

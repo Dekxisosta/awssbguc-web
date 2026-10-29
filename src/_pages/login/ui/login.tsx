@@ -15,7 +15,7 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
     <AuthShell
       title="Sign in"
       sub={
-        redirectTo === "/member"
+        redirectTo === "/membership"
           ? "Sign in to complete your membership registration."
           : "AWSSBG-UC member portal"
       }

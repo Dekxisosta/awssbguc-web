@@ -624,6 +624,8 @@ export async function registerAccount(input: RegisterAccountInput): Promise<Regi
       github_username: profile.githubUsername ?? null,
       bio: profile.bio ?? null,
       skills: profile.skills ?? null,
+      // Public by default; the signup wizard lets people opt out.
+      directory_visible: profile.directoryVisible ?? true,
     });
 
     if (profileErr) {
@@ -720,6 +722,61 @@ export async function completeInitialSetup(
       "Password updated but account setup could not be marked complete. Please contact support."
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// FLOW 4: Reissue a temporary password for an existing account
+//
+// Replaces the account's password with a new temporary one and sends the member
+// back through the first-sign-in setup screen (initial_setup_completed = false).
+// Sessions that are already signed in are NOT ended by this.
+// ---------------------------------------------------------------------------
+
+export async function reissueTemporaryPassword(
+  authUserId: string
+): Promise<{ temporaryPassword: string; email: string | null }> {
+  const supabase = createAdminClient();
+
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(authUserId);
+  if (userError || !userData?.user) {
+    throw new Error("Auth account not found.");
+  }
+
+  const { data: profile, error: profileReadError } = await supabase
+    .from("profiles")
+    .select("initial_setup_completed")
+    .eq("profile_id", authUserId)
+    .maybeSingle();
+
+  if (profileReadError || !profile) {
+    throw new Error("Account profile not found.");
+  }
+  const previous = (profile as { initial_setup_completed: boolean }).initial_setup_completed;
+
+  // Flag first, password second: if the password update fails we can put the flag back,
+  // so nobody is left with an old password that suddenly forces setup (or the reverse).
+  const { error: flagError } = await supabase
+    .from("profiles")
+    .update({ initial_setup_completed: false })
+    .eq("profile_id", authUserId);
+  if (flagError) {
+    throw new Error(`Could not reset account setup: ${flagError.message}`);
+  }
+
+  const temporaryPassword = generateTemporaryPassword();
+  const { error: pwError } = await supabase.auth.admin.updateUserById(authUserId, {
+    password: temporaryPassword,
+  });
+
+  if (pwError) {
+    await supabase
+      .from("profiles")
+      .update({ initial_setup_completed: previous })
+      .eq("profile_id", authUserId);
+    throw new Error(`Password update failed: ${pwError.message}`);
+  }
+
+  return { temporaryPassword, email: userData.user.email ?? null };
 }
 
 // ---------------------------------------------------------------------------

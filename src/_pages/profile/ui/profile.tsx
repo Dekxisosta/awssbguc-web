@@ -1,5 +1,8 @@
 import { bodyFont, hd } from "@/src/shared/config/fonts";
 import { ProfileCard } from "@/src/features/profile-edit";
+import type { ShowcaseRepo } from "@/src/entities/showcase";
+import type { MembershipRow } from "@/src/entities/member";
+import type { StudentExtras } from "@/src/entities/student-data";
 import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 
 export const profileMetadata = { title: "Profile — AWSSBG-UC" };
@@ -36,11 +39,19 @@ export interface ProfilePageProps {
   skills: string[] | null;
   /** ISO timestamp of one-time username change; null means never changed */
   usernameChangedAt: string | null;
+  /** Showcased GitHub repos (up to 3) with their pictures */
+  initialRepos: ShowcaseRepo[];
+  /** Linked membership record (student data), or null when there is none */
+  membership: MembershipRow | null;
+  /** Read-only extras historical rows may carry */
+  extras: StudentExtras | null;
+  /** True when the membership record could not be loaded (as opposed to not existing) */
+  membershipUnavailable?: boolean;
 }
 
 export function ProfilePage(props: ProfilePageProps) {
   return (
-    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+    <div className={`${bodyFont.className} relative isolate overflow-x-clip bg-black tracking-normal text-pix-butter`}>
       <PixelClouds />
       <SidePixels side="left" />
       <SidePixels side="right" />

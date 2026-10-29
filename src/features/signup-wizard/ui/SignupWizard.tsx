@@ -231,7 +231,7 @@ export function SignupWizard({ onStepChange }: { onStepChange?: (step: WizardSte
               : phase === "validating" ? (<><SpinnerIcon />Checking…</>)
               : isReview ? "Create account"
               : step === "membership" && !Object.values(membershipInput(data)).some((v) => v.trim()) ? "Skip membership"
-              : step === "profile" && !data.username && !data.discordId && !data.githubUsername && !data.bio && !data.skills && !data.avatar ? "Skip profile"
+              : step === "profile" && !data.username && !data.discordId && !data.githubUsername && !data.bio && !data.skills && !data.avatar && data.directoryVisible ? "Skip profile"
               : "Next"}
           </button>
           {stepIdx > 0 && (
@@ -278,7 +278,7 @@ function DoneCard({ info }: { info: DoneInfo }) {
       )}
 
       <a
-        href={signedIn ? (membership.status === "failed" ? "/member" : "/") : "/login"}
+        href={signedIn ? (membership.status === "failed" ? "/membership" : "/") : "/login"}
         className={`${submitCls} no-underline`}
       >
         {signedIn ? (membership.status === "failed" ? "Go to member page" : "Continue") : "Sign in"}

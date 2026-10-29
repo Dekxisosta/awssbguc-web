@@ -3,7 +3,11 @@
 Members can see the student data stored for their membership and ask for corrections. Nothing is edited
 directly. A request is reviewed by staff, and only an approval changes `student_data`.
 
-## Member flow (`/member`)
+## Member flow (`/membership`)
+
+The current record (member ID, student number, name, year level, program, section) is also shown read-only in the
+**Membership** tile on `/profile`, with a **History & changes** button that opens this page. Requests, their
+status and past decisions live here only.
 
 1. The page shows the linked record: member ID, student number, name, year level, program, section. Email,
    contact number and date of birth also appear when a historical row has them (read-only).
@@ -39,7 +43,7 @@ If the live record no longer matches what the member saw when filing, a warning 
 
 ## Security notes
 
-- `student_data` has no client RLS policy, so `/member` reads it server-side with the service role, keyed only by
+- `student_data` has no client RLS policy, so `/membership` reads it server-side with the service role, keyed only by
   the signed-in user's id. The student number is never taken from a request body.
 - `student_data_change_requests` is readable by its owner through RLS; all writes are service-role only.
 - The editable-column whitelist is enforced in the API **and** by a CHECK constraint on the table.

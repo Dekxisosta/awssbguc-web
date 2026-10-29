@@ -123,7 +123,7 @@ export function ProfileSetupPage({
               <p className={`${hd} text-5xl`}>All set</p>
               <p className="mt-3 text-lg">Your profile is saved. Next up: your SBG membership.</p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                <Link href="/member" className={darkSubmit}>
+                <Link href="/membership" className={darkSubmit}>
                   Register membership
                   <ChevronIcon />
                 </Link>
@@ -240,7 +240,7 @@ export function ProfileSetupPage({
               )}
 
               <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-end">
-                <Link href="/member" className={darkOutline}>
+                <Link href="/membership" className={darkOutline}>
                   Skip for now
                 </Link>
                 <button type="submit" disabled={saving} className={darkSubmit}>

@@ -618,8 +618,8 @@ function Tunnel({ registeredCount, participantCount }: { registeredCount: number
             />
           ))}
         </div>
-        <div className="flex items-center justify-between border-t-4 border-[#2c8f8f] bg-black px-3 text-sm text-[#fff7a1]">
-          <span aria-live="off">
+        <div className="flex items-center justify-end border-t-4 border-[#2c8f8f] bg-black px-3 text-sm text-[#fff7a1] lg:justify-between">
+          <span aria-live="off" className="hidden lg:inline">
             photo {index + 1} of {HERO_IMAGES.length}
           </span>
           <div className="flex">
@@ -1056,7 +1056,7 @@ function JoinCta() {
 
             {/* Crying duck at the side, vertically centered with the text. The bubble floats above it so it doesn't shift the centering. */}
             <div className="relative mx-auto mt-14 lg:mt-0">
-              <div className="absolute bottom-full left-1/2 mb-3 -translate-x-1/2 whitespace-nowrap border-4 border-black bg-black px-4 py-2 text-lg leading-none text-[#fff7a1] shadow-[4px_4px_0_#b32a0e]">
+              <div className="absolute bottom-full left-1/2 mb-3 w-max max-w-[calc(100vw-3rem)] -translate-x-1/2 border-4 border-black bg-black px-4 py-2 text-center text-lg leading-snug text-[#fff7a1] sm:whitespace-nowrap sm:leading-none shadow-[4px_4px_0_#b32a0e]">
                 Please join us... I&apos;m begging you
                 <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b-4 border-r-4 border-black bg-black" />
               </div>

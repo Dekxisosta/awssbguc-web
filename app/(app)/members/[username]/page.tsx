@@ -4,6 +4,8 @@ import { createAdminClient } from "@/src/shared/supabase/admin";
 import { createClient } from "@/src/shared/supabase/server";
 import { MemberDetailPage } from "@/src/_pages/member-detail";
 import type { MemberEventSummary, PublicMemberDetail } from "@/src/entities/member";
+import type { ShowcaseRepo } from "@/src/entities/showcase";
+import { loadPublicShowcase } from "@/src/shared/lib/showcase/service";
 
 /**
  * /members/[username]: public member profile.
@@ -103,5 +105,14 @@ export default async function MemberDetailRoute({ params }: Props) {
     .filter((e) => e.status === "completed" || e.status === "cancelled")
     .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
 
-  return <MemberDetailPage member={member} upcoming={upcoming} past={past} />;
+  // Showcased repos come from the `public_member_repos` view (opted-in members only). A failure, such as the
+  // migration not being applied yet, just hides the section.
+  let repos: ShowcaseRepo[] = [];
+  try {
+    repos = await loadPublicShowcase(createAdminClient(), member.username);
+  } catch (err) {
+    console.error("[members/:username] showcase load failed:", err);
+  }
+
+  return <MemberDetailPage member={member} upcoming={upcoming} past={past} repos={repos} />;
 }

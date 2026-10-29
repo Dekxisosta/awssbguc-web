@@ -157,16 +157,24 @@ const NAV_ENTRIES: NavItem[] = [
       </Icon>
     ),
   },
+];
+
+// Items in the "Community" dropdown
+const COMMUNITY_ITEMS: NavItem[] = [
   {
     href: "/members",
-    label: "Community",
-    tone: "green",
+    label: "Members",
     icon: (
       <Icon>
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </Icon>
     ),
+  },
+  {
+    href: "/socials",
+    label: "Socials",
+    icon: <Icon><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Icon>,
   },
 ];
 
@@ -224,7 +232,7 @@ const PROFILE_NAV: NavItem[] = [
     icon: <Icon><circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 1 0-16 0" /></Icon>,
   },
   {
-    href: "/member",
+    href: "/membership",
     label: "Membership",
     icon: <Icon><rect width="20" height="14" x="2" y="5" /><path d="M2 10h20" /></Icon>,
   },
@@ -347,6 +355,26 @@ function Dropdown({
           document.body
         )}
     </>
+  );
+}
+
+function CommunityDropdown({ pathname }: { pathname: string }) {
+  return (
+    <Dropdown label="Community" pathname={pathname} tone="green" accent={colors.pix.green} width="w-48" active={COMMUNITY_ITEMS.some((i) => isActivePath(pathname, i.href))}>
+      {(close) =>
+        COMMUNITY_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={close}
+            className={`${rowBase} ${isActivePath(pathname, item.href) ? rowOn : rowOff}`}
+          >
+            {item.icon}
+            {item.label}
+          </Link>
+        ))
+      }
+    </Dropdown>
   );
 }
 
@@ -516,6 +544,7 @@ function MobileMenu({
   headerHeight: number;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(() => COMMUNITY_ITEMS.some((i) => isActivePath(pathname, i.href)));
   const [discoverOpen, setDiscoverOpen] = useState(() => DISCOVER_ITEMS.some((i) => pathname === i.href));
   const [awsOpen, setAwsOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
@@ -524,6 +553,7 @@ function MobileMenu({
 
   useEffect(() => {
     if (!open) {
+      setCommunityOpen(COMMUNITY_ITEMS.some((i) => isActivePath(pathname, i.href)));
       setDiscoverOpen(DISCOVER_ITEMS.some((i) => pathname === i.href));
       setAwsOpen(false);
       setContactOpen(false);
@@ -579,6 +609,29 @@ function MobileMenu({
                     </Link>
                   );
                 })}
+
+                <Collapsible
+                  icon={<Icon><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></Icon>}
+                  label="Community"
+                  tone="green"
+                  open={communityOpen}
+                  onToggle={() => setCommunityOpen((o) => !o)}
+                >
+                  {COMMUNITY_ITEMS.map((entry) => {
+                    const active = isActivePath(pathname, entry.href);
+                    return (
+                      <Link
+                        key={entry.href}
+                        href={entry.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={onClose}
+                        className={`${mobCls("green", active)} !py-2`}
+                      >
+                        {entry.icon}{entry.label}
+                      </Link>
+                    );
+                  })}
+                </Collapsible>
 
                 <Collapsible
                   icon={<Icon><circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" /></Icon>}
@@ -714,7 +767,8 @@ const ALL_SEARCH_ITEMS: { href: string; label: string; group: string; adminOnly?
   { href: "/",             label: "Home",            group: "Pages" },
   { href: "/events",       label: "Events",          group: "Pages" },
   { href: "/join",         label: "Join Us",         group: "Pages" },
-  { href: "/members",      label: "Community",       group: "Pages" },
+  { href: "/members",      label: "Members",         group: "Community" },
+  { href: "/socials",      label: "Socials",         group: "Community" },
   // Discover
   { href: "/about",        label: "About",           group: "Discover" },
   { href: "/constitution", label: "Constitution",    group: "Discover" },
@@ -725,7 +779,7 @@ const ALL_SEARCH_ITEMS: { href: string; label: string; group: string; adminOnly?
   // Auth / account
   { href: "/profile",       label: "Profile",         group: "Account" },
   { href: "/profile-setup", label: "Profile Setup",   group: "Account" },
-  { href: "/member",        label: "Membership",      group: "Account" },
+  { href: "/membership",        label: "Membership",      group: "Account" },
   { href: "/admin",         label: "Admin Dashboard", group: "Account", adminOnly: true },
 ];
 
@@ -975,7 +1029,7 @@ export function Footer({ isAuthenticated }: { isAuthenticated: boolean }) {
             <FooterColumn title="Account">
               <Link href="/profile" className={footerLink}>Profile</Link>
               {isAuthenticated ? (
-                <Link href="/member" className={footerLink}>Membership</Link>
+                <Link href="/membership" className={footerLink}>Membership</Link>
               ) : (
                 <>
                   <Link href="/login" className={footerLink}>Sign In</Link>
@@ -1106,6 +1160,7 @@ export function DashboardShell({
                   </Link>
                 );
               })}
+              <CommunityDropdown pathname={pathname} />
               <DiscoverDropdown pathname={pathname} />
               <AwsDropdown pathname={pathname} />
               <ContactDropdown pathname={pathname} />

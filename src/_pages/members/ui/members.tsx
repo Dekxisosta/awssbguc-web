@@ -1,33 +1,22 @@
 "use client";
 
-
-import Image from "next/image";
 import Link from "next/link";
 import { bodyFont, hd } from "@/src/shared/config/fonts";
+import { SidePixels, PixelClouds } from "@/src/widgets/home-client";
 import type { PublicMemberProfile } from "@/src/entities/member";
 import { SOCIALS } from "@/src/shared/config/socials";
-import { colors } from "@/tailwind.tokens";
 
-export const membersMetadata = { title: "Community — AWSSBG-UC" };
+export const membersMetadata = { title: "Members — AWSSBG-UC" };
 
 /**
- * Community page in the pixel-art direction of the home page:
- * black ground, butter-yellow type, Jersey 10 headlines, stripe dividers, square corners, hard offset shadows.
+ * Member directory in the pixel-art direction of the home page:
+ * black ground, butter-yellow type, Jersey 10 headlines, square corners, hard offset shadows.
+ * Discord and Facebook live on /socials.
  */
-
-
-// Headlines: set the class directly, since the element-level heading font in globals.css would otherwise win.
 
 const focus = "focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-pix-teal";
 
-const btnPrimary = `inline-flex items-center justify-center gap-2 border-4 border-pix-butter bg-pix-butter px-6 py-3 text-lg text-black shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
-const btnDark = `inline-flex items-center justify-center gap-2 border-4 border-black bg-black px-6 py-3 text-lg text-pix-butter shadow-pixel-rust-4 transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pixel-rust-2 ${focus}`;
-
 const CARD_BORDERS = ["border-pix-teal", "border-pix-mustard", "border-pix-rust", "border-pix-green"];
-
-function Stripes({ className = "h-4" }: { className?: string }) {
-  return <div aria-hidden="true" className={`bg-stripes ${className}`} />;
-}
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
@@ -45,8 +34,6 @@ function PixelPhoto({ src, width = 24, height = 24 }: { src: string; width?: num
     />
   );
 }
-
-// ─── Discord SVG ──────────────────────────────────────────────────────────────
 
 function DiscordIcon({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (
@@ -66,239 +53,45 @@ function FacebookIcon({ size = 20, className = "" }: { size?: number; className?
   );
 }
 
-// ─── Discord app mock ─────────────────────────────────────────────────────────
-
-const CHANNELS = [
-  { id: "announcements", label: "announcements", category: "INFO",             active: false, announce: true,  voice: false },
-  { id: "rules",         label: "rules",          category: null,              active: false, announce: false, voice: false },
-  { id: "welcome",       label: "welcome",        category: "AWSSBG-UC",      active: false, announce: false, voice: false },
-  { id: "general",       label: "general",        category: null,              active: true,  announce: false, voice: false },
-  { id: "ask-anything",  label: "ask-anything",   category: null,              active: false, announce: false, voice: false },
-  { id: "tech-news",     label: "tech-news",      category: null,              active: false, announce: false, voice: false },
-  { id: "study-groups",  label: "study-groups",   category: "VOICE",          active: false, announce: false, voice: true  },
-  { id: "build-brew",    label: "build-and-brew", category: null,              active: false, announce: false, voice: true  },
-];
-
-function DiscordMock() {
+function GitHubIcon({ size = 14 }: { size?: number }) {
   return (
-    <div
-      className="flex h-[500px] w-full overflow-hidden border-4 border-pix-butter shadow-pixel-teal-8 sm:h-[540px]"
-      aria-label="Discord community preview"
-      role="img"
-    >
-      {/* ── Server icon rail ── */}
-      <div className="flex w-[52px] shrink-0 flex-col items-center gap-2 px-1.5 py-3 overflow-y-auto [scrollbar-width:none]" style={{ background: colors.discord.rail }}>
-        {/* Server icon */}
-        <div className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[16px] bg-discord-blurple transition-all hover:rounded-[12px] cursor-default">
-          <DiscordIcon size={22} className="text-white" />
-          {/* Active pill */}
-          <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />
-        </div>
-        <div className="h-px w-8 rounded-full bg-white/10 my-1" />
-        {/* DMs icon */}
-        <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-discord-chat cursor-default hover:rounded-[12px] hover:bg-discord-blurple transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-      </div>
-
-      {/* ── Channel sidebar ── */}
-      <div className="flex w-[172px] shrink-0 flex-col" style={{ background: colors.discord.side }}>
-        {/* Server name header */}
-        <div className="flex h-12 shrink-0 items-center justify-between border-b px-3 shadow-sm cursor-default" style={{ borderColor: colors.discord.rail }}>
-          <span className="text-[13px] font-semibold truncate" style={{ color: colors.discord.text }}>AWSSBG-UC</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </div>
-
-        {/* Channel list */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {(() => {
-            let lastCategory: string | null = "";
-            return CHANNELS.map((ch) => {
-              const showCat = ch.category !== null && ch.category !== lastCategory;
-              if (showCat) lastCategory = ch.category;
-              return (
-                <div key={ch.id}>
-                  {showCat && (
-                    <div className="flex items-center gap-1 px-1 pt-4 pb-1 cursor-default">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.discord.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: colors.discord.muted }}>{ch.category}</span>
-                    </div>
-                  )}
-                  <div
-                    className="flex items-center gap-1.5 rounded-[4px] px-2 py-[5px] cursor-default"
-                    style={{
-                      background: ch.active ? colors.discord.hover : "transparent",
-                      color: ch.active ? colors.discord.text : colors.discord.muted,
-                    }}
-                  >
-                    {ch.voice ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
-                    ) : ch.announce ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true"><path d="M3 11l19-9-9 19-2-8-8-2z" /></svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                    )}
-                    <span className="truncate text-[13px] font-medium">{ch.label}</span>
-                  </div>
-                </div>
-              );
-            });
-          })()}
-        </div>
-
-        {/* User bar */}
-        <div className="flex h-[52px] shrink-0 items-center gap-2 px-2" style={{ background: colors.discord.bar }}>
-          <div className="relative shrink-0">
-            <div className="h-8 w-8 overflow-hidden rounded-full">
-              <Image src="/images/discord/discord.jpg" alt="Capybara67" width={32} height={32} className="h-full w-full object-cover" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 bg-discord-online" style={{ borderColor: colors.discord.bar }} aria-hidden="true" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-semibold leading-none" style={{ color: colors.discord.text }}>Capybara67</p>
-            <p className="mt-0.5 truncate text-[11px] leading-none" style={{ color: colors.discord.muted }}>Online</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="23" y2="15" /><line x1="23" y1="9" x2="17" y2="12" /><line x1="23" y1="15" x2="17" y2="12" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M4.93 4.93a10 10 0 0 0 0 14.14" /></svg>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Chat area ── */}
-      <div className="flex min-w-0 flex-1 flex-col" style={{ background: colors.discord.chat }}>
-        {/* Channel header */}
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4 shadow-sm" style={{ borderColor: colors.discord.rail }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-          <span className="text-[13px] font-semibold" style={{ color: colors.discord.text }}>general</span>
-          <div className="mx-2 h-4 w-px" style={{ background: colors.discord.divider }} />
-          <span className="text-[12px] truncate" style={{ color: colors.discord.muted }}>AWSSBG-UC community · all members welcome</span>
-          <div className="ml-auto flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.icon} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-          </div>
-        </div>
-
-        {/* Video — the actual chat content */}
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <video src="/video/discord_video.mp4" autoPlay muted loop playsInline className="h-full w-full object-cover" />
-        </div>
-
-        {/* Message input bar */}
-        <div className="mx-4 mb-4 flex items-center gap-2 rounded-lg px-4 py-2.5" style={{ background: colors.discord.input }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
-          <span className="flex-1 text-[13px]" style={{ color: colors.discord.placeholder }}>Message #general</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.discord.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
-        </div>
-      </div>
-    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="shrink-0">
+      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+    </svg>
   );
 }
 
-// ─── Discord CTA ──────────────────────────────────────────────────────────────
+// ─── Quick links ──────────────────────────────────────────────────────────────
 
-const DISCORD_PERKS = [
-  { text: "Channels for AWS services, study sessions, and job sharing", dot: "bg-pix-teal" },
-  { text: "First to hear about upcoming events and workshops", dot: "bg-pix-mustard" },
-  { text: "Connect directly with officers, mentors, and alumni", dot: "bg-pix-rust" },
-  { text: "Project feedback, career tips, and certification support", dot: "bg-pix-green" },
-];
+const quickLink = `inline-flex items-center gap-2 border-2 border-pix-butter/60 px-3 py-1.5 text-sm transition-colors hover:bg-pix-butter hover:text-black ${focus}`;
 
-function DiscordCTA() {
+function QuickLinks() {
   return (
-    <div className="flex flex-col justify-center">
-      <p className="text-xl">Community</p>
-      <h2 className={`${hd} mt-3 text-[clamp(4.5rem,9vw,8rem)]`}>
-        Where the <span className="text-pix-green">community</span> lives.
-      </h2>
-
-      <p className="mt-6 max-w-md text-lg leading-snug">
-        Ask questions, share projects, get feedback on your AWS journey, and meet members across every year level — all in one place.
-      </p>
-
-      <ul className="mt-6 flex flex-col gap-3">
-        {DISCORD_PERKS.map((p) => (
-          <li key={p.text} className="flex items-start gap-3 leading-snug">
-            <span aria-hidden="true" className={`mt-1.5 h-3 w-3 shrink-0 ${p.dot}`} />
-            {p.text}
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-        <a href={SOCIALS.discord} target="_blank" rel="noopener noreferrer" className={btnPrimary}>
-          <DiscordIcon size={18} />
-          Join the Discord
-        </a>
-        <span className="text-pix-butter/70">Free · Open to all members</span>
-      </div>
-
-      <div className="mt-6 flex w-fit max-w-full items-center gap-3 border-4 border-pix-teal px-4 py-2">
-        <span className="text-pix-butter/60">discord.gg/</span>
-        <span className="font-bold">JxACGrMAMK</span>
-        <a
-          href={SOCIALS.discord}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open Discord invite"
-          className={`ml-2 border-2 border-pix-butter/60 px-2 py-0.5 text-sm transition-colors hover:bg-pix-teal hover:text-black ${focus}`}
-        >
-          Open ↗
-        </a>
-      </div>
-    </div>
-  );
-}
-
-// ─── Facebook CTA (butter panel) ──────────────────────────────────────────────
-
-const FB_PERKS = [
-  "Upcoming workshops, hackathons, and org events posted first",
-  "Event photos and recaps from every activity",
-  "Official org announcements and important updates",
-  "Registration links and partner event listings",
-];
-
-function FacebookCTA() {
-  return (
-    <div className="order-1 flex flex-col justify-center lg:order-2">
-      <p className="text-xl">Facebook</p>
-      <h2 className={`${hd} mt-3 text-[clamp(4rem,8vw,7rem)]`}>
-        Events, updates, <span className="text-pix-rust">announcements.</span>
-      </h2>
-
-      <p className="mt-6 max-w-md text-lg leading-snug">
-        Our Facebook page is the primary channel for official announcements, event postings, and recaps. Follow to stay in the loop.
-      </p>
-
-      <ul className="mt-6 flex flex-col gap-3">
-        {FB_PERKS.map((text) => (
-          <li key={text} className="flex items-start gap-3 leading-snug">
-            <span aria-hidden="true" className="mt-1.5 h-3 w-3 shrink-0 bg-black" />
-            {text}
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-        <a href={SOCIALS.facebook} target="_blank" rel="noopener noreferrer" className={btnDark}>
-          <FacebookIcon size={18} />
-          Follow on Facebook
-        </a>
-        <span className="text-black/70">facebook.com/awsccpnc</span>
-      </div>
-    </div>
+    <nav aria-label="Quick links" className="mt-6 flex flex-wrap items-center gap-2">
+      <span className="mr-1 text-sm text-pix-butter/60">Quick links</span>
+      <Link href="/socials" className={quickLink}>
+        All socials
+      </Link>
+      <a href={SOCIALS.discord} target="_blank" rel="noopener noreferrer" className={quickLink}>
+        <DiscordIcon size={14} />
+        Discord ↗
+      </a>
+      <a href={SOCIALS.facebook} target="_blank" rel="noopener noreferrer" className={quickLink}>
+        <FacebookIcon size={14} />
+        Facebook ↗
+      </a>
+    </nav>
   );
 }
 
 // ─── Member card ──────────────────────────────────────────────────────────────
 
+const MAX_SKILLS = 4;
+
 function MemberCard({ member, border }: { member: PublicMemberProfile; border: string }) {
   const handle = member.username ?? member.display_name ?? "Member";
   const isMemberId = /^SBG-UC-\d{6}$/.test(member.member_id);
+  const skills = member.skills ?? [];
 
   return (
     <div className={`relative flex h-full w-full flex-col border-2 ${border} transition-colors focus-within:bg-pix-butter/5 hover:bg-pix-butter/5`}>
@@ -327,17 +120,86 @@ function MemberCard({ member, border }: { member: PublicMemberProfile; border: s
           {isMemberId && <p className="truncate text-[11px] text-pix-butter/50">{member.member_id}</p>}
         </div>
       </div>
+      {member.bio && (
+        <p className="line-clamp-3 break-words px-3 pb-3 text-xs leading-snug text-pix-butter/80">{member.bio}</p>
+      )}
+      {skills.length > 0 && (
+        <ul className="flex flex-wrap gap-1 px-3 pb-3" aria-label="Skills">
+          {skills.slice(0, MAX_SKILLS).map((skill) => (
+            <li key={skill} className="max-w-full truncate border border-pix-butter/50 px-1.5 text-[11px] leading-5">
+              {skill}
+            </li>
+          ))}
+          {skills.length > MAX_SKILLS && (
+            <li className="px-1 text-[11px] leading-5 text-pix-butter/60">+{skills.length - MAX_SKILLS}</li>
+          )}
+        </ul>
+      )}
+      {member.github_username && (
+        // z-10 lifts the link above the card's stretched profile link.
+        <div className="mt-auto flex flex-wrap gap-2 border-t-2 border-pix-butter/15 px-3 py-2">
+          <a
+            href={`https://github.com/${encodeURIComponent(member.github_username)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${handle} on GitHub`}
+            className={`relative z-10 inline-flex items-center gap-1.5 border-2 border-pix-butter/50 px-2 py-0.5 text-xs transition-colors hover:bg-pix-butter hover:text-black ${focus}`}
+          >
+            <GitHubIcon />
+            GitHub ↗
+          </a>
+        </div>
+      )}
     </div>
+  );
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+
+function MemberSearch({ query }: { query: string }) {
+  return (
+    <form action="/members" method="get" role="search" className="mt-8 max-w-xl">
+      <label htmlFor="member-search" className="sr-only">Search members</label>
+      <div className="flex border-4 border-pix-teal focus-within:border-pix-butter">
+        <input
+          id="member-search"
+          type="search"
+          name="q"
+          defaultValue={query}
+          maxLength={40}
+          placeholder="Search name or @username"
+          autoComplete="off"
+          className="min-w-0 flex-1 bg-black px-3 py-2 text-base text-pix-butter placeholder:text-pix-butter/50 focus:outline-none"
+        />
+        <button
+          type="submit"
+          aria-label="Search"
+          className={`shrink-0 border-l-4 border-pix-teal bg-pix-teal px-3 text-black transition-colors hover:bg-pix-butter ${focus}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
+        </button>
+      </div>
+      {query && (
+        <Link href="/members" className={`mt-2 inline-block text-sm underline underline-offset-4 ${focus}`}>
+          Clear search
+        </Link>
+      )}
+    </form>
   );
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
-function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
+function Pagination({ page, totalPages, query }: { page: number; totalPages: number; query: string }) {
   if (totalPages <= 1) return null;
 
-  const prevHref = page > 1 ? `/members?page=${page - 1}` : null;
-  const nextHref = page < totalPages ? `/members?page=${page + 1}` : null;
+  const href = (n: number) => `/members?${new URLSearchParams({ ...(query ? { q: query } : {}), page: String(n) }).toString()}`;
+
+  const prevHref = page > 1 ? href(page - 1) : null;
+  const nextHref = page < totalPages ? href(page + 1) : null;
 
   const windowSize = 5;
   const half = Math.floor(windowSize / 2);
@@ -360,7 +222,7 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
 
       {start > 1 && (
         <>
-          <Link href="/members?page=1" className={btnLink}>1</Link>
+          <Link href={href(1)} className={btnLink}>1</Link>
           {start > 2 && <span className={`${btn} text-pix-butter/50`}>…</span>}
         </>
       )}
@@ -369,14 +231,14 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
         n === page ? (
           <span key={n} aria-current="page" className={`${btn} border-4 border-pix-butter bg-pix-butter text-black shadow-pixel-rust-3`}>{n}</span>
         ) : (
-          <Link key={n} href={`/members?page=${n}`} className={btnLink}>{n}</Link>
+          <Link key={n} href={href(n)} className={btnLink}>{n}</Link>
         )
       )}
 
       {end < totalPages && (
         <>
           {end < totalPages - 1 && <span className={`${btn} text-pix-butter/50`}>…</span>}
-          <Link href={`/members?page=${totalPages}`} className={btnLink}>{totalPages}</Link>
+          <Link href={href(totalPages)} className={btnLink}>{totalPages}</Link>
         </>
       )}
 
@@ -396,87 +258,69 @@ interface MembersPageProps {
   page: number;
   totalPages: number;
   totalCount?: number;
+  /** Active search text (empty when not searching). */
+  query?: string;
+  /** Number of members matching the search (equals totalCount when not searching). */
+  matchCount?: number;
 }
 
-export function MembersPage({ members, page, totalPages, totalCount }: MembersPageProps) {
+export function MembersPage({ members, page, totalPages, totalCount, query = "", matchCount }: MembersPageProps) {
   const shared = totalCount ?? 0;
-  // Section padding inside the 80% column. The outer container supplies the side margin: the same gutter the pixel sides used to occupy.
-  const pad = "px-5 sm:px-8 lg:px-8";
+  const matches = matchCount ?? shared;
   return (
-    <div className={`${bodyFont.className} bg-black tracking-normal text-pix-butter`}>
-      {/* Desktop: 80% Discord + Facebook CTAs, 20% member directory. Stacked on smaller screens. */}
-      <div className="px-3 sm:px-4 lg:grid lg:grid-cols-[80fr_20fr] lg:items-start lg:px-[clamp(16px,calc((100%_-_1300px)/2),320px)]">
-        <div className="min-w-0">
-          {/* ── Discord ── */}
-          <section className={`${pad} py-14 sm:py-20`}>
-            <div className="grid gap-12 xl:grid-cols-2 xl:items-center xl:gap-12">
-              <DiscordCTA />
-              <DiscordMock />
-            </div>
-          </section>
+    <div className={`${bodyFont.className} relative isolate bg-black tracking-normal text-pix-butter`}>
+      <PixelClouds />
+      <SidePixels side="left" />
+      <SidePixels side="right" />
 
-          {/* ── Facebook (butter panel) ── */}
-          <Stripes />
-          <section className="bg-pix-butter text-black">
-            <div className={`${pad} py-14 sm:py-20`}>
-              <div className="grid gap-12 xl:grid-cols-2 xl:items-center xl:gap-12">
-                <div className="order-2 border-4 border-black bg-black shadow-pixel-rust-8 xl:order-1">
-                  <Image
-                    src="/images/facebook/facebook_image.png"
-                    alt="AWSSBG-UC Facebook page"
-                    width={800}
-                    height={600}
-                    className="w-full object-cover"
-                  />
-                </div>
-                <FacebookCTA />
-              </div>
-            </div>
-          </section>
-        </div>
+      <section className="relative z-10 mx-auto w-full max-w-[1300px] px-5 py-14 sm:px-8 sm:py-20">
+        <p className="text-xl">Members</p>
+        <h1 className={`${hd} mt-3 text-[clamp(3.5rem,8vw,6.5rem)] leading-[0.9]`}>
+          Meet the <span className="text-pix-green">community</span>.
+        </h1>
+        <p className="mt-5 max-w-xl text-lg leading-snug">
+          Members who have opted into the public directory.
+          {shared > 0 && (
+            <span className="ml-1 text-pix-butter/70">
+              {query
+                ? `${matches} of ${shared} ${shared !== 1 ? "profiles" : "profile"} match.`
+                : `${shared} ${shared !== 1 ? "profiles" : "profile"} shared.`}
+            </span>
+          )}
+        </p>
 
-        {/* ── Member directory (20% sidebar on desktop; scrolls on its own beneath the navbar) ── */}
-        <div className="lg:sticky lg:top-[var(--site-nav-h,3.75rem)] lg:max-h-[calc(100vh-var(--site-nav-h,3.75rem))] lg:overflow-y-auto lg:border-l-4 lg:border-pix-teal">
-          <Stripes className="h-4 lg:hidden" />
-          <section className="px-5 py-14 sm:px-8 sm:py-20 lg:px-4 lg:py-8">
-            <h2 className={`${hd} text-6xl sm:text-8xl lg:text-5xl`}>Member directory</h2>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed lg:mt-3 lg:text-sm lg:leading-snug">
-              Members who have opted into the public directory.
-              {shared > 0 && (
-                <span className="ml-1 text-pix-butter/70">
-                  {shared} {shared !== 1 ? "profiles" : "profile"} shared.
-                </span>
+        <QuickLinks />
+
+        <MemberSearch query={query} />
+
+        <div className="mt-10">
+          {members.length === 0 ? (
+            <div className="flex flex-col items-center justify-center border-4 border-dashed border-pix-teal/60 px-6 py-20 text-center">
+              <p className={`${hd} text-4xl`}>{query ? "No matches" : "No public profiles yet"}</p>
+              <p className="mt-3 text-pix-butter/70">
+                {query ? "Try a different name or username." : "Members who opt into the directory will appear here."}
+              </p>
+            </div>
+          ) : (
+            <>
+              <ul
+                className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                aria-label={`Members, page ${page} of ${totalPages}`}
+              >
+                {members.map((member, i) => (
+                  <li key={member.member_id} className="flex">
+                    <MemberCard member={member} border={CARD_BORDERS[i % CARD_BORDERS.length]} />
+                  </li>
+                ))}
+              </ul>
+              <Pagination page={page} totalPages={totalPages} query={query} />
+              {totalPages > 1 && (
+                <p className="mt-4 text-center text-sm text-pix-butter/60">Page {page} of {totalPages}</p>
               )}
-            </p>
-
-            <div className="mt-10 lg:mt-5">
-              {members.length === 0 ? (
-                <div className="flex flex-col items-center justify-center border-4 border-dashed border-pix-teal/60 px-6 py-20 text-center lg:px-3 lg:py-10">
-                  <p className={`${hd} text-4xl`}>No public profiles yet</p>
-                  <p className="mt-3 text-pix-butter/70 lg:text-sm">Members who opt into the directory will appear here.</p>
-                </div>
-              ) : (
-                <>
-                  <ul
-                    className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:gap-3"
-                    aria-label={`Members, page ${page} of ${totalPages}`}
-                  >
-                    {members.map((member, i) => (
-                      <li key={member.member_id} className="flex">
-                        <MemberCard member={member} border={CARD_BORDERS[i % CARD_BORDERS.length]} />
-                      </li>
-                    ))}
-                  </ul>
-                  <Pagination page={page} totalPages={totalPages} />
-                  {totalPages > 1 && (
-                    <p className="mt-4 text-center text-sm text-pix-butter/60">Page {page} of {totalPages}</p>
-                  )}
-                </>
-              )}
-            </div>
-          </section>
+            </>
+          )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
